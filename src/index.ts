@@ -7,7 +7,6 @@ process.on("uncaughtException", (err, origin) => {
   });
   console.log("Gets here");
   console.log("\n\n STACK", err.stack);
-  console.log("\n\n CAUSE", err.cause);
 });
 
 async function main() {
