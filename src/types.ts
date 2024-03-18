@@ -1,10 +1,11 @@
 export interface ErrorData {
   id: string;
-  fingerPrint: string;
+  fingerprint: string;
   stack: string;
   name: string;
   totalOccurences: number;
   lastOccurenceTimestamp: string;
+  muted: boolean;
 }
 
 export interface Occurence {
@@ -14,8 +15,10 @@ export interface Occurence {
 }
 
 export interface Storage {
-  save: (data: ErrorData) => Promise<void>;
-  getErrorIdByFingerPrint: (
-    fingerPrint: ErrorData["fingerPrint"]
+  createError: (data: Omit<ErrorData, "id">) => Promise<ErrorData["id"]>;
+  addOccurence: (data: Occurence) => Promise<void>;
+  updateLastOccurenceOnError: (data: Occurence) => Promise<void>;
+  findErrorIdByFingerprint: (
+    fingerprint: ErrorData["fingerprint"]
   ) => Promise<ErrorData["id"] | null>;
 }
