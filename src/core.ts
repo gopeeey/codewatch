@@ -1,20 +1,37 @@
 import { createHash } from "crypto";
-import { Storage } from "./types";
+import { ErrorData, Storage } from "./types";
 
 export class Core {
   constructor(private _storage: Storage) {}
 
   async handleError(err: unknown): Promise<void> {
-    if (!(err instanceof Error)) return;
-    if (!err.stack) return;
+    if (!(err instanceof Error)) throw err;
+    if (!err.stack) throw err;
 
-    const fingerPrint = this._generateFingerPrint(err);
-    // Check storage for an existing error with this fingerprint
-    // If error exists, add new occurence of the error
-    // If error does not exist, create new error and add new occurence to storage
+    const fingerPrint = this._generateFingerprint(err);
+    const currentTimestamp = new Date().toISOString();
+    let errorId: ErrorData["id"] | null = null;
+    errorId = await this._storage.findErrorIdByFingerprint(fingerPrint); // should cache this value
+
+    if (!errorId) {
+      errorId = await this._storage.createError({
+        fingerprint: fingerPrint,
+        name: err.name,
+        stack: err.stack,
+        totalOccurences: 1,
+        lastOccurenceTimestamp: currentTimestamp,
+        muted: false,
+      });
+    }
+
+    await this._storage.addOccurence({
+      errorId,
+      message: err.message,
+      timestamp: currentTimestamp,
+    });
   }
 
-  protected _generateFingerPrint(err: Error) {
+  protected _generateFingerprint(err: Error) {
     // Normalize the error stack
     const stackFrames = (err.stack as string).split("\n").slice(1);
     let normalizedStack = "";
