@@ -41,7 +41,7 @@ describe("init", () => {
     await pool.query(
       SQL`
       DROP TABLE IF EXISTS codewatch_pg_migrations CASCADE;
-      DROP TABLE IF EXISTS errors CASCADE;`
+      DROP TABLE IF EXISTS codewatch_pg_errors CASCADE;`
     );
 
     await storage.init();
@@ -49,10 +49,13 @@ describe("init", () => {
     const { rows } = await pool.query(
       SQL`SELECT tablename FROM pg_tables
         WHERE schemaname = 'public'
-        AND tablename = ANY(${["errors", "codewatch_pg_migrations"]});`
+        AND tablename = ANY(${[
+          "codewatch_pg_errors",
+          "codewatch_pg_migrations",
+        ]});`
     );
 
     const tablenames = rows.map(({ tablename }) => tablename as string);
-    expect(tablenames).toContain("errors");
+    expect(tablenames).toContain("codewatch_pg_errors");
   });
 });
