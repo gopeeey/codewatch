@@ -17,7 +17,16 @@ export const dbSetup = () => {
     // Truncate each table except migrations
   }, 5000);
 
-  afterAll(() => pool.end());
+  afterAll(async () => {
+    await pool.query(`
+    DROP SCHEMA public CASCADE;
+    CREATE SCHEMA public;
+    GRANT ALL ON SCHEMA public TO postgres;
+    GRANT ALL ON SCHEMA public TO public;
+    COMMENT ON SCHEMA public IS 'standard public schema';
+    `);
+    pool.end();
+  }, 5000);
 
   return pool;
 };
