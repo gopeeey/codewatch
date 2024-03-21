@@ -8,6 +8,11 @@ export interface ErrorData {
   muted: boolean;
 }
 
+export type CreateErrorData = Pick<
+  ErrorData,
+  "fingerprint" | "name" | "stack" | "lastOccurenceTimestamp"
+>;
+
 export interface Occurence {
   errorId: ErrorData["id"];
   message: string;
@@ -15,7 +20,7 @@ export interface Occurence {
 }
 
 export interface Storage {
-  createError: (data: Omit<ErrorData, "id">) => Promise<ErrorData["id"]>;
+  createError: (data: CreateErrorData) => Promise<ErrorData["id"]>;
   addOccurence: (data: Occurence) => Promise<void>;
   updateLastOccurenceOnError: (data: Occurence) => Promise<void>;
   findErrorIdByFingerprint: (

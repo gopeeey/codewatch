@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { Pool } from "pg";
+import SQL from "sql-template-strings";
 
 config();
 
@@ -15,6 +16,8 @@ export const dbSetup = () => {
 
   afterEach(async () => {
     // Truncate each table except migrations
+    await pool.query(SQL`TRUNCATE codewatch_pg_errors CASCADE;`);
+    await pool.query(SQL`TRUNCATE codewatch_pg_errors CASCADE;`);
   }, 5000);
 
   afterAll(async () => {

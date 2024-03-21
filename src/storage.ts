@@ -1,8 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { Pool, PoolConfig } from "pg";
+import { Pool, PoolConfig, types as pgTypes } from "pg";
 import SQL from "sql-template-strings";
-import { Storage } from "./types";
+import { ErrorData, Storage } from "./types";
+
+pgTypes.setTypeParser(pgTypes.builtins.TIMESTAMPTZ, (val) =>
+  new Date(val).toISOString()
+);
 
 type Migration = {
   id: number;
@@ -31,6 +35,7 @@ export class CodewatchPgStorage implements Storage {
     `);
 
     await this._runMigrations("up");
+    this.ready = true;
   };
 
   close: Storage["close"] = async () => {
@@ -114,19 +119,46 @@ export class CodewatchPgStorage implements Storage {
     }
   };
 
-  addOccurence: Storage["addOccurence"] = async (data) => {};
+  addOccurence: Storage["addOccurence"] = async (data) => {
+    await this._pool.query(SQL`
+      INSERT INTO codewatch_pg_occurences ("errorId", message, timestamp)
+      VALUES (${data.errorId}, ${data.message}, ${data.timestamp});
+    `);
+  };
 
   createError: Storage["createError"] = async (data) => {
-    return "";
+    const query = SQL`INSERT INTO codewatch_pg_errors (
+      fingerprint, 
+      name, 
+      stack, 
+      "lastOccurenceTimestamp"
+      )
+      VALUES (
+        ${data.fingerprint}, 
+        ${data.name}, 
+        ${data.stack}, 
+        ${data.lastOccurenceTimestamp}
+      ) RETURNING id;`;
+    const { rows } = await this._pool.query<{ id: ErrorData["id"] }>(query);
+    return rows[0].id;
   };
 
   findErrorIdByFingerprint: Storage["findErrorIdByFingerprint"] = async (
     fingerprint
   ) => {
-    return "";
+    const query = SQL`SELECT id FROM codewatch_pg_errors WHERE fingerprint = ${fingerprint};`;
+    const { rows } = await this._pool.query<{ id: ErrorData["id"] }>(query);
+    return rows[0]?.id || null;
   };
 
   updateLastOccurenceOnError: Storage["updateLastOccurenceOnError"] = async (
     data
-  ) => {};
+  ) => {
+    await this._pool.query(SQL`
+      UPDATE codewatch_pg_errors SET 
+      "lastOccurenceTimestamp" = ${data.timestamp},
+      "totalOccurences" = "totalOccurences" + 1
+      WHERE id = ${data.errorId};
+    `);
+  };
 }
