@@ -12,6 +12,8 @@ export interface Occurence {
   errorId: ErrorData["id"];
   message: string;
   timestamp: string;
+  stdoutLogs: [number, string][];
+  stderrLogs: [number, string][];
 }
 
 export interface Storage {

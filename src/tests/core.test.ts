@@ -69,7 +69,7 @@ describe("Core", () => {
         );
       });
 
-      describe("given there are no existing error with the same fingerprint", () => {
+      describe("given there are no existing errors with the same fingerprint", () => {
         it("should call the createError method on the storage", async () => {
           await core.handleError(testError);
           expect(storageMock.createError).toHaveBeenCalledTimes(1);
@@ -88,13 +88,31 @@ describe("Core", () => {
       const errorId = "1";
       it("should add a new occurence to the error", async () => {
         storageMock.findErrorIdByFingerprint.mockResolvedValue(errorId);
+        const logBeforeError =
+          "something logged to the console before the error";
+        console.log(logBeforeError);
+        console.error(logBeforeError);
+
         await core.handleError(testError);
+
         expect(storageMock.addOccurence).toHaveBeenCalledTimes(1);
+
         expect(storageMock.addOccurence).toHaveBeenCalledWith({
           errorId,
           message: testError.message,
           timestamp: expect.any(String),
+          stdoutLogs: expect.any(Array),
+          stderrLogs: expect.any(Array),
         });
+
+        const calls = storageMock.addOccurence.mock.calls;
+        expect(calls[0][0].stdoutLogs.includes(logBeforeError + "\n")).toBe(
+          true
+        );
+
+        expect(calls[0][0].stderrLogs.includes(logBeforeError + "\n")).toBe(
+          true
+        );
       });
 
       //   // it("should increment the occurences of the existing error and update the last occurence time", async () => {});
