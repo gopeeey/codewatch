@@ -1,9 +1,11 @@
 import { createHash } from "crypto";
+import { format } from "util";
 import { ErrorData, Storage } from "./types";
 
 export type Options = {
   stdoutLogRetentionTime?: number;
   stderrLogRetentionTime?: number;
+  disableConsoleLogs?: boolean;
 };
 
 type RecentLogs = {
@@ -14,23 +16,32 @@ type RecentLogs = {
 export class Core {
   private _stdoutRecentLogs: RecentLogs = { logs: [], retentionTime: 5000 };
   private _stderrRecentLogs: RecentLogs = { logs: [], retentionTime: 5000 };
+  private _options: Options = {
+    disableConsoleLogs: false,
+  };
 
   constructor(private _storage: Storage, options?: Options) {
     if (options) {
-      const { stdoutLogRetentionTime, stderrLogRetentionTime } = options;
+      const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
+        options;
       if (stdoutLogRetentionTime)
         this._stdoutRecentLogs.retentionTime = stdoutLogRetentionTime;
       if (stderrLogRetentionTime)
         this._stderrRecentLogs.retentionTime = stderrLogRetentionTime;
+
+      this._options = { ...this._options, ...theRest };
     }
+
+    if (!this._options.disableConsoleLogs) this._hookConsole();
   }
 
   async handleError(err: unknown): Promise<void> {
     if (!(err instanceof Error)) throw err;
     if (!err.stack) throw err;
 
+    const now = new Date();
     const fingerPrint = this._generateFingerprint(err);
-    const currentTimestamp = new Date().toISOString();
+    const currentTimestamp = now.toISOString();
     let errorId: ErrorData["id"] | null = null;
     errorId = await this._storage.findErrorIdByFingerprint(fingerPrint); // should cache this value
 
@@ -45,12 +56,28 @@ export class Core {
       });
     }
 
+    this._cleanUpLogs(
+      this._stdoutRecentLogs,
+      now.getTime() - this._stdoutRecentLogs.retentionTime
+    );
+    const stdoutLogs = this._stdoutRecentLogs.logs;
+
+    this._cleanUpLogs(
+      this._stderrRecentLogs,
+      now.getTime() - this._stderrRecentLogs.retentionTime
+    );
+    const stderrLogs = this._stderrRecentLogs.logs;
     await this._storage.addOccurence({
       errorId,
       message: err.message,
       timestamp: currentTimestamp,
-      stderrLogs: [],
-      stdoutLogs: [],
+      stderrLogs,
+      stdoutLogs,
+    });
+
+    await this._storage.updateLastOccurenceOnError({
+      errorId,
+      timestamp: currentTimestamp,
     });
   }
 
@@ -68,21 +95,25 @@ export class Core {
     return createHash("sha256").update(normalizedStack).digest("hex");
   }
 
-  private _hookStream(
-    stream: NodeJS.WriteStream,
-    callback: (...args: Parameters<NodeJS.WriteStream["write"]>) => void
-  ) {
-    const oldWrite = stream.write.bind(stream);
+  private _hookConsole() {
+    const oldConsoleLog = console.log;
+    const oldConsoleErr = console.error;
 
-    stream.write = ((...args: Parameters<NodeJS.WriteStream["write"]>) => {
-      callback(...args);
-      return oldWrite(...args);
-    }) as typeof stream.write;
+    console.log = (...args: Parameters<Console["log"]>) => {
+      oldConsoleLog(...args);
+      this._writeLog(this._stdoutRecentLogs, format(...args));
+    };
+
+    console.error = (...args: Parameters<Console["error"]>) => {
+      oldConsoleErr(...args);
+      this._writeLog(this._stderrRecentLogs, format(...args));
+    };
   }
 
   private _writeLog(target: RecentLogs, log: string) {
     const timestamp = Date.now();
     this._cleanUpLogs(target, timestamp - target.retentionTime);
+    target.logs.push([timestamp, log.trim()]);
   }
 
   private _cleanUpLogs(target: RecentLogs, refTimestamp: number) {
@@ -90,7 +121,7 @@ export class Core {
 
     // If the last log has exceeded the retention time, empty the array
     if (target.logs[target.logs.length - 1][0] < refTimestamp) {
-      this._deleteLogs(target.logs, target.logs.length - 1);
+      target.logs.splice(0, target.logs.length);
     } else {
       // If the first log has exceeded the retention time,
       // delete all logs that have exceeded the retention time
@@ -100,7 +131,7 @@ export class Core {
             ? this._findLastExpiredLogIndexBinary
             : this._findLastExpiredLogIndexLinear;
         const index = indexFinder(target.logs, refTimestamp);
-        this._deleteLogs(target.logs, index);
+        if (index > -1) target.logs.splice(0, index + 1);
       }
     }
   }
@@ -138,9 +169,5 @@ export class Core {
     }
 
     return index;
-  }
-
-  private _deleteLogs(target: RecentLogs["logs"], to: number) {
-    target.splice(0, to + 1);
   }
 }

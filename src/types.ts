@@ -19,7 +19,9 @@ export interface Occurence {
 export interface Storage {
   createError: (data: Omit<ErrorData, "id">) => Promise<ErrorData["id"]>;
   addOccurence: (data: Occurence) => Promise<void>;
-  updateLastOccurenceOnError: (data: Occurence) => Promise<void>;
+  updateLastOccurenceOnError: (
+    data: Pick<Occurence, "errorId" | "timestamp">
+  ) => Promise<void>;
   findErrorIdByFingerprint: (
     fingerprint: ErrorData["fingerprint"]
   ) => Promise<ErrorData["id"] | null>;

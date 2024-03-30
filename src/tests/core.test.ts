@@ -86,36 +86,70 @@ describe("Core", () => {
       });
 
       const errorId = "1";
-      it("should add a new occurence to the error", async () => {
-        storageMock.findErrorIdByFingerprint.mockResolvedValue(errorId);
-        const logBeforeError =
-          "something logged to the console before the error";
-        console.log(logBeforeError);
-        console.error(logBeforeError);
+      describe("given logs are not disabled", () => {
+        it("should add a new occurence with logs to the error", async () => {
+          storageMock.findErrorIdByFingerprint.mockResolvedValue(errorId);
+          const logBeforeError =
+            "something logged to the console before the error";
+          console.log(logBeforeError);
+          console.error(logBeforeError);
 
-        await core.handleError(testError);
+          await core.handleError(testError);
 
-        expect(storageMock.addOccurence).toHaveBeenCalledTimes(1);
+          expect(storageMock.addOccurence).toHaveBeenCalledTimes(1);
 
-        expect(storageMock.addOccurence).toHaveBeenCalledWith({
-          errorId,
-          message: testError.message,
-          timestamp: expect.any(String),
-          stdoutLogs: expect.any(Array),
-          stderrLogs: expect.any(Array),
+          expect(storageMock.addOccurence).toHaveBeenCalledWith({
+            errorId,
+            message: testError.message,
+            timestamp: expect.any(String),
+            stdoutLogs: expect.any(Array),
+            stderrLogs: expect.any(Array),
+          });
+
+          const calls = storageMock.addOccurence.mock.calls;
+          expect(calls[0][0].stdoutLogs[0].includes(logBeforeError)).toBe(true);
+
+          expect(calls[0][0].stderrLogs[0].includes(logBeforeError)).toBe(true);
         });
-
-        const calls = storageMock.addOccurence.mock.calls;
-        expect(calls[0][0].stdoutLogs.includes(logBeforeError + "\n")).toBe(
-          true
-        );
-
-        expect(calls[0][0].stderrLogs.includes(logBeforeError + "\n")).toBe(
-          true
-        );
       });
 
-      //   // it("should increment the occurences of the existing error and update the last occurence time", async () => {});
+      describe("given logs are disabled", () => {
+        it("should add a new occurence without logs to the error", async () => {
+          const newCore = new Core(storageMock as Storage, {
+            disableConsoleLogs: true,
+          });
+          storageMock.findErrorIdByFingerprint.mockResolvedValue(errorId);
+          const logBeforeError =
+            "something logged to the console before the error";
+          console.log(logBeforeError);
+          console.error(logBeforeError);
+
+          await newCore.handleError(testError);
+
+          expect(storageMock.addOccurence).toHaveBeenCalledTimes(1);
+
+          expect(storageMock.addOccurence).toHaveBeenCalledWith({
+            errorId,
+            message: testError.message,
+            timestamp: expect.any(String),
+            stdoutLogs: expect.any(Array),
+            stderrLogs: expect.any(Array),
+          });
+
+          const calls = storageMock.addOccurence.mock.calls;
+          expect(calls[0][0].stdoutLogs.length).toBe(0);
+          expect(calls[0][0].stderrLogs.length).toBe(0);
+        });
+      });
+
+      it("should increment the total occurences of the existing error and update the last occurence time", async () => {
+        await core.handleError(testError);
+        expect(storageMock.updateLastOccurenceOnError).toHaveBeenCalledTimes(1);
+        expect(storageMock.updateLastOccurenceOnError).toHaveBeenCalledWith({
+          errorId,
+          timestamp: expect.any(String),
+        });
+      });
     });
   });
 

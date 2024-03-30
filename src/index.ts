@@ -1,3 +1,6 @@
+import { Core } from "./core";
+import { Storage } from "./types";
+
 process.on("uncaughtException", (err, origin) => {
   new Promise((resolve) => {
     setTimeout(resolve, 3000);
@@ -9,31 +12,45 @@ process.on("uncaughtException", (err, origin) => {
   console.log("\n\n STACK", err.stack);
 });
 
-function hookStream(
-  stream: NodeJS.WriteStream,
-  callback: (...args: Parameters<NodeJS.WriteStream["write"]>) => void
-) {
-  const oldWrite = stream.write.bind(stream);
+// function hookStream(
+//   stream: NodeJS.WriteStream,
+//   callback: (...args: Parameters<NodeJS.WriteStream["write"]>) => void
+// ) {
+//   const oldWrite = stream.write.bind(stream);
 
-  stream.write = ((...args: Parameters<NodeJS.WriteStream["write"]>) => {
-    callback(...args);
-    return oldWrite(...args);
-  }) as typeof stream.write;
-}
-const queue: (string | Uint8Array)[] = [];
-hookStream(process.stdout, (str) => {
-  queue.push(str);
-});
+//   stream.write = ((...args: Parameters<NodeJS.WriteStream["write"]>) => {
+//     callback(...args);
+//     return oldWrite(...args);
+//   }) as typeof stream.write;
+// }
+// const queue: (string | Uint8Array)[] = [];
+// hookStream(process.stdout, (str) => {
+//   queue.push(str);
+// });
 
-hookStream(process.stderr, (str) => {
-  queue.push(str);
-});
+// hookStream(process.stderr, (str) => {
+//   queue.push(str);
+// });
+
+const fakeStorage = {
+  findErrorIdByFingerprint: async (str: string) => "1",
+  createError: async () => "1",
+  addOccurence: async () => "",
+};
+
+const core = new Core(fakeStorage as unknown as Storage);
 
 async function main() {
   const err = new Error("Hello world");
-  console.log(err.stack);
-  console.error("something here");
-  console.log(queue);
+  console.error(err);
+  // console.log(err.stack);
+  console.log("%s", "foo");
+
+  const somestr = "Hello there how are you";
+  const buffer = Buffer.from(somestr);
+  // console.log(buffer.toString("utf-8"));
+
+  core.handleError(err);
   // for (let i = 0; i < 1; i++) {
   //   deflate(input, (err, buffer) => {
   //     if (err) return console.log(err);
