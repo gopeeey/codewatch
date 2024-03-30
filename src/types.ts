@@ -25,4 +25,5 @@ export interface Storage {
   findErrorIdByFingerprint: (
     fingerprint: ErrorData["fingerprint"]
   ) => Promise<ErrorData["id"] | null>;
+  close: () => Promise<void>;
 }

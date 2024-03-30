@@ -19,6 +19,8 @@ export class Core {
   private _options: Options = {
     disableConsoleLogs: false,
   };
+  private _unhookConsole: (() => void) | null = null;
+  private _closed = false;
 
   constructor(private _storage: Storage, options?: Options) {
     if (options) {
@@ -32,10 +34,13 @@ export class Core {
       this._options = { ...this._options, ...theRest };
     }
 
-    if (!this._options.disableConsoleLogs) this._hookConsole();
+    if (!this._options.disableConsoleLogs) {
+      this._unhookConsole = this._hookConsole();
+    }
   }
 
   async handleError(err: unknown): Promise<void> {
+    if (this._closed) throw new Error("Cannot handle errors after close");
     if (!(err instanceof Error)) throw err;
     if (!err.stack) throw err;
 
@@ -81,6 +86,14 @@ export class Core {
     });
   }
 
+  async close() {
+    this._closed = true;
+    if (this._unhookConsole) this._unhookConsole();
+    this._stderrRecentLogs.logs = [];
+    this._stdoutRecentLogs.logs = [];
+    await this._storage.close();
+  }
+
   protected _generateFingerprint(err: Error) {
     // Normalize the error stack
     const stackFrames = (err.stack as string).split("\n").slice(1);
@@ -119,6 +132,13 @@ export class Core {
     console.warn = (...args: Parameters<Console["warn"]>) => {
       oldConsoleWarn(...args);
       this._writeLog(this._stderrRecentLogs, format(...args));
+    };
+
+    return () => {
+      console.log = oldConsoleLog;
+      console.error = oldConsoleErr;
+      console.info = oldConsoleInfo;
+      console.warn = oldConsoleWarn;
     };
   }
 

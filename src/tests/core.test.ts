@@ -6,6 +6,7 @@ const storageMock: { [key in keyof Storage]: jest.Mock } = {
   findErrorIdByFingerprint: jest.fn(),
   addOccurence: jest.fn(),
   updateLastOccurenceOnError: jest.fn(),
+  close: jest.fn(),
 };
 
 const core = new Core(storageMock as Storage);
@@ -145,6 +146,25 @@ describe("Core", () => {
           timestamp: expect.any(String),
         });
       });
+    });
+
+    describe("when close has been called", () => {
+      it("should throw an error", async () => {
+        await core.close();
+        expect.assertions(1);
+        try {
+          await core.handleError(testError);
+        } catch (err) {
+          expect(err).toBeInstanceOf(Error);
+        }
+      });
+    });
+  });
+
+  describe("close", () => {
+    it("should close the storage", async () => {
+      await core.close();
+      expect(storageMock.close).toHaveBeenCalledTimes(1);
     });
   });
 });
