@@ -98,14 +98,26 @@ export class Core {
   private _hookConsole() {
     const oldConsoleLog = console.log;
     const oldConsoleErr = console.error;
+    const oldConsoleInfo = console.info;
+    const oldConsoleWarn = console.warn;
 
     console.log = (...args: Parameters<Console["log"]>) => {
       oldConsoleLog(...args);
       this._writeLog(this._stdoutRecentLogs, format(...args));
     };
 
+    console.info = (...args: Parameters<Console["info"]>) => {
+      oldConsoleInfo(...args);
+      this._writeLog(this._stdoutRecentLogs, format(...args));
+    };
+
     console.error = (...args: Parameters<Console["error"]>) => {
       oldConsoleErr(...args);
+      this._writeLog(this._stderrRecentLogs, format(...args));
+    };
+
+    console.warn = (...args: Parameters<Console["warn"]>) => {
+      oldConsoleWarn(...args);
       this._writeLog(this._stderrRecentLogs, format(...args));
     };
   }

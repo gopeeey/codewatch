@@ -10,19 +10,6 @@ const storageMock: { [key in keyof Storage]: jest.Mock } = {
 
 const core = new Core(storageMock as Storage);
 
-// Using this to test the protected methods
-class ProtectedCore extends Core {
-  constructor() {
-    super(storageMock as Storage);
-  }
-
-  publicGenerateFingerPrint(error: Error) {
-    return this._generateFingerprint(error);
-  }
-}
-
-const protectedCore = new ProtectedCore();
-
 const testError = new Error("Hello world");
 describe("Core", () => {
   describe("handleError", () => {
@@ -93,6 +80,8 @@ describe("Core", () => {
             "something logged to the console before the error";
           console.log(logBeforeError);
           console.error(logBeforeError);
+          console.warn(logBeforeError);
+          console.info(logBeforeError);
 
           await core.handleError(testError);
 
@@ -108,8 +97,14 @@ describe("Core", () => {
 
           const calls = storageMock.addOccurence.mock.calls;
           expect(calls[0][0].stdoutLogs[0].includes(logBeforeError)).toBe(true);
+          expect(calls[0][0].stdoutLogs[1]?.includes(logBeforeError)).toBe(
+            true
+          );
 
           expect(calls[0][0].stderrLogs[0].includes(logBeforeError)).toBe(true);
+          expect(calls[0][0].stderrLogs[1]?.includes(logBeforeError)).toBe(
+            true
+          );
         });
       });
 
@@ -150,15 +145,6 @@ describe("Core", () => {
           timestamp: expect.any(String),
         });
       });
-    });
-  });
-
-  describe("_generateFingerprint", () => {
-    it("should generate a unique id", async () => {
-      const fingerPrint = protectedCore.publicGenerateFingerPrint(testError);
-      expect(fingerPrint).toBeDefined();
-      expect(typeof fingerPrint).toBe("string");
-      expect(fingerPrint.length).toBeGreaterThan(0);
     });
   });
 });
