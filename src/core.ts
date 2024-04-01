@@ -203,3 +203,6 @@ export class Core {
     return index;
   }
 }
+
+// To be honest this is just so I can commit something today
+// I'll resume work on this tomorrow
