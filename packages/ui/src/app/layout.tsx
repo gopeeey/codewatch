@@ -1,3 +1,5 @@
+import SideBar from "@/components/ui/side_bar";
+import clsx from "clsx";
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import React from "react";
@@ -17,7 +19,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={poppins.className}>{children}</body>
+      <body
+        className={clsx(
+          poppins.className,
+          "bg-background min-h-full text-grey-100"
+        )}
+      >
+        <SideBar />
+        <main>{children}</main>
+      </body>
     </html>
   );
 }
