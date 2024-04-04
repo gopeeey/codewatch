@@ -7,12 +7,26 @@ type Props = {
     HTMLInputElement
   >;
   className?: string;
+  startAdornment?: React.ReactNode;
 };
 
-export function TextField({ className, inputProps }: Props) {
+export function TextField({ className, inputProps, startAdornment }: Props) {
   return (
-    <div className={clsx("", className)}>
-      <input type="text" {...inputProps} />
+    <div
+      className={clsx(
+        "bg-background flex items-center rounded-xl px-4 focus-within:outline focus-within:outline-primary-400 focus-within:outline-2 focus-within:outline-offset-3",
+        className
+      )}
+      tabIndex={0}
+    >
+      {startAdornment ? (
+        <span className="mr-3 -mt-0.5">{startAdornment}</span>
+      ) : null}
+      <input
+        type="text"
+        className="bg-transparent py-3 outline-none"
+        {...inputProps}
+      />
     </div>
   );
 }
