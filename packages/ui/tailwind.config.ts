@@ -3,10 +3,13 @@ import type { Config } from "tailwindcss";
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/ui/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    boxShadow: {
+      DEFAULT: "0 4px 20px 0 rgb(7 6 18 / 0.1)",
+    },
     extend: {
       colors: {
         "primary-400": "#67985F",

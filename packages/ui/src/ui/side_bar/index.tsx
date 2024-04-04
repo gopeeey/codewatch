@@ -4,11 +4,11 @@ import NavLink from "./link";
 
 export default function SideBar() {
   return (
-    <aside className="w-72 px-6 py-8 h-screen bg-pane-background">
+    <aside className="w-72 flex-shrink-0 px-6 py-8 h-screen bg-pane-background shadow">
       {/* Logo and greeting */}
       <div className="flex items-start">
         <div className="flex-shrink-0">
-          <Image src={LogoSmall} width={33} height={39.99} alt="logo" />
+          <Image src={LogoSmall} width={33} alt="logo" />
         </div>
         <div className="ml-3">
           <div className="text-xl -mt-1 font-black text-white">Codewatch</div>

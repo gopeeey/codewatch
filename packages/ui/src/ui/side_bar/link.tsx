@@ -37,7 +37,6 @@ export default function NavLink({ children, link, icon, iconAlt }: Props) {
       <Image
         src={icons[icon][isActive ? 1 : 0]}
         width={16}
-        height={15.3}
         alt={iconAlt}
         className="mr-3"
       />

@@ -1,4 +1,4 @@
-import SideBar from "@/components/ui/side_bar";
+import SideBar from "@/ui/side_bar";
 import clsx from "clsx";
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
@@ -26,7 +26,7 @@ export default function RootLayout({
         )}
       >
         <SideBar />
-        <main>{children}</main>
+        {children}
       </body>
     </html>
   );
