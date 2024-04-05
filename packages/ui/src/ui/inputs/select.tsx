@@ -81,8 +81,8 @@ export function Select({
       {/* Drop down */}
       <div
         className={clsx(
-          "bg-background shadow rounded-lg absolute py-3 min-w-full mt-3",
-          isOpen ? "block" : "hidden"
+          "bg-background shadow rounded-lg absolute py-3 min-w-full mt-3 origin-top scale-y-0 transition-all duration-300 opacity-0",
+          { "opacity-100 scale-y-100": isOpen }
         )}
       >
         {options.map((option) => (
