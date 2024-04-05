@@ -10,14 +10,17 @@ const config: Config = {
     boxShadow: {
       DEFAULT: "0 4px 20px 0 rgb(7 6 18 / 0.1)",
     },
+
     extend: {
       colors: {
         "primary-400": "#67985F",
         "input-background": "#3B4758",
+        "input-background-dark": "#2b333f",
         background: "#161B21",
         "pane-background": "#1D232C",
         "input-placeholder": "#BAC4D1",
         error: "#AD3D35",
+        "error-bright": "#EC7168",
         "grey-50": "#F6F8F9",
         "grey-100": "#E4E8ED",
         "grey-200": "#D7DDE5",
@@ -28,6 +31,10 @@ const config: Config = {
         "grey-700": "#78818D",
         "grey-800": "#5D646D",
         "grey-900": "#474C53",
+      },
+      fontSize: {
+        xs: ["0.68rem", "0.94rem"],
+        sm: ["0.835rem", "1.1rem"],
       },
     },
   },

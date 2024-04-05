@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { TabButton } from "./button";
+import { TabButton } from "../tabs";
 
 export type TabType = "resolved" | "unresolved";
 type Props = {

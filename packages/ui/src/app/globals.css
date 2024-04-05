@@ -27,3 +27,12 @@ body {
     text-wrap: balance;
   }
 }
+
+@layer components {
+  .custom-rule {
+    @apply border-b-[0.5px] border-b-background;
+  }
+  .custom-disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+}

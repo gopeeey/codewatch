@@ -1,7 +1,8 @@
 "use client";
 
-import { AppPage, Select, TextField } from "@/ui";
-import { IssuesTabs, TabType } from "@/ui/tabs";
+import { AppPage, Checkbox, Select, TextField } from "@/ui";
+import { Button } from "@/ui/buttons";
+import { IssueCard, IssuesTabs, TabType } from "@/ui/issues";
 import CalendarIcon from "@public/calendar.svg";
 import SearchIcon from "@public/search.svg";
 import Image from "next/image";
@@ -12,8 +13,9 @@ export default function Home() {
   const [currentTab, setCurrentTab] = useState<TabType>("unresolved");
 
   return (
-    <AppPage title="Issues" cardClassName="px-0">
-      <div className="px-5 pr-8 flex justify-between">
+    <AppPage title="Issues" cardClassName="px-0 py-0 pb-10">
+      {/* Filters and Tabs */}
+      <div className="px-5 py-6 pr-8 flex justify-between custom-rule">
         <div className="flex">
           <TextField
             inputProps={{ placeholder: "Search issues" }}
@@ -40,15 +42,29 @@ export default function Home() {
           />
         </div>
 
-        {/* Tabs */}
         <IssuesTabs
           current={currentTab}
           onChange={setCurrentTab}
           resolvedCount={0}
           unresolvedCount={12}
-          className="-mb-12"
+          className="-mb-[3.54rem]"
         />
       </div>
+
+      <div className="px-5 py-3 custom-rule flex justify-between pr-8">
+        {/* Actions */}
+        <div className="flex items-center">
+          <Checkbox label="" />
+          <Button label="Resolve" onClick={() => {}} />
+          <Button label="Delete" onClick={() => {}} className="ml-3" />
+        </div>
+
+        {/* Table Header */}
+        <span className="text-grey-600 text-[0.8125rem]">Occurences</span>
+      </div>
+
+      {/* Issues */}
+      <IssueCard />
     </AppPage>
   );
 }
