@@ -58,7 +58,7 @@ export function Select({
       {/* Input box */}
       <div
         className={clsx(
-          "bg-background flex items-center cursor-pointer rounded-xl px-4 py-3 focus-within:outline focus-within:outline-primary-400 focus-within:outline-2 focus-within:outline-offset-3"
+          "bg-background flex items-center cursor-pointer rounded-xl px-3.5 py-2.5 focus-within:outline focus-within:outline-primary-400 focus-within:outline-2 focus-within:outline-offset-3"
         )}
         tabIndex={0}
         onClick={handleClick}

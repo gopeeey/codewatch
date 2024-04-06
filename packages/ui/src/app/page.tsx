@@ -3,6 +3,7 @@
 import { AppPage, Checkbox, Select, TextField } from "@/ui";
 import { Button } from "@/ui/buttons";
 import { IssueCard, IssuesTabs, TabType } from "@/ui/issues";
+import { Pagination } from "@/ui/pagination";
 import CalendarIcon from "@public/calendar.svg";
 import SearchIcon from "@public/search.svg";
 import Image from "next/image";
@@ -13,13 +14,13 @@ export default function Home() {
   const [currentTab, setCurrentTab] = useState<TabType>("unresolved");
 
   return (
-    <AppPage title="Issues" cardClassName="px-0 py-0 pb-10">
+    <AppPage title="Issues" cardClassName="px-0 py-0">
       {/* Filters and Tabs */}
       <div className="px-5 py-6 pr-8 flex justify-between custom-rule">
         <div className="flex">
           <TextField
             inputProps={{ placeholder: "Search issues" }}
-            startAdornment={<Image src={SearchIcon} alt="search" width={13} />}
+            startAdornment={<Image src={SearchIcon} alt="search" width={14} />}
           />
 
           <Select
@@ -37,7 +38,7 @@ export default function Home() {
             value={datePreset}
             className="ml-5"
             startAdornment={
-              <Image src={CalendarIcon} alt="search" width={13} />
+              <Image src={CalendarIcon} alt="search" width={14} />
             }
           />
         </div>
@@ -65,6 +66,15 @@ export default function Home() {
 
       {/* Issues */}
       <IssueCard />
+
+      <div className="py-10 pr-8 flex justify-end">
+        <Pagination
+          page={1}
+          perPage={10}
+          totalRows={200}
+          onChange={(page) => console.log(page)}
+        />
+      </div>
     </AppPage>
   );
 }

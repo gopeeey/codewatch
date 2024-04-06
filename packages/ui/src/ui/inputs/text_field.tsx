@@ -14,7 +14,7 @@ export function TextField({ className, inputProps, startAdornment }: Props) {
   return (
     <div
       className={clsx(
-        "bg-background flex items-center rounded-xl px-4 focus-within:outline focus-within:outline-primary-400 focus-within:outline-2 focus-within:outline-offset-3",
+        "bg-background flex items-center rounded-xl px-3.5 focus-within:outline focus-within:outline-primary-400 focus-within:outline-2 focus-within:outline-offset-3 h-fit",
         className
       )}
       tabIndex={0}
@@ -24,7 +24,7 @@ export function TextField({ className, inputProps, startAdornment }: Props) {
       ) : null}
       <input
         type="text"
-        className="bg-transparent py-3 outline-none"
+        className="bg-transparent py-2.5 outline-none"
         {...inputProps}
       />
     </div>
