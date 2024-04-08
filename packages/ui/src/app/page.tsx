@@ -61,7 +61,7 @@ export default function Home() {
         </div>
 
         {/* Table Header */}
-        <span className="text-grey-600 text-[0.8125rem]">Occurences</span>
+        <span className="text-grey-600 text-[0.8rem]">Occurences</span>
       </div>
 
       {/* Issues */}
