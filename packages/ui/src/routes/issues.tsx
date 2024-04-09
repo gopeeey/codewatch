@@ -1,15 +1,13 @@
-"use client";
-
-import { AppPage, Checkbox, Select, TextField } from "@/ui";
-import { Button } from "@/ui/buttons";
-import { IssueCard, IssuesTabs, TabType } from "@/ui/issues";
-import { Pagination } from "@/ui/pagination";
-import CalendarIcon from "@public/calendar.svg";
-import SearchIcon from "@public/search.svg";
-import Image from "next/image";
+import CalendarIcon from "@assets/calendar.svg";
+import SearchIcon from "@assets/search.svg";
+import { AppPage } from "@ui/app_page";
+import { Button } from "@ui/buttons";
+import { Checkbox, Select, TextField } from "@ui/inputs";
+import { IssueCard, IssuesTabs, TabType } from "@ui/issues";
+import { Pagination } from "@ui/pagination";
 import { useState } from "react";
 
-export default function Home() {
+export default function IssuesRoute() {
   const [datePreset, setDatePreset] = useState("1");
   const [currentTab, setCurrentTab] = useState<TabType>("unresolved");
 
@@ -20,7 +18,7 @@ export default function Home() {
         <div className="flex">
           <TextField
             inputProps={{ placeholder: "Search issues" }}
-            startAdornment={<Image src={SearchIcon} alt="search" width={14} />}
+            startAdornment={<img src={SearchIcon} alt="search" width={14} />}
           />
 
           <Select
@@ -37,9 +35,7 @@ export default function Home() {
             ]}
             value={datePreset}
             className="ml-5"
-            startAdornment={
-              <Image src={CalendarIcon} alt="search" width={14} />
-            }
+            startAdornment={<img src={CalendarIcon} alt="search" width={14} />}
           />
         </div>
 

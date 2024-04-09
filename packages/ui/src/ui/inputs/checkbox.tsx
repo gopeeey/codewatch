@@ -13,7 +13,7 @@ export function Checkbox({ label, disabled = false, className }: Props) {
         <input
           type="checkbox"
           className={clsx(
-            "w-4 h-4 mr-3 appearance-none border border-1 border-grey-700 rounded-[0.35rem] checked:bg-[url('/checkbox.svg')] checked:border-none cursor-pointer",
+            "w-4 h-4 mr-3 appearance-none border border-1 border-grey-700 rounded-[0.35rem] checked:bg-[url('/src/assets/checkbox.svg')] checked:border-none cursor-pointer",
             { "custom-disabled": disabled }
           )}
         />

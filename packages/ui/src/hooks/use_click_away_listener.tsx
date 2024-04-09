@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export function useClickAwayListener(callback: () => unknown) {
+export default function useClickAwayListener(callback: () => unknown) {
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {

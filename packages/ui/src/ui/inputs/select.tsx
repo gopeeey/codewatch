@@ -1,9 +1,8 @@
 "use client";
 
-import { useClickAwayListener } from "@/hooks";
-import ChevronDownIcon from "@public/chevron-down.svg";
+import ChevronDownIcon from "@assets/chevron-down.svg";
+import useClickAwayListener from "@hooks/use_click_away_listener";
 import clsx from "clsx";
-import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 type Props = {
   onChange: (val: string) => void;
@@ -68,7 +67,7 @@ export function Select({
         ) : null}
         {displayValue}
 
-        <Image
+        <img
           src={ChevronDownIcon}
           alt="chevron-down"
           width={11}

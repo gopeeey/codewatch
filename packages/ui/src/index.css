@@ -17,9 +17,9 @@
 } */
 
 body {
-  display: flex;
   letter-spacing: 0.02rem;
   font-size: 14px;
+  font-family: "Poppins", sans-serif;
 }
 
 @layer utilities {
@@ -32,6 +32,7 @@ body {
   .custom-rule {
     @apply border-b-[0.5px] border-b-background;
   }
+
   .custom-disabled {
     @apply opacity-50 cursor-not-allowed;
   }

@@ -1,7 +1,6 @@
-import ClockIcon from "@public/clock.svg";
-import ErrorRedIcon from "@public/error-red.svg";
-import Image from "next/image";
-import { Checkbox } from "..";
+import ClockIcon from "@assets/clock.svg";
+import ErrorRedIcon from "@assets/error-red.svg";
+import { Checkbox } from "@ui/inputs/checkbox";
 
 export function IssueCard() {
   return (
@@ -21,17 +20,12 @@ export function IssueCard() {
 
           <div className="mt-0.5 text-[0.68rem] flex">
             <span className="flex text-grey-800">
-              <Image src={ClockIcon} alt="clock" width={11} className="mr-1" />4
+              <img src={ClockIcon} alt="clock" width={11} className="mr-1" />4
               hours ago | 10 years old
             </span>
 
             <span className="flex ml-3 text-error-bright">
-              <Image
-                src={ErrorRedIcon}
-                alt="error"
-                width={11}
-                className="mr-1"
-              />
+              <img src={ErrorRedIcon} alt="error" width={11} className="mr-1" />
               Unhandled
             </span>
           </div>

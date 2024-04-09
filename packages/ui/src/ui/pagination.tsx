@@ -1,8 +1,7 @@
-import { generatePagination } from "@/lib/utils";
-import ChevronLeftIcon from "@public/chevron-left.svg";
-import ChevronRightIcon from "@public/chevron-right.svg";
+import ChevronLeftIcon from "@assets/chevron-left.svg";
+import ChevronRightIcon from "@assets/chevron-right.svg";
+import { generatePagination } from "@lib/utils";
 import clsx from "clsx";
-import Image from "next/image";
 
 type Props = {
   page: number;
@@ -17,7 +16,7 @@ export function Pagination({ page, perPage, totalRows, onChange }: Props) {
   return (
     <div className="flex items-center justify-center w-fit">
       <PaginationButton
-        label={<Image src={ChevronLeftIcon} alt="chevron left" width={7} />}
+        label={<img src={ChevronLeftIcon} alt="chevron left" width={7} />}
         onClick={() => console.log("prev")}
         position="edge"
         className="mr-3"
@@ -49,7 +48,7 @@ export function Pagination({ page, perPage, totalRows, onChange }: Props) {
         />
       ))}
       <PaginationButton
-        label={<Image src={ChevronRightIcon} alt="chevron right" width={7} />}
+        label={<img src={ChevronRightIcon} alt="chevron right" width={7} />}
         onClick={() => console.log("next")}
         position="edge"
         className="ml-3"

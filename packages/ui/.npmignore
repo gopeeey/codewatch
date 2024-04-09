@@ -1,9 +1,0 @@
-/.next/
-/node_modules/
-/public/
-/src/
-tsconfig.json
-tailwind.config.ts
-postcss.config.json
-next.config.mjs
-next-env.d.ts

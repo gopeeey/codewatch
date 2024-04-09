@@ -1,6 +1,6 @@
+import { AppBar } from "@ui/app_bar";
+import { Card } from "@ui/card";
 import clsx from "clsx";
-import { AppBar } from ".";
-import { Card } from "./card";
 
 type Props = {
   title: string;

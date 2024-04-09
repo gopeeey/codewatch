@@ -1,10 +1,8 @@
-import type { Config } from "tailwindcss";
-
-const config: Config = {
+/** @type {import('tailwindcss').Config} */
+export default {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/routes/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/ui/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     boxShadow: {
@@ -12,6 +10,9 @@ const config: Config = {
     },
 
     extend: {
+      fontFamily: {
+        poppins: ["Poppins", "sans-serif"],
+      },
       colors: {
         "primary-400": "#67985F",
         "input-background": "#3B4758",
@@ -40,4 +41,3 @@ const config: Config = {
   },
   plugins: [],
 };
-export default config;
