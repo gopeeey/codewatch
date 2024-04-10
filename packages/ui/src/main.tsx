@@ -3,8 +3,14 @@ import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import routes from "./routes";
-const basePath =
-  document.head.querySelector("base")?.getAttribute("href") || "";
+
+declare global {
+  interface Window {
+    __basePath__: string;
+  }
+}
+const basePath = (window.__basePath__ =
+  document.head.querySelector("base")?.getAttribute("href") || "/");
 const router = createBrowserRouter(routes, { basename: basePath });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

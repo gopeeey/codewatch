@@ -1,7 +1,7 @@
 import ChevronLeftIcon from "@assets/chevron-left.svg";
 import ChevronRightIcon from "@assets/chevron-right.svg";
 import { generatePagination } from "@lib/utils";
-import clsx from "clsx";
+import { PaginationButton } from "./buttons";
 
 type Props = {
   page: number;
@@ -17,9 +17,12 @@ export function Pagination({ page, perPage, totalRows, onChange }: Props) {
     <div className="flex items-center justify-center w-fit">
       <PaginationButton
         label={<img src={ChevronLeftIcon} alt="chevron left" width={7} />}
-        onClick={() => console.log("prev")}
+        onClick={() => {
+          onChange(page - 1);
+        }}
         position="edge"
         className="mr-3"
+        disabled={page === 1}
       />
       {pages.map((cPage, index) => (
         <PaginationButton
@@ -49,43 +52,13 @@ export function Pagination({ page, perPage, totalRows, onChange }: Props) {
       ))}
       <PaginationButton
         label={<img src={ChevronRightIcon} alt="chevron right" width={7} />}
-        onClick={() => console.log("next")}
+        onClick={() => {
+          onChange(page + 1);
+        }}
         position="edge"
         className="ml-3"
+        disabled={page === Number(pages[pages.length - 1])}
       />
-    </div>
-  );
-}
-
-type ButtonProps = {
-  label: string | React.ReactNode;
-  onClick: () => void;
-  className?: string;
-  position: "first" | "last" | "middle" | "edge";
-  active?: boolean;
-};
-function PaginationButton({
-  label,
-  onClick,
-  className,
-  position,
-  active,
-}: ButtonProps) {
-  return (
-    <div
-      onClick={onClick}
-      className={clsx(
-        "text-center  min-w-8 py-1.5 bg-background mx-[0.5px] cursor-pointer hover:bg-primary-400 transition-all duration-200",
-        {
-          "rounded-l-xl": position === "first",
-          "rounded-r-xl": position === "last",
-          "bg-primary-400": active,
-          "rounded-xl flex justify-center py-[0.68rem]": position === "edge",
-        },
-        className
-      )}
-    >
-      {label}
     </div>
   );
 }

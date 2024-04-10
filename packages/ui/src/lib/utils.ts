@@ -1,6 +1,6 @@
 export const PAGINATION_MIDPOINT = ">|<";
 
-export const generatePagination = (currentPage: number, totalPages: number) => {
+export function generatePagination(currentPage: number, totalPages: number) {
   // If the total number of pages is 7 or less,
   // display all pages without any ellipsis.
   if (totalPages <= 7) {
@@ -38,4 +38,10 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
     PAGINATION_MIDPOINT,
     totalPages,
   ];
-};
+}
+
+export function quantifyNumber(number: number) {
+  if (number < 1000) return number.toString();
+  if (number >= 1000000) return `${Math.floor((number / 1000000) * 10) / 10}M`;
+  return `${Math.floor((number / 1000) * 10) / 10}K`;
+}

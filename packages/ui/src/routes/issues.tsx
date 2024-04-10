@@ -1,15 +1,79 @@
 import CalendarIcon from "@assets/calendar.svg";
 import SearchIcon from "@assets/search.svg";
+import { useDebounce } from "@hooks/use_debounce";
+import { getIssues } from "@lib/data";
 import { AppPage } from "@ui/app_page";
-import { Button } from "@ui/buttons";
+import { ActionButton } from "@ui/buttons";
 import { Checkbox, Select, TextField } from "@ui/inputs";
 import { IssueCard, IssuesTabs, TabType } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
-import { useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { useLoaderData, useSearchParams } from "react-router-dom";
+
+type DatePreset = "1" | "2" | "3" | "4";
 
 export default function IssuesRoute() {
-  const [datePreset, setDatePreset] = useState("1");
-  const [currentTab, setCurrentTab] = useState<TabType>("unresolved");
+  const [searchParams, setSearchParams] = useSearchParams({});
+  const [datePreset, setDatePreset] = useState<DatePreset>(
+    dateToPreset(searchParams.get("startDate"), searchParams.get("endDate"))
+  );
+  const [currentTab, setCurrentTab] = useState<TabType>(
+    searchParams.get("resolved") === "true" ? "resolved" : "unresolved"
+  );
+  const [searchString, setSearchString] = useState(
+    searchParams.get("searchString") ?? ""
+  );
+  const [page, setPage] = useState(Number(searchParams.get("page") ?? 1));
+  const [perPage] = useState(Number(searchParams.get("perPage") ?? 15));
+  const [resolvedCount] = useState(0);
+  const [unresolvedCount] = useState(0);
+  const [startDate, setStartDate] = useState(
+    searchParams.get("startDate") ??
+      (Date.now() - 3 * 24 * 60 * 60 * 1000).toString()
+  );
+  const [endDate, setEndDate] = useState(
+    searchParams.get("endDate") ?? Date.now().toString()
+  );
+
+  useEffect(() => {
+    if (datePreset !== "4") {
+      setStartDate(presetToDate(datePreset));
+      setEndDate(Date.now().toString());
+    }
+  }, [datePreset]);
+
+  const submit = useCallback(() => {
+    setSearchParams({
+      searchString,
+      page: page.toString(),
+      perPage: perPage.toString(),
+      startDate,
+      endDate,
+      resolved: `${currentTab === "resolved"}`,
+    });
+  }, [
+    setSearchParams,
+    searchString,
+    page,
+    perPage,
+    startDate,
+    endDate,
+    currentTab,
+  ]);
+
+  useEffect(() => {
+    submit();
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchString, page, perPage, startDate, endDate, currentTab]);
+
+  const debouncedSearchStringChange = useDebounce(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchString(e.target.value);
+    },
+    1000
+  );
+
+  const { issues } = useLoaderData() as Awaited<ReturnType<typeof getIssues>>;
 
   return (
     <AppPage title="Issues" cardClassName="px-0 py-0">
@@ -17,19 +81,23 @@ export default function IssuesRoute() {
       <div className="px-5 py-6 pr-8 flex justify-between custom-rule">
         <div className="flex">
           <TextField
-            inputProps={{ placeholder: "Search issues" }}
+            inputProps={{
+              placeholder: "Search issues",
+              onChange: debouncedSearchStringChange,
+              defaultValue: searchString,
+            }}
             startAdornment={<img src={SearchIcon} alt="search" width={14} />}
           />
 
           <Select
-            onChange={setDatePreset}
+            onChange={(val) => setDatePreset(val as DatePreset)}
             options={[
-              { display: "Person", value: "1" },
-              { display: "Goat", value: "2" },
-              { display: "The Manufacturer", value: "4" },
+              { display: "Last 24 hours", value: "1" },
+              { display: "Last 3 days", value: "2" },
+              { display: "Last 7 days", value: "3" },
               {
-                display: "The Creator",
-                value: "3",
+                display: "Custom",
+                value: "4",
                 onSelect: () => console.log("onSelect"),
               },
             ]}
@@ -42,8 +110,8 @@ export default function IssuesRoute() {
         <IssuesTabs
           current={currentTab}
           onChange={setCurrentTab}
-          resolvedCount={0}
-          unresolvedCount={12}
+          resolvedCount={resolvedCount}
+          unresolvedCount={unresolvedCount}
           className="-mb-[3.54rem]"
         />
       </div>
@@ -52,8 +120,8 @@ export default function IssuesRoute() {
         {/* Actions */}
         <div className="flex items-center">
           <Checkbox label="" />
-          <Button label="Resolve" onClick={() => {}} />
-          <Button label="Delete" onClick={() => {}} className="ml-3" />
+          <ActionButton label="Resolve" onClick={() => {}} />
+          <ActionButton label="Delete" onClick={() => {}} className="ml-3" />
         </div>
 
         {/* Table Header */}
@@ -61,16 +129,51 @@ export default function IssuesRoute() {
       </div>
 
       {/* Issues */}
-      <IssueCard />
+      {issues.map((issue) => (
+        <IssueCard key={issue.id} issue={issue} />
+      ))}
 
       <div className="py-10 pr-8 flex justify-end">
         <Pagination
-          page={1}
-          perPage={10}
+          page={page}
+          perPage={perPage}
           totalRows={200}
-          onChange={(page) => console.log(page)}
+          onChange={setPage}
         />
       </div>
     </AppPage>
   );
+}
+
+function dateToPreset(startDate?: string | null, endDate?: string | null) {
+  if (!startDate) return "2";
+  const now = Date.now();
+  if (endDate && Number(endDate) !== now) return "4";
+  const diff = now - new Date(startDate).getTime();
+
+  switch (diff) {
+    case 24 * 60 * 60 * 1000:
+      return "1";
+    case 3 * 24 * 60 * 60 * 1000:
+      return "2";
+    case 7 * 24 * 60 * 60 * 1000:
+      return "3";
+    default:
+      return "4";
+  }
+}
+
+function presetToDate(preset: ReturnType<typeof dateToPreset>) {
+  const now = Date.now();
+
+  switch (preset) {
+    case "1":
+      return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
+    case "2":
+      return new Date(now - 3 * 24 * 60 * 60 * 1000).getTime().toString();
+    case "3":
+      return new Date(now - 7 * 24 * 60 * 60 * 1000).getTime().toString();
+    default:
+      return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
+  }
 }
