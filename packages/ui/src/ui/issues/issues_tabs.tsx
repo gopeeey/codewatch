@@ -1,3 +1,4 @@
+import { quantifyNumber } from "@lib/utils";
 import { TabButton } from "@ui/tabs/button";
 import clsx from "clsx";
 
@@ -22,15 +23,16 @@ export function IssuesTabs({
       <TabButton
         label="Unresolved"
         onClick={() => onChange("unresolved")}
-        badgeContent={unresolvedCount ? unresolvedCount.toString() : ""}
+        badgeContent={unresolvedCount ? quantifyNumber(unresolvedCount) : ""}
         active={current === "unresolved"}
       />
       <TabButton
         label="Resolved"
         onClick={() => onChange("resolved")}
-        badgeContent={resolvedCount ? resolvedCount.toString() : ""}
+        badgeContent={resolvedCount ? quantifyNumber(resolvedCount) : ""}
         active={current === "resolved"}
         className="ml-5"
+        variant="resolved"
       />
     </div>
   );

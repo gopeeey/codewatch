@@ -1,4 +1,3 @@
-import { getIssues } from "@lib/data";
 import { RouteObject } from "react-router-dom";
 import IssuesRoute from "./issues";
 import Layout from "./layout";
@@ -11,7 +10,6 @@ const routes: RouteObject[] = [
       {
         path: "/",
         Component: IssuesRoute,
-        loader: getIssues,
       },
       {
         path: "/statistics",

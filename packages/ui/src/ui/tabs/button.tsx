@@ -7,6 +7,7 @@ type Props = {
   active: boolean;
   badgeContent?: string;
   className?: string;
+  variant?: "resolved" | "unresolved";
 };
 
 export function TabButton({
@@ -15,6 +16,7 @@ export function TabButton({
   active,
   badgeContent,
   className,
+  variant = "unresolved",
 }: Props) {
   return (
     <button
@@ -31,7 +33,11 @@ export function TabButton({
     >
       {label}
       {!!badgeContent && (
-        <Badge content={badgeContent} variant="error" className="ml-1.5" />
+        <Badge
+          content={badgeContent}
+          variant={variant === "unresolved" ? "error" : "default"}
+          className="ml-1.5"
+        />
       )}
     </button>
   );

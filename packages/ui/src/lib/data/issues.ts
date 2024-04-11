@@ -1,26 +1,16 @@
 import { ErrorData } from "@codewatch/core";
-import { LoaderFunctionArgs } from "react-router-dom";
-import { z } from "zod";
 
-const GetIssuesSchema = z.object({
-  searchString: z.string().nullable().optional(),
-  startDate: z.string().nullable().optional(),
-  endDate: z.string().nullable().optional(),
-  page: z.number().default(1),
-  perPage: z.number().default(15),
-  resolved: z.boolean().default(false),
-});
-export async function getIssues({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const filters = GetIssuesSchema.parse({
-    searchString: url.searchParams.get("searchString"),
-    startDate: url.searchParams.get("startDate"),
-    endDate: url.searchParams.get("endDate"),
-    page: Number(url.searchParams.get("page")) || 1,
-    perPage: Number(url.searchParams.get("perPage")) || 15,
-    resolved: url.searchParams.get("resolved") === "true",
-  });
-  if (!filters.startDate || !filters.endDate) return { issues: [] };
+export type GetIssuesFilters = {
+  searchString: string;
+  startDate: string;
+  endDate: string;
+  page: number;
+  perPage: number;
+  resolved: "resolved" | "unresolved";
+};
+export async function getIssues(filters: GetIssuesFilters) {
+  if (!filters.startDate.length || !filters.endDate.length)
+    return { issues: [], resolvedCount: 0, unresolvedCount: 0 };
   console.log("Filters", filters);
   const issues: ErrorData[] = [
     {
@@ -64,5 +54,5 @@ export async function getIssues({ request }: LoaderFunctionArgs) {
       createdAt: "2024-04-10T13:59:33.021Z",
     },
   ];
-  return { issues };
+  return { issues, resolvedCount: 1200, unresolvedCount: 3 };
 }
