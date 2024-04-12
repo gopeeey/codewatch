@@ -1,5 +1,4 @@
-import LogoSmall from "@/../public/logo.svg";
-import Image from "next/image";
+import LogoSmall from "@assets/logo.svg";
 import NavLink from "./link";
 
 export default function SideBar() {
@@ -8,7 +7,7 @@ export default function SideBar() {
       {/* Logo and greeting */}
       <div className="flex items-start">
         <div className="flex-shrink-0">
-          <Image src={LogoSmall} width={33} alt="logo" />
+          <img src={LogoSmall} width={33} alt="logo" />
         </div>
         <div className="ml-3">
           <div className="text-xl -mt-1 font-black text-white">Codewatch</div>

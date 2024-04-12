@@ -1,8 +1,7 @@
 "use client";
 
-import MenuIcon from "@public/menu.svg";
+import MenuIcon from "@assets/menu.svg";
 import clsx from "clsx";
-import Image from "next/image";
 
 type Props = { title: string; className?: string };
 export function AppBar({ title, className }: Props) {
@@ -13,7 +12,7 @@ export function AppBar({ title, className }: Props) {
         className
       )}
     >
-      <Image src={MenuIcon} width={20} alt="menu-icon" />
+      <img src={MenuIcon} width={20} alt="menu-icon" />
       <span className="ml-8">{title}</span>
     </nav>
   );

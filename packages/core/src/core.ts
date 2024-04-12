@@ -39,7 +39,7 @@ export class Core {
     }
   }
 
-  async handleError(err: unknown): Promise<void> {
+  async handleError(err: unknown, unhandled?: boolean): Promise<void> {
     if (this._closed) throw new Error("Cannot handle errors after close");
     if (!(err instanceof Error)) throw err;
     if (!err.stack) throw err;
@@ -55,9 +55,12 @@ export class Core {
         fingerprint: fingerPrint,
         name: err.name,
         stack: err.stack,
-        totalOccurences: 1,
-        lastOccurenceTimestamp: currentTimestamp,
+        totalOccurrences: 1,
+        lastOccurrenceTimestamp: currentTimestamp,
+        lastOccurrenceMessage: err.message,
         muted: false,
+        unhandled: Boolean(unhandled),
+        createdAt: currentTimestamp,
       });
     }
 
@@ -72,7 +75,7 @@ export class Core {
       now.getTime() - this._stderrRecentLogs.retentionTime
     );
     const stderrLogs = this._stderrRecentLogs.logs;
-    await this._storage.addOccurence({
+    await this._storage.addOccurrence({
       errorId,
       message: err.message,
       timestamp: currentTimestamp,
@@ -80,7 +83,7 @@ export class Core {
       stdoutLogs,
     });
 
-    await this._storage.updateLastOccurenceOnError({
+    await this._storage.updateLastOccurrenceOnError({
       errorId,
       timestamp: currentTimestamp,
     });
