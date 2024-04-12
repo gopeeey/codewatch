@@ -1,22 +1,30 @@
 --up
-CREATE TABLE IF NOT EXISTS codewatch_pg_errors (
+CREATE TABLE IF NOT EXISTS codewatch_pg_issues (
     id SERIAL PRIMARY KEY,
     fingerprint VARCHAR UNIQUE NOT NULL,
-    name VARCHAR NOT NULL,
-    stack VARCHAR NOT NULL,
-    "totalOccurences" INTEGER NOT NULL DEFAULT 0,
-    "lastOccurenceTimestamp" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    muted BOOLEAN DEFAULT FALSE NOT NULL
+    name TEXT NOT NULL,
+    stack TEXT NOT NULL,
+    "totalOccurrences" INTEGER NOT NULL DEFAULT 0,
+    "lastOccurrenceTimestamp" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "lastOccurrenceMessage" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    muted BOOLEAN DEFAULT FALSE NOT NULL,
+    unhandled BOOLEAN DEFAULT FALSE NOT NULL,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS codewatch_pg_occurences (
+CREATE TABLE IF NOT EXISTS codewatch_pg_occurrences (
     id SERIAL PRIMARY KEY,
-    "errorId" INTEGER NOT NULL,
-    message VARCHAR DEFAULT '',
+    "issueId" INTEGER NOT NULL,
+    message TEXT DEFAULT '',
     timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY("errorId") REFERENCES codewatch_pg_errors("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "stdoutLogs" JSONB[] NOT NULL DEFAULT ARRAY[]::JSONB[],
+    "stderrLogs" JSONB[] NOT NULL DEFAULT ARRAY[]::JSONB[],
+    FOREIGN KEY("issueId") REFERENCES codewatch_pg_issues("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS codewatch_pg_occurrences_issueid_idx ON codewatch_pg_occurrences ("issueId");
 
 --down
-DROP TABLE IF EXISTS codewatch_pg_occurences;
-DROP TABLE IF EXISTS codewatch_pg_errors;
+DROP INDEX IF EXISTS codewatch_pg_occurrences_issueid_idx;
+DROP TABLE IF EXISTS codewatch_pg_occurrences;
+DROP TABLE IF EXISTS codewatch_pg_issues;

@@ -1,8 +1,8 @@
+import { Issue, Storage } from "@codewatch/core";
 import fs from "fs";
 import path from "path";
 import { Pool, PoolConfig, types as pgTypes } from "pg";
 import SQL from "sql-template-strings";
-import { ErrorData, Storage } from "./types";
 
 pgTypes.setTypeParser(pgTypes.builtins.TIMESTAMPTZ, (val) =>
   new Date(val).toISOString()
@@ -42,7 +42,7 @@ export class CodewatchPgStorage implements Storage {
     await this._pool.end();
   };
 
-  protected _runMigrations = async (direction: "up" | "down") => {
+  private _runMigrations = async (direction: "up" | "down") => {
     let filenames = await new Promise<string[]>((resolve, reject) => {
       fs.readdir(this.migrationsBasePath, (err, files) => {
         if (err) return reject(err);
@@ -83,20 +83,20 @@ export class CodewatchPgStorage implements Storage {
     }
   };
 
-  protected _addMigrationRecord = async (name: string) => {
+  private _addMigrationRecord = async (name: string) => {
     await this._pool.query(SQL`
       INSERT INTO codewatch_pg_migrations (name) VALUES (${name})
       ON CONFLICT DO NOTHING;
     `);
   };
 
-  protected _removeMigrationRecord = async (name: string) => {
+  private _removeMigrationRecord = async (name: string) => {
     await this._pool.query(SQL`
       DELETE FROM codewatch_pg_migrations WHERE name = ${name};
     `);
   };
 
-  protected _runMigrationFile = async (
+  private _runMigrationFile = async (
     filename: string,
     direction: "up" | "down"
   ) => {
@@ -119,46 +119,82 @@ export class CodewatchPgStorage implements Storage {
     }
   };
 
-  addOccurence: Storage["addOccurence"] = async (data) => {
+  addOccurrence: Storage["addOccurrence"] = async (data) => {
     await this._pool.query(SQL`
-      INSERT INTO codewatch_pg_occurences ("errorId", message, timestamp)
-      VALUES (${data.errorId}, ${data.message}, ${data.timestamp});
+      INSERT INTO codewatch_pg_occurrences (
+        "issueId", 
+        message, 
+        timestamp,
+        "stdoutLogs",
+        "stderrLogs"
+      )
+      VALUES (
+        ${data.issueId}, 
+        ${data.message}, 
+        ${data.timestamp},
+        ${data.stdoutLogs},
+        ${data.stderrLogs}
+      );
     `);
   };
 
-  createError: Storage["createError"] = async (data) => {
-    const query = SQL`INSERT INTO codewatch_pg_errors (
+  createIssue: Storage["createIssue"] = async (data) => {
+    console.log("\n\nTHE CREATED DATE", data.createdAt);
+    const query = SQL`INSERT INTO codewatch_pg_issues (
       fingerprint, 
       name, 
       stack, 
-      "lastOccurenceTimestamp"
+      "totalOccurrences", 
+      "lastOccurrenceTimestamp",
+      "lastOccurrenceMessage",
+      "muted",
+      "unhandled",
+      "createdAt"
       )
       VALUES (
         ${data.fingerprint}, 
         ${data.name}, 
         ${data.stack}, 
-        ${data.lastOccurenceTimestamp}
+        ${data.totalOccurrences},
+        ${data.lastOccurrenceTimestamp},
+        ${data.lastOccurrenceMessage},
+        ${data.muted},
+        ${data.unhandled},
+        ${new Date(data.createdAt)}
       ) RETURNING id;`;
-    const { rows } = await this._pool.query<{ id: ErrorData["id"] }>(query);
+    const { rows } = await this._pool.query<{ id: Issue["id"] }>(query);
     return rows[0].id;
   };
 
-  findErrorIdByFingerprint: Storage["findErrorIdByFingerprint"] = async (
+  findIssueIdByFingerprint: Storage["findIssueIdByFingerprint"] = async (
     fingerprint
   ) => {
-    const query = SQL`SELECT id FROM codewatch_pg_errors WHERE fingerprint = ${fingerprint};`;
-    const { rows } = await this._pool.query<{ id: ErrorData["id"] }>(query);
+    const query = SQL`SELECT id FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
+    const { rows } = await this._pool.query<{ id: Issue["id"] }>(query);
     return rows[0]?.id || null;
   };
 
-  updateLastOccurenceOnError: Storage["updateLastOccurenceOnError"] = async (
+  updateLastOccurrenceOnIssue: Storage["updateLastOccurrenceOnIssue"] = async (
     data
   ) => {
     await this._pool.query(SQL`
-      UPDATE codewatch_pg_errors SET 
-      "lastOccurenceTimestamp" = ${data.timestamp},
-      "totalOccurences" = "totalOccurences" + 1
-      WHERE id = ${data.errorId};
+      UPDATE codewatch_pg_issues SET 
+      "lastOccurrenceTimestamp" = ${data.timestamp},
+      "lastOccurrenceMessage" = ${data.message},
+      "totalOccurrences" = "totalOccurrences" + 1
+      WHERE id = ${data.issueId};
     `);
   };
+
+  getPaginatedIssues: Storage["getPaginatedIssues"] = async (filters) => {
+    return [];
+  };
+
+  getIssuesTotal: Storage["getIssuesTotal"] = async (filters) => {
+    return 0;
+  };
+
+  deleteIssues: Storage["deleteIssues"] = async (issueIds) => {};
+
+  resolveIssues: Storage["resolveIssues"] = async (issueIds) => {};
 }

@@ -1,6 +1,6 @@
+import { Issue, Occurrence } from "@codewatch/core";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage } from "../storage";
-import { ErrorData, Occurence } from "../types";
 import { dbSetup } from "./utils";
 
 const pool = dbSetup();
@@ -42,7 +42,7 @@ describe("init", () => {
     await pool.query(
       SQL`
       DROP TABLE IF EXISTS codewatch_pg_migrations CASCADE;
-      DROP TABLE IF EXISTS codewatch_pg_errors CASCADE;`
+      DROP TABLE IF EXISTS codewatch_pg_issues CASCADE;`
     );
 
     await storage.init();
@@ -51,13 +51,13 @@ describe("init", () => {
       SQL`SELECT tablename FROM pg_tables
         WHERE schemaname = 'public'
         AND tablename = ANY(${[
-          "codewatch_pg_errors",
+          "codewatch_pg_issues",
           "codewatch_pg_migrations",
         ]});`
     );
 
     const tablenames = rows.map(({ tablename }) => tablename as string);
-    expect(tablenames).toContain("codewatch_pg_errors");
+    expect(tablenames).toContain("codewatch_pg_issues");
   });
 
   it("should change the storage ready state to true", async () => {
@@ -67,41 +67,61 @@ describe("init", () => {
   });
 });
 
-describe("createError", () => {
+describe("createIssue", () => {
   it("should create a new error record", async () => {
     const fingerprint = "123456789012345678";
-    await storage.createError({
+    await storage.createIssue({
       fingerprint,
-      lastOccurenceTimestamp: new Date().toISOString(),
+      lastOccurrenceTimestamp: new Date().toISOString(),
+      lastOccurrenceMessage: "",
+      createdAt: new Date().toISOString(),
+      muted: false,
+      totalOccurrences: 1,
+      unhandled: false,
       name: "Error 1",
       stack: "Error 1",
     });
 
-    const { rows } = await pool.query<Pick<ErrorData, "fingerprint">>(
-      SQL`SELECT fingerprint FROM codewatch_pg_errors;`
+    const { rows } = await pool.query<Pick<Issue, "fingerprint">>(
+      SQL`SELECT fingerprint FROM codewatch_pg_issues;`
     );
 
     expect(rows[0].fingerprint).toBe(fingerprint);
   });
 });
 
-describe("addOccurence", () => {
-  it("should create a new occurence record", async () => {
+describe("addOccurrence", () => {
+  it("should create a new occurrence record", async () => {
     const now = new Date().toISOString();
-    const errorId = await storage.createError({
+    const issueId = await storage.createIssue({
       fingerprint: "123456789012345678",
-      lastOccurenceTimestamp: now,
+      lastOccurrenceTimestamp: now,
+      lastOccurrenceMessage: "",
+      createdAt: now,
+      muted: false,
+      totalOccurrences: 1,
+      unhandled: false,
       name: "Error 1",
       stack: "Error 1",
     });
 
-    const data: Occurence = { errorId, message: "Error 1", timestamp: now };
-    await storage.addOccurence(data);
+    const data: Occurrence = {
+      issueId,
+      message: "Error 1",
+      timestamp: now,
+      stderrLogs: [
+        { timestamp: 1234567, message: "something was logged here" },
+      ],
+      stdoutLogs: [
+        { timestamp: 534564567, message: "something was logged here too" },
+      ],
+    };
+    await storage.addOccurrence(data);
 
-    const { rows } = await pool.query<Occurence>(
+    const { rows } = await pool.query<Occurrence>(
       SQL`
-        SELECT * FROM codewatch_pg_occurences
-        WHERE "errorId" = ${errorId} 
+        SELECT * FROM codewatch_pg_occurrences
+        WHERE "issueId" = ${issueId} 
         ORDER BY timestamp DESC;
       `
     );
@@ -111,50 +131,66 @@ describe("addOccurence", () => {
   });
 });
 
-describe("updateLastOccurenceOnError", () => {
-  it("should update the last occurence timestamp and increment total occurences", async () => {
+describe("updateLastOccurrenceOnError", () => {
+  it("should update the last occurrence timestamp and increment total occurrences", async () => {
     const now = new Date().toISOString();
-    const errorId = await storage.createError({
+    const issueId = await storage.createIssue({
       fingerprint: "123456789012345678",
-      lastOccurenceTimestamp: now,
+      lastOccurrenceTimestamp: now,
+      createdAt: now,
+      lastOccurrenceMessage: "",
+      muted: false,
+      totalOccurrences: 0,
+      unhandled: false,
       name: "Error 1",
       stack: "Error 1",
     });
 
-    const occurence: Occurence = {
-      errorId,
+    const occurrence: Occurrence = {
+      issueId,
       message: "Error 1",
       timestamp: now,
+      stderrLogs: [
+        { timestamp: 1234567, message: "something was logged here" },
+      ],
+      stdoutLogs: [
+        { timestamp: 534564567, message: "something was logged here too" },
+      ],
     };
 
-    await storage.updateLastOccurenceOnError(occurence);
-    await storage.updateLastOccurenceOnError(occurence);
+    await storage.updateLastOccurrenceOnIssue(occurrence);
+    await storage.updateLastOccurrenceOnIssue(occurrence);
 
     const { rows } = await pool.query<
-      Pick<ErrorData, "totalOccurences" | "lastOccurenceTimestamp">
+      Pick<Issue, "totalOccurrences" | "lastOccurrenceTimestamp">
     >(
-      SQL`SELECT "totalOccurences", "lastOccurenceTimestamp" FROM codewatch_pg_errors;`
+      SQL`SELECT "totalOccurrences", "lastOccurrenceTimestamp" FROM codewatch_pg_issues;`
     );
 
-    expect(rows[0].totalOccurences).toBe(2);
-    expect(rows[0].lastOccurenceTimestamp).toBe(now);
+    expect(rows[0].totalOccurrences).toBe(2);
+    expect(rows[0].lastOccurrenceTimestamp).toBe(now);
   });
 });
 
-describe("findErrorIdByFingerprint", () => {
+describe("findIssueIdByFingerprint", () => {
   describe("given an existing error record", () => {
     it("should return the id of the record", async () => {
       const fingerprint = "123456789012345678";
-      const errorId = await storage.createError({
+      const issueId = await storage.createIssue({
         fingerprint,
-        lastOccurenceTimestamp: new Date().toISOString(),
+        lastOccurrenceTimestamp: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        lastOccurrenceMessage: "",
+        muted: false,
+        totalOccurrences: 1,
+        unhandled: false,
         name: "Error 1",
         stack: "Error 1",
       });
 
-      const id = await storage.findErrorIdByFingerprint(fingerprint);
+      const id = await storage.findIssueIdByFingerprint(fingerprint);
 
-      expect(id).toBe(errorId);
+      expect(id).toBe(issueId);
     });
   });
 
@@ -162,7 +198,7 @@ describe("findErrorIdByFingerprint", () => {
     it("should return null", async () => {
       const fingerprint = "123456789012345678";
 
-      const id = await storage.findErrorIdByFingerprint(fingerprint);
+      const id = await storage.findIssueIdByFingerprint(fingerprint);
 
       expect(id).toBeNull();
     });
