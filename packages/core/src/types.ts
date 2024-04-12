@@ -43,4 +43,6 @@ export interface Storage {
   close: () => Promise<void>;
   getPaginatedIssues: (filters: GetPaginatedIssuesFilters) => Promise<Issue[]>;
   getIssuesTotal: (filters: GetIssuesFilters) => Promise<number>;
+  deleteIssues: (issueIds: Issue["id"][]) => Promise<void>;
+  resolveIssues: (issueIds: Issue["id"][]) => Promise<void>;
 }
