@@ -1,15 +1,24 @@
 import { Core } from "../core";
-import { ErrorData, Storage } from "../types";
+import { Issue, Storage } from "../types";
 
-const storageMock: { [key in keyof Storage]: jest.Mock } = {
-  createError: jest.fn(),
-  findErrorIdByFingerprint: jest.fn(),
+const storageMock: {
+  [key in keyof Pick<
+    Storage,
+    | "createIssue"
+    | "addOccurrence"
+    | "close"
+    | "findIssueIdByFingerprint"
+    | "updateLastOccurrenceOnIssue"
+  >]: jest.Mock;
+} = {
+  createIssue: jest.fn(),
+  findIssueIdByFingerprint: jest.fn(),
   addOccurrence: jest.fn(),
-  updateLastOccurrenceOnError: jest.fn(),
+  updateLastOccurrenceOnIssue: jest.fn(),
   close: jest.fn(),
 };
 
-const core = new Core(storageMock as Storage);
+const core = new Core(storageMock as unknown as Storage);
 
 const testError = new Error("Hello world");
 describe("Core", () => {
@@ -51,17 +60,17 @@ describe("Core", () => {
 
       it("should check storage for an existing error with the same fingerprint", async () => {
         await core.handleError(testError);
-        expect(storageMock.findErrorIdByFingerprint).toHaveBeenCalledTimes(1);
-        expect(storageMock.findErrorIdByFingerprint).toHaveBeenCalledWith(
+        expect(storageMock.findIssueIdByFingerprint).toHaveBeenCalledTimes(1);
+        expect(storageMock.findIssueIdByFingerprint).toHaveBeenCalledWith(
           fingerprint
         );
       });
 
       describe("given there are no existing errors with the same fingerprint", () => {
-        it("should call the createError method on the storage", async () => {
+        it("should call the createIssue method on the storage", async () => {
           await core.handleError(testError);
-          expect(storageMock.createError).toHaveBeenCalledTimes(1);
-          const expected: Omit<ErrorData, "id"> = {
+          expect(storageMock.createIssue).toHaveBeenCalledTimes(1);
+          const expected: Omit<Issue, "id"> = {
             fingerprint,
             lastOccurrenceTimestamp: expect.any(String),
             lastOccurrenceMessage: expect.any(String),
@@ -72,14 +81,14 @@ describe("Core", () => {
             totalOccurrences: 1,
             createdAt: expect.any(String),
           };
-          expect(storageMock.createError).toHaveBeenCalledWith(expected);
+          expect(storageMock.createIssue).toHaveBeenCalledWith(expected);
         });
       });
 
-      const errorId = "1";
+      const issueId = "1";
       describe("given logs are not disabled", () => {
         it("should add a new occurrence with logs to the error", async () => {
-          storageMock.findErrorIdByFingerprint.mockResolvedValue(errorId);
+          storageMock.findIssueIdByFingerprint.mockResolvedValue(issueId);
           const logBeforeError =
             "something logged to the console before the error";
           console.log(logBeforeError);
@@ -92,7 +101,7 @@ describe("Core", () => {
           expect(storageMock.addOccurrence).toHaveBeenCalledTimes(1);
 
           expect(storageMock.addOccurrence).toHaveBeenCalledWith({
-            errorId,
+            issueId,
             message: testError.message,
             timestamp: expect.any(String),
             stdoutLogs: expect.any(Array),
@@ -114,10 +123,10 @@ describe("Core", () => {
 
       describe("given logs are disabled", () => {
         it("should add a new occurrence without logs to the error", async () => {
-          const newCore = new Core(storageMock as Storage, {
+          const newCore = new Core(storageMock as unknown as Storage, {
             disableConsoleLogs: true,
           });
-          storageMock.findErrorIdByFingerprint.mockResolvedValue(errorId);
+          storageMock.findIssueIdByFingerprint.mockResolvedValue(issueId);
           const logBeforeError =
             "something logged to the console before the error";
           console.log(logBeforeError);
@@ -128,7 +137,7 @@ describe("Core", () => {
           expect(storageMock.addOccurrence).toHaveBeenCalledTimes(1);
 
           expect(storageMock.addOccurrence).toHaveBeenCalledWith({
-            errorId,
+            issueId,
             message: testError.message,
             timestamp: expect.any(String),
             stdoutLogs: expect.any(Array),
@@ -143,11 +152,11 @@ describe("Core", () => {
 
       it("should increment the total occurrences of the existing error and update the last occurrence time", async () => {
         await core.handleError(testError);
-        expect(storageMock.updateLastOccurrenceOnError).toHaveBeenCalledTimes(
+        expect(storageMock.updateLastOccurrenceOnIssue).toHaveBeenCalledTimes(
           1
         );
-        expect(storageMock.updateLastOccurrenceOnError).toHaveBeenCalledWith({
-          errorId,
+        expect(storageMock.updateLastOccurrenceOnIssue).toHaveBeenCalledWith({
+          issueId,
           timestamp: expect.any(String),
         });
       });

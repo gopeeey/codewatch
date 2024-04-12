@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { format } from "util";
-import { ErrorData, Storage } from "./types";
+import { Issue, Storage } from "./types";
 
 export type Options = {
   stdoutLogRetentionTime?: number;
@@ -47,11 +47,11 @@ export class Core {
     const now = new Date();
     const fingerPrint = this._generateFingerprint(err);
     const currentTimestamp = now.toISOString();
-    let errorId: ErrorData["id"] | null = null;
-    errorId = await this._storage.findErrorIdByFingerprint(fingerPrint); // should cache this value
+    let issueId: Issue["id"] | null = null;
+    issueId = await this._storage.findIssueIdByFingerprint(fingerPrint); // should cache this value
 
-    if (!errorId) {
-      errorId = await this._storage.createError({
+    if (!issueId) {
+      issueId = await this._storage.createIssue({
         fingerprint: fingerPrint,
         name: err.name,
         stack: err.stack,
@@ -76,15 +76,15 @@ export class Core {
     );
     const stderrLogs = this._stderrRecentLogs.logs;
     await this._storage.addOccurrence({
-      errorId,
+      issueId,
       message: err.message,
       timestamp: currentTimestamp,
       stderrLogs,
       stdoutLogs,
     });
 
-    await this._storage.updateLastOccurrenceOnError({
-      errorId,
+    await this._storage.updateLastOccurrenceOnIssue({
+      issueId,
       timestamp: currentTimestamp,
     });
   }
@@ -206,6 +206,3 @@ export class Core {
     return index;
   }
 }
-
-// To be honest this is just so I can commit something today
-// I'll resume work on this tomorrow

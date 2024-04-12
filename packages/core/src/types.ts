@@ -1,4 +1,4 @@
-export interface ErrorData {
+export interface Issue {
   id: string;
   fingerprint: string;
   stack: string;
@@ -12,21 +12,35 @@ export interface ErrorData {
 }
 
 export interface Occurrence {
-  errorId: ErrorData["id"];
+  issueId: Issue["id"];
   message: string;
   timestamp: string;
   stdoutLogs: [number, string][];
   stderrLogs: [number, string][];
 }
 
+export type GetIssuesFilters = {
+  searchString: string;
+  startDate?: string;
+  endDate?: string;
+  resolved: boolean;
+};
+
+export interface GetPaginatedIssuesFilters extends GetIssuesFilters {
+  page: number;
+  perPage: number;
+}
+
 export interface Storage {
-  createError: (data: Omit<ErrorData, "id">) => Promise<ErrorData["id"]>;
+  createIssue: (data: Omit<Issue, "id">) => Promise<Issue["id"]>;
   addOccurrence: (data: Occurrence) => Promise<void>;
-  updateLastOccurrenceOnError: (
-    data: Pick<Occurrence, "errorId" | "timestamp">
+  updateLastOccurrenceOnIssue: (
+    data: Pick<Occurrence, "issueId" | "timestamp">
   ) => Promise<void>;
-  findErrorIdByFingerprint: (
-    fingerprint: ErrorData["fingerprint"]
-  ) => Promise<ErrorData["id"] | null>;
+  findIssueIdByFingerprint: (
+    fingerprint: Issue["fingerprint"]
+  ) => Promise<Issue["id"] | null>;
   close: () => Promise<void>;
+  getPaginatedIssues: (filters: GetPaginatedIssuesFilters) => Promise<Issue[]>;
+  getIssuesTotal: (filters: GetIssuesFilters) => Promise<number>;
 }
