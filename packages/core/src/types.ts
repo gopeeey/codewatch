@@ -11,12 +11,13 @@ export interface Issue {
   createdAt: string;
 }
 
+export type StdChannelLog = { timestamp: number; message: string };
 export interface Occurrence {
   issueId: Issue["id"];
   message: string;
   timestamp: string;
-  stdoutLogs: [number, string][];
-  stderrLogs: [number, string][];
+  stdoutLogs: StdChannelLog[];
+  stderrLogs: StdChannelLog[];
 }
 
 export type GetIssuesFilters = {
@@ -32,10 +33,11 @@ export interface GetPaginatedIssuesFilters extends GetIssuesFilters {
 }
 
 export interface Storage {
+  init: () => Promise<void>;
   createIssue: (data: Omit<Issue, "id">) => Promise<Issue["id"]>;
   addOccurrence: (data: Occurrence) => Promise<void>;
   updateLastOccurrenceOnIssue: (
-    data: Pick<Occurrence, "issueId" | "timestamp">
+    data: Pick<Occurrence, "issueId" | "timestamp" | "message">
   ) => Promise<void>;
   findIssueIdByFingerprint: (
     fingerprint: Issue["fingerprint"]

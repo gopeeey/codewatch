@@ -109,15 +109,11 @@ describe("Core", () => {
           });
 
           const calls = storageMock.addOccurrence.mock.calls;
-          expect(calls[0][0].stdoutLogs[0].includes(logBeforeError)).toBe(true);
-          expect(calls[0][0].stdoutLogs[1]?.includes(logBeforeError)).toBe(
-            true
-          );
+          expect(calls[0][0].stdoutLogs[0].message).toBe(logBeforeError);
+          expect(calls[0][0].stdoutLogs[1]?.message).toBe(logBeforeError);
 
-          expect(calls[0][0].stderrLogs[0].includes(logBeforeError)).toBe(true);
-          expect(calls[0][0].stderrLogs[1]?.includes(logBeforeError)).toBe(
-            true
-          );
+          expect(calls[0][0].stderrLogs[0].message).toBe(logBeforeError);
+          expect(calls[0][0].stderrLogs[1]?.message).toBe(logBeforeError);
         });
       });
 
@@ -158,6 +154,7 @@ describe("Core", () => {
         expect(storageMock.updateLastOccurrenceOnIssue).toHaveBeenCalledWith({
           issueId,
           timestamp: expect.any(String),
+          message: testError.message,
         });
       });
     });

@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { format } from "util";
-import { Issue, Storage } from "./types";
+import { Issue, StdChannelLog, Storage } from "./types";
 
 export type Options = {
   stdoutLogRetentionTime?: number;
@@ -9,7 +9,7 @@ export type Options = {
 };
 
 type RecentLogs = {
-  logs: [number, string][];
+  logs: StdChannelLog[];
   retentionTime: number;
 };
 
@@ -55,7 +55,7 @@ export class Core {
         fingerprint: fingerPrint,
         name: err.name,
         stack: err.stack,
-        totalOccurrences: 1,
+        totalOccurrences: 0,
         lastOccurrenceTimestamp: currentTimestamp,
         lastOccurrenceMessage: err.message,
         muted: false,
@@ -86,6 +86,7 @@ export class Core {
     await this._storage.updateLastOccurrenceOnIssue({
       issueId,
       timestamp: currentTimestamp,
+      message: err.message,
     });
   }
 
@@ -148,19 +149,19 @@ export class Core {
   private _writeLog(target: RecentLogs, log: string) {
     const timestamp = Date.now();
     this._cleanUpLogs(target, timestamp - target.retentionTime);
-    target.logs.push([timestamp, log.trim()]);
+    target.logs.push({ timestamp, message: log.trim() });
   }
 
   private _cleanUpLogs(target: RecentLogs, refTimestamp: number) {
     if (!target.logs.length) return;
 
     // If the last log has exceeded the retention time, empty the array
-    if (target.logs[target.logs.length - 1][0] < refTimestamp) {
+    if (target.logs[target.logs.length - 1].timestamp < refTimestamp) {
       target.logs.splice(0, target.logs.length);
     } else {
       // If the first log has exceeded the retention time,
       // delete all logs that have exceeded the retention time
-      if (target.logs[0][0] < refTimestamp) {
+      if (target.logs[0].timestamp < refTimestamp) {
         const indexFinder =
           target.logs.length >= 100
             ? this._findLastExpiredLogIndexBinary
@@ -172,11 +173,11 @@ export class Core {
   }
 
   private _findLastExpiredLogIndexLinear(
-    logs: [number, string][],
+    logs: StdChannelLog[],
     refTimestamp: number
   ) {
     for (let i = 0; i < logs.length; i++) {
-      if (logs[i][0] < refTimestamp) {
+      if (logs[i].timestamp < refTimestamp) {
         return i;
       }
     }
@@ -184,7 +185,7 @@ export class Core {
   }
 
   private _findLastExpiredLogIndexBinary(
-    logs: [number, string][],
+    logs: StdChannelLog[],
     refTimestamp: number
   ) {
     let min = 0,
@@ -193,13 +194,13 @@ export class Core {
 
     while (min < max) {
       const mid = Math.floor((min + max) / 2);
-      if (logs[mid][0] < refTimestamp) {
+      if (logs[mid].timestamp < refTimestamp) {
         min = mid + 1;
         index = mid;
-        if (logs[min] && logs[min][0] >= refTimestamp) return mid;
+        if (logs[min] && logs[min].timestamp >= refTimestamp) return mid;
       } else {
         max = mid - 1;
-        if (logs[max] && logs[max][0] < refTimestamp) return max;
+        if (logs[max] && logs[max].timestamp < refTimestamp) return max;
       }
     }
 
