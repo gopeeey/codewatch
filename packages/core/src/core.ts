@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { format } from "util";
 import { Issue, StdChannelLog, Storage } from "./types";
 
-export type Options = {
+export type CoreOptions = {
   stdoutLogRetentionTime?: number;
   stderrLogRetentionTime?: number;
   disableConsoleLogs?: boolean;
@@ -16,13 +16,13 @@ type RecentLogs = {
 export class Core {
   private _stdoutRecentLogs: RecentLogs = { logs: [], retentionTime: 5000 };
   private _stderrRecentLogs: RecentLogs = { logs: [], retentionTime: 5000 };
-  private _options: Options = {
+  private _options: CoreOptions = {
     disableConsoleLogs: false,
   };
   private _unhookConsole: (() => void) | null = null;
   private _closed = false;
 
-  constructor(private _storage: Storage, options?: Options) {
+  constructor(private _storage: Storage, options?: CoreOptions) {
     if (options) {
       const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
         options;

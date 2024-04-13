@@ -1,5 +1,5 @@
 import { Core } from "../core";
-import { Issue, Storage } from "../types";
+import { Storage } from "../types";
 
 const storageMock: {
   [key in keyof Pick<
@@ -70,7 +70,7 @@ describe("Core", () => {
         it("should call the createIssue method on the storage", async () => {
           await core.handleError(testError);
           expect(storageMock.createIssue).toHaveBeenCalledTimes(1);
-          const expected: Omit<Issue, "id"> = {
+          const expected: Parameters<Storage["createIssue"]>[number] = {
             fingerprint,
             lastOccurrenceTimestamp: expect.any(String),
             lastOccurrenceMessage: expect.any(String),
@@ -78,7 +78,7 @@ describe("Core", () => {
             muted: false,
             name: testError.name,
             stack: testError.stack as string,
-            totalOccurrences: 1,
+            totalOccurrences: 0,
             createdAt: expect.any(String),
           };
           expect(storageMock.createIssue).toHaveBeenCalledWith(expected);

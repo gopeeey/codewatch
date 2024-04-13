@@ -11,5 +11,6 @@ export const testIssue: Issue = {
   stack: "\n Somewhere (index.js:123)",
   totalOccurrences: 20,
   unhandled: false,
+  resolved: false,
 };
 export const testIssueArray = [testIssue, testIssue, testIssue];

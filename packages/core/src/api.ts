@@ -1,4 +1,5 @@
 import {
+  ApiRoute,
   GetIssuesFilters,
   GetPaginatedIssuesFilters,
   Issue,
@@ -7,6 +8,8 @@ import {
 
 export class Api {
   constructor(private _storage: Storage) {}
+
+  routes: ApiRoute[] = [];
 
   async getPaginatedIssues(filters: GetPaginatedIssuesFilters) {
     return await this._storage.getPaginatedIssues(filters);
