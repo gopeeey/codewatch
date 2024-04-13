@@ -169,146 +169,247 @@ describe("findIssueIdByFingerprint", () => {
   });
 });
 
-describe("getPaginatedIssues", () => {
-  const now = Date.now();
-  const isoFromNow = (offset: number) => new Date(now - offset).toISOString();
-  const issuesData: {
-    timestamp: string;
-    overrides?: Partial<CreateIssueData>;
-  }[] = [
-    {
-      timestamp: isoFromNow(25000),
-      overrides: { name: "Nothing like the rest", fingerprint: "123" },
-    },
-    { timestamp: isoFromNow(20000), overrides: { fingerprint: "234" } },
-    { timestamp: isoFromNow(15000), overrides: { fingerprint: "345" } },
-    {
-      timestamp: isoFromNow(10000),
-      overrides: { name: "Error 2", fingerprint: "456" },
-    },
-    {
-      timestamp: isoFromNow(5000),
-      overrides: { name: "Error 3", fingerprint: "567" },
-    },
-    { timestamp: isoFromNow(0), overrides: { fingerprint: "678" } },
-  ];
+const crudNow = Date.now();
+const isoFromNow = (offset: number) => new Date(crudNow - offset).toISOString();
+const issuesData: {
+  timestamp: string;
+  overrides?: Partial<CreateIssueData>;
+}[] = [
+  {
+    timestamp: isoFromNow(25000),
+    overrides: { name: "Nothing like the rest", fingerprint: "123" },
+  },
+  { timestamp: isoFromNow(20000), overrides: { fingerprint: "234" } },
+  { timestamp: isoFromNow(15000), overrides: { fingerprint: "345" } },
+  {
+    timestamp: isoFromNow(10000),
+    overrides: { name: "Error 2", fingerprint: "456" },
+  },
+  {
+    timestamp: isoFromNow(5000),
+    overrides: { name: "Error 3", fingerprint: "567" },
+  },
+  { timestamp: isoFromNow(0), overrides: { fingerprint: "678" } },
+];
 
-  beforeEach(async () => {
-    await Promise.all(
-      issuesData.map(async ({ timestamp, overrides }) => {
-        const issueData = createCreateIssueData(timestamp, overrides);
-        await storage.createIssue(issueData);
-      })
-    );
-  }, 5000);
+const seed = async () => {
+  await Promise.all(
+    issuesData.map(async ({ timestamp, overrides }) => {
+      const issueData = createCreateIssueData(timestamp, overrides);
+      await storage.createIssue(issueData);
+    })
+  );
+};
 
-  it("should sort the issues by createdAt in descending order", async () => {
-    const issues = await storage.getPaginatedIssues({
-      searchString: "",
-      page: 1,
-      perPage: 10,
-      resolved: false,
-    });
-
-    let lastTimestamp = new Date().toISOString();
-    for (const issue of issues) {
-      expect(issue.createdAt < lastTimestamp).toBe(true);
-      lastTimestamp = issue.createdAt;
-    }
-    expect.assertions(issuesData.length);
-  });
-
-  it("should paginate the issues", async () => {
-    const testData: {
-      page: number;
-      perPage: number;
-      expectedFPrint: string[];
-    }[] = [
-      { page: 1, perPage: 1, expectedFPrint: ["678"] },
-      { page: 2, perPage: 1, expectedFPrint: ["567"] },
-      { page: 1, perPage: 2, expectedFPrint: ["678", "567"] },
-      { page: 2, perPage: 2, expectedFPrint: ["456", "345"] },
-      { page: 2, perPage: 10, expectedFPrint: [] },
-    ];
-
-    for (const { page, perPage, expectedFPrint } of testData) {
+describe("CRUD", () => {
+  beforeEach(seed, 5000);
+  describe("getPaginatedIssues", () => {
+    it("should sort the issues by createdAt in descending order", async () => {
       const issues = await storage.getPaginatedIssues({
         searchString: "",
-        page,
-        perPage,
+        page: 1,
+        perPage: 10,
         resolved: false,
       });
 
-      expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
-        expectedFPrint
-      );
-    }
+      let lastTimestamp = new Date().toISOString();
+      for (const issue of issues) {
+        expect(issue.createdAt < lastTimestamp).toBe(true);
+        lastTimestamp = issue.createdAt;
+      }
+      expect.assertions(issuesData.length);
+    });
+
+    it("should paginate the issues", async () => {
+      const testData: {
+        page: number;
+        perPage: number;
+        expectedFPrint: string[];
+      }[] = [
+        { page: 1, perPage: 1, expectedFPrint: ["678"] },
+        { page: 2, perPage: 1, expectedFPrint: ["567"] },
+        { page: 1, perPage: 2, expectedFPrint: ["678", "567"] },
+        { page: 2, perPage: 2, expectedFPrint: ["456", "345"] },
+        { page: 2, perPage: 10, expectedFPrint: [] },
+      ];
+
+      for (const { page, perPage, expectedFPrint } of testData) {
+        const issues = await storage.getPaginatedIssues({
+          searchString: "",
+          page,
+          perPage,
+          resolved: false,
+        });
+
+        expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
+          expectedFPrint
+        );
+      }
+    });
+
+    it("should apply the supplied filters", async () => {
+      const testData: {
+        filters: GetIssuesFilters;
+        expectedFPrints: Issue["fingerprint"][];
+      }[] = [
+        {
+          filters: { searchString: "error", resolved: false },
+          expectedFPrints: ["678", "567", "456", "345", "234"],
+        },
+        {
+          filters: { searchString: "error 2", resolved: false },
+          expectedFPrints: ["456"],
+        },
+        {
+          filters: { searchString: "", resolved: false },
+          expectedFPrints: ["678", "567", "456", "345", "234", "123"],
+        },
+        { filters: { searchString: "", resolved: true }, expectedFPrints: [] },
+        {
+          filters: {
+            searchString: "",
+            startDate: isoFromNow(10000),
+            resolved: false,
+          },
+          expectedFPrints: ["678", "567", "456"],
+        },
+        {
+          filters: {
+            searchString: "",
+            endDate: isoFromNow(15000),
+            resolved: false,
+          },
+          expectedFPrints: ["345", "234", "123"],
+        },
+        {
+          filters: {
+            searchString: "",
+            startDate: isoFromNow(25000),
+            endDate: isoFromNow(10000),
+            resolved: false,
+          },
+          expectedFPrints: ["456", "345", "234", "123"],
+        },
+        {
+          filters: {
+            searchString: "rest",
+            startDate: isoFromNow(25000),
+            endDate: isoFromNow(10000),
+            resolved: false,
+          },
+          expectedFPrints: ["123"],
+        },
+      ];
+
+      for (const { filters, expectedFPrints } of testData) {
+        const issues = await storage.getPaginatedIssues({
+          ...filters,
+          page: 1,
+          perPage: 10,
+        });
+
+        expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
+          expectedFPrints
+        );
+      }
+    });
   });
 
-  it("should apply the supplied filters", async () => {
-    const testData: {
-      filters: GetIssuesFilters;
-      expectedFPrints: Issue["fingerprint"][];
-    }[] = [
-      {
-        filters: { searchString: "error", resolved: false },
-        expectedFPrints: ["678", "567", "456", "345", "234"],
-      },
-      {
-        filters: { searchString: "error 2", resolved: false },
-        expectedFPrints: ["456"],
-      },
-      {
-        filters: { searchString: "", resolved: false },
-        expectedFPrints: ["678", "567", "456", "345", "234", "123"],
-      },
-      { filters: { searchString: "", resolved: true }, expectedFPrints: [] },
-      {
-        filters: {
-          searchString: "",
-          startDate: isoFromNow(10000),
-          resolved: false,
+  describe("getIssuesTotal", () => {
+    it("should return the total number of issues for the applied filters", async () => {
+      const testData: {
+        filters: GetIssuesFilters;
+        expectedTotal: number;
+      }[] = [
+        {
+          filters: { searchString: "error", resolved: false },
+          expectedTotal: 5,
         },
-        expectedFPrints: ["678", "567", "456"],
-      },
-      {
-        filters: {
-          searchString: "",
-          endDate: isoFromNow(15000),
-          resolved: false,
+        {
+          filters: { searchString: "error 2", resolved: false },
+          expectedTotal: 1,
         },
-        expectedFPrints: ["345", "234", "123"],
-      },
-      {
-        filters: {
-          searchString: "",
-          startDate: isoFromNow(25000),
-          endDate: isoFromNow(10000),
-          resolved: false,
+        {
+          filters: { searchString: "", resolved: false },
+          expectedTotal: 6,
         },
-        expectedFPrints: ["456", "345", "234", "123"],
-      },
-      {
-        filters: {
-          searchString: "rest",
-          startDate: isoFromNow(25000),
-          endDate: isoFromNow(10000),
-          resolved: false,
+        { filters: { searchString: "", resolved: true }, expectedTotal: 0 },
+        {
+          filters: {
+            searchString: "",
+            startDate: isoFromNow(10000),
+            resolved: false,
+          },
+          expectedTotal: 3,
         },
-        expectedFPrints: ["123"],
-      },
-    ];
+        {
+          filters: {
+            searchString: "",
+            endDate: isoFromNow(15000),
+            resolved: false,
+          },
+          expectedTotal: 3,
+        },
+        {
+          filters: {
+            searchString: "",
+            startDate: isoFromNow(25000),
+            endDate: isoFromNow(10000),
+            resolved: false,
+          },
+          expectedTotal: 4,
+        },
+        {
+          filters: {
+            searchString: "rest",
+            startDate: isoFromNow(25000),
+            endDate: isoFromNow(10000),
+            resolved: false,
+          },
+          expectedTotal: 1,
+        },
+      ];
 
-    for (const { filters, expectedFPrints } of testData) {
-      const issues = await storage.getPaginatedIssues({
-        ...filters,
-        page: 1,
-        perPage: 10,
-      });
+      for (const { filters, expectedTotal } of testData) {
+        const total = await storage.getIssuesTotal(filters);
 
-      expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
-        expectedFPrints
+        expect(total).toBe(expectedTotal);
+      }
+    });
+  });
+
+  describe("deleteIssues", () => {
+    it("should delete the issues with the supplied ids", async () => {
+      const { rows: issues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues LIMIT 2;`
       );
-    }
+      expect(issues.length).toBe(2);
+      await storage.deleteIssues(issues.map(({ id }) => id));
+      const { rows: deletedIssues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
+          ({ id }) => id
+        )});`
+      );
+      expect(deletedIssues.length).toBe(0);
+    });
+  });
+
+  describe("resolveIssues", () => {
+    it("should update resolved to true on the issues with the supplied ids", async () => {
+      const { rows: issues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE resolved = false LIMIT 2;`
+      );
+      expect(issues.length).toBe(2);
+      await storage.resolveIssues(issues.map(({ id }) => id));
+      const { rows: resolvedIssues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
+          ({ id }) => id
+        )});`
+      );
+      for (const { resolved } of resolvedIssues) {
+        expect(resolved).toBe(true);
+      }
+      expect.assertions(resolvedIssues.length + 1); // Plus one for the initial assertion we did.
+    });
   });
 });

@@ -7,6 +7,7 @@ import SQL from "sql-template-strings";
 pgTypes.setTypeParser(pgTypes.builtins.TIMESTAMPTZ, (val) =>
   new Date(val).toISOString()
 );
+pgTypes.setTypeParser(pgTypes.builtins.INT8, (num) => parseInt(num, 10));
 
 type Migration = {
   id: number;
@@ -211,10 +212,33 @@ export class CodewatchPgStorage implements Storage {
   };
 
   getIssuesTotal: Storage["getIssuesTotal"] = async (filters) => {
-    return 0;
+    const query = SQL`
+    SELECT COUNT(*) FROM codewatch_pg_issues WHERE resolved = ${filters.resolved}`;
+
+    if (filters.searchString.length) {
+      query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
+    }
+
+    if (filters.startDate) {
+      query.append(SQL` AND "createdAt" >= ${new Date(filters.startDate)} `);
+    }
+
+    if (filters.endDate) {
+      query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
+    }
+    const { rows } = await this._pool.query<{ count: number }>(query);
+    return rows[0].count;
   };
 
-  deleteIssues: Storage["deleteIssues"] = async (issueIds) => {};
+  deleteIssues: Storage["deleteIssues"] = async (issueIds) => {
+    await this._pool.query(SQL`
+      DELETE FROM codewatch_pg_issues WHERE id = ANY(${issueIds});
+    `);
+  };
 
-  resolveIssues: Storage["resolveIssues"] = async (issueIds) => {};
+  resolveIssues: Storage["resolveIssues"] = async (issueIds) => {
+    await this._pool.query(SQL`
+      UPDATE codewatch_pg_issues SET resolved = true WHERE id = ANY(${issueIds});
+    `);
+  };
 }
