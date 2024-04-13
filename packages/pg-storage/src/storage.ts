@@ -139,7 +139,6 @@ export class CodewatchPgStorage implements Storage {
   };
 
   createIssue: Storage["createIssue"] = async (data) => {
-    console.log("\n\nTHE CREATED DATE", data.createdAt);
     const query = SQL`INSERT INTO codewatch_pg_issues (
       fingerprint, 
       name, 
@@ -160,7 +159,7 @@ export class CodewatchPgStorage implements Storage {
         ${data.lastOccurrenceMessage},
         ${data.muted},
         ${data.unhandled},
-        ${new Date(data.createdAt)}
+        ${data.createdAt}
       ) RETURNING id;`;
     const { rows } = await this._pool.query<{ id: Issue["id"] }>(query);
     return rows[0].id;
@@ -187,7 +186,28 @@ export class CodewatchPgStorage implements Storage {
   };
 
   getPaginatedIssues: Storage["getPaginatedIssues"] = async (filters) => {
-    return [];
+    const offset = (filters.page - 1) * filters.perPage;
+    const query = SQL`
+    SELECT * FROM codewatch_pg_issues WHERE resolved = ${filters.resolved}`;
+
+    if (filters.searchString.length) {
+      query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
+    }
+
+    if (filters.startDate) {
+      query.append(SQL` AND "createdAt" >= ${new Date(filters.startDate)} `);
+    }
+
+    if (filters.endDate) {
+      query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
+    }
+
+    query.append(
+      SQL` ORDER BY "createdAt" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
+    );
+
+    const { rows } = await this._pool.query<Issue>(query);
+    return rows;
   };
 
   getIssuesTotal: Storage["getIssuesTotal"] = async (filters) => {

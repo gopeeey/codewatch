@@ -1,7 +1,7 @@
-import { Issue, Occurrence } from "@codewatch/core";
+import { GetIssuesFilters, Issue, Occurrence } from "@codewatch/core";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage } from "../storage";
-import { dbSetup } from "./utils";
+import { CreateIssueData, createCreateIssueData, dbSetup } from "./utils";
 
 const pool = dbSetup();
 
@@ -69,41 +69,23 @@ describe("init", () => {
 
 describe("createIssue", () => {
   it("should create a new error record", async () => {
-    const fingerprint = "123456789012345678";
-    await storage.createIssue({
-      fingerprint,
-      lastOccurrenceTimestamp: new Date().toISOString(),
-      lastOccurrenceMessage: "",
-      createdAt: new Date().toISOString(),
-      muted: false,
-      totalOccurrences: 1,
-      unhandled: false,
-      name: "Error 1",
-      stack: "Error 1",
-    });
+    const now = new Date().toISOString();
+    const issueData = createCreateIssueData(now);
+    await storage.createIssue(issueData);
 
     const { rows } = await pool.query<Pick<Issue, "fingerprint">>(
       SQL`SELECT fingerprint FROM codewatch_pg_issues;`
     );
 
-    expect(rows[0].fingerprint).toBe(fingerprint);
+    expect(rows[0].fingerprint).toBe(issueData.fingerprint);
   });
 });
 
 describe("addOccurrence", () => {
   it("should create a new occurrence record", async () => {
     const now = new Date().toISOString();
-    const issueId = await storage.createIssue({
-      fingerprint: "123456789012345678",
-      lastOccurrenceTimestamp: now,
-      lastOccurrenceMessage: "",
-      createdAt: now,
-      muted: false,
-      totalOccurrences: 1,
-      unhandled: false,
-      name: "Error 1",
-      stack: "Error 1",
-    });
+    const issueData = createCreateIssueData(now);
+    const issueId = await storage.createIssue(issueData);
 
     const data: Occurrence = {
       issueId,
@@ -134,17 +116,8 @@ describe("addOccurrence", () => {
 describe("updateLastOccurrenceOnError", () => {
   it("should update the last occurrence timestamp and increment total occurrences", async () => {
     const now = new Date().toISOString();
-    const issueId = await storage.createIssue({
-      fingerprint: "123456789012345678",
-      lastOccurrenceTimestamp: now,
-      createdAt: now,
-      lastOccurrenceMessage: "",
-      muted: false,
-      totalOccurrences: 0,
-      unhandled: false,
-      name: "Error 1",
-      stack: "Error 1",
-    });
+    const issueData = createCreateIssueData(now);
+    const issueId = await storage.createIssue(issueData);
 
     const occurrence: Occurrence = {
       issueId,
@@ -175,20 +148,11 @@ describe("updateLastOccurrenceOnError", () => {
 describe("findIssueIdByFingerprint", () => {
   describe("given an existing error record", () => {
     it("should return the id of the record", async () => {
-      const fingerprint = "123456789012345678";
-      const issueId = await storage.createIssue({
-        fingerprint,
-        lastOccurrenceTimestamp: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        lastOccurrenceMessage: "",
-        muted: false,
-        totalOccurrences: 1,
-        unhandled: false,
-        name: "Error 1",
-        stack: "Error 1",
-      });
+      const now = new Date().toISOString();
+      const issueData = createCreateIssueData(now);
+      const issueId = await storage.createIssue(issueData);
 
-      const id = await storage.findIssueIdByFingerprint(fingerprint);
+      const id = await storage.findIssueIdByFingerprint(issueData.fingerprint);
 
       expect(id).toBe(issueId);
     });
@@ -202,5 +166,149 @@ describe("findIssueIdByFingerprint", () => {
 
       expect(id).toBeNull();
     });
+  });
+});
+
+describe("getPaginatedIssues", () => {
+  const now = Date.now();
+  const isoFromNow = (offset: number) => new Date(now - offset).toISOString();
+  const issuesData: {
+    timestamp: string;
+    overrides?: Partial<CreateIssueData>;
+  }[] = [
+    {
+      timestamp: isoFromNow(25000),
+      overrides: { name: "Nothing like the rest", fingerprint: "123" },
+    },
+    { timestamp: isoFromNow(20000), overrides: { fingerprint: "234" } },
+    { timestamp: isoFromNow(15000), overrides: { fingerprint: "345" } },
+    {
+      timestamp: isoFromNow(10000),
+      overrides: { name: "Error 2", fingerprint: "456" },
+    },
+    {
+      timestamp: isoFromNow(5000),
+      overrides: { name: "Error 3", fingerprint: "567" },
+    },
+    { timestamp: isoFromNow(0), overrides: { fingerprint: "678" } },
+  ];
+
+  beforeEach(async () => {
+    await Promise.all(
+      issuesData.map(async ({ timestamp, overrides }) => {
+        const issueData = createCreateIssueData(timestamp, overrides);
+        await storage.createIssue(issueData);
+      })
+    );
+  }, 5000);
+
+  it("should sort the issues by createdAt in descending order", async () => {
+    const issues = await storage.getPaginatedIssues({
+      searchString: "",
+      page: 1,
+      perPage: 10,
+      resolved: false,
+    });
+
+    let lastTimestamp = new Date().toISOString();
+    for (const issue of issues) {
+      expect(issue.createdAt < lastTimestamp).toBe(true);
+      lastTimestamp = issue.createdAt;
+    }
+    expect.assertions(issuesData.length);
+  });
+
+  it("should paginate the issues", async () => {
+    const testData: {
+      page: number;
+      perPage: number;
+      expectedFPrint: string[];
+    }[] = [
+      { page: 1, perPage: 1, expectedFPrint: ["678"] },
+      { page: 2, perPage: 1, expectedFPrint: ["567"] },
+      { page: 1, perPage: 2, expectedFPrint: ["678", "567"] },
+      { page: 2, perPage: 2, expectedFPrint: ["456", "345"] },
+      { page: 2, perPage: 10, expectedFPrint: [] },
+    ];
+
+    for (const { page, perPage, expectedFPrint } of testData) {
+      const issues = await storage.getPaginatedIssues({
+        searchString: "",
+        page,
+        perPage,
+        resolved: false,
+      });
+
+      expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
+        expectedFPrint
+      );
+    }
+  });
+
+  it("should apply the supplied filters", async () => {
+    const testData: {
+      filters: GetIssuesFilters;
+      expectedFPrints: Issue["fingerprint"][];
+    }[] = [
+      {
+        filters: { searchString: "error", resolved: false },
+        expectedFPrints: ["678", "567", "456", "345", "234"],
+      },
+      {
+        filters: { searchString: "error 2", resolved: false },
+        expectedFPrints: ["456"],
+      },
+      {
+        filters: { searchString: "", resolved: false },
+        expectedFPrints: ["678", "567", "456", "345", "234", "123"],
+      },
+      { filters: { searchString: "", resolved: true }, expectedFPrints: [] },
+      {
+        filters: {
+          searchString: "",
+          startDate: isoFromNow(10000),
+          resolved: false,
+        },
+        expectedFPrints: ["678", "567", "456"],
+      },
+      {
+        filters: {
+          searchString: "",
+          endDate: isoFromNow(15000),
+          resolved: false,
+        },
+        expectedFPrints: ["345", "234", "123"],
+      },
+      {
+        filters: {
+          searchString: "",
+          startDate: isoFromNow(25000),
+          endDate: isoFromNow(10000),
+          resolved: false,
+        },
+        expectedFPrints: ["456", "345", "234", "123"],
+      },
+      {
+        filters: {
+          searchString: "rest",
+          startDate: isoFromNow(25000),
+          endDate: isoFromNow(10000),
+          resolved: false,
+        },
+        expectedFPrints: ["123"],
+      },
+    ];
+
+    for (const { filters, expectedFPrints } of testData) {
+      const issues = await storage.getPaginatedIssues({
+        ...filters,
+        page: 1,
+        perPage: 10,
+      });
+
+      expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
+        expectedFPrints
+      );
+    }
   });
 });
