@@ -71,7 +71,7 @@ describe("createIssue", () => {
   it("should create a new error record", async () => {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
-    await storage.createIssue(issueData);
+    const id = await storage.createIssue(issueData);
 
     const { rows } = await pool.query<Pick<Issue, "fingerprint">>(
       SQL`SELECT fingerprint FROM codewatch_pg_issues;`
@@ -109,6 +109,7 @@ describe("addOccurrence", () => {
     );
 
     expect(rows).toHaveLength(1);
+    rows[0].issueId = rows[0].issueId.toString();
     expect(rows[0]).toMatchObject(data);
   });
 });
@@ -384,10 +385,10 @@ describe("CRUD", () => {
         SQL`SELECT * FROM codewatch_pg_issues LIMIT 2;`
       );
       expect(issues.length).toBe(2);
-      await storage.deleteIssues(issues.map(({ id }) => id));
+      await storage.deleteIssues(issues.map(({ id }) => id.toString()));
       const { rows: deletedIssues } = await pool.query<Issue>(
         SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
-          ({ id }) => id
+          ({ id }) => id.toString()
         )});`
       );
       expect(deletedIssues.length).toBe(0);
@@ -400,7 +401,7 @@ describe("CRUD", () => {
         SQL`SELECT * FROM codewatch_pg_issues WHERE resolved = false LIMIT 2;`
       );
       expect(issues.length).toBe(2);
-      await storage.resolveIssues(issues.map(({ id }) => id));
+      await storage.resolveIssues(issues.map(({ id }) => id.toString()));
       const { rows: resolvedIssues } = await pool.query<Issue>(
         SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
           ({ id }) => id

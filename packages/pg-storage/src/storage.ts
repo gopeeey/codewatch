@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { Pool, PoolConfig, types as pgTypes } from "pg";
 import SQL from "sql-template-strings";
+import { DbIssue } from "./types";
 
 pgTypes.setTypeParser(pgTypes.builtins.TIMESTAMPTZ, (val) =>
   new Date(val).toISOString()
@@ -50,7 +51,6 @@ export class CodewatchPgStorage implements Storage {
         resolve(files);
       });
     });
-    console.log(filenames);
     filenames = filenames
       .map((file) => file.split(".sql")[0])
       .sort((a, b) => parseInt(a.split("-")[0]) - parseInt(b.split("-")[0]));
@@ -120,6 +120,13 @@ export class CodewatchPgStorage implements Storage {
     }
   };
 
+  private _standardizeIssues = (issues: DbIssue[]): Issue[] => {
+    return issues.map((issue) => ({
+      ...issue,
+      id: issue.id.toString(),
+    }));
+  };
+
   addOccurrence: Storage["addOccurrence"] = async (data) => {
     await this._pool.query(SQL`
       INSERT INTO codewatch_pg_occurrences (
@@ -162,16 +169,16 @@ export class CodewatchPgStorage implements Storage {
         ${data.unhandled},
         ${data.createdAt}
       ) RETURNING id;`;
-    const { rows } = await this._pool.query<{ id: Issue["id"] }>(query);
-    return rows[0].id;
+    const { rows } = await this._pool.query<{ id: DbIssue["id"] }>(query);
+    return rows[0].id.toString();
   };
 
   findIssueIdByFingerprint: Storage["findIssueIdByFingerprint"] = async (
     fingerprint
   ) => {
     const query = SQL`SELECT id FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
-    const { rows } = await this._pool.query<{ id: Issue["id"] }>(query);
-    return rows[0]?.id || null;
+    const { rows } = await this._pool.query<{ id: DbIssue["id"] }>(query);
+    return rows[0]?.id.toString() || null;
   };
 
   updateLastOccurrenceOnIssue: Storage["updateLastOccurrenceOnIssue"] = async (
@@ -207,8 +214,8 @@ export class CodewatchPgStorage implements Storage {
       SQL` ORDER BY "createdAt" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
     );
 
-    const { rows } = await this._pool.query<Issue>(query);
-    return rows;
+    const { rows } = await this._pool.query<DbIssue>(query);
+    return this._standardizeIssues(rows);
   };
 
   getIssuesTotal: Storage["getIssuesTotal"] = async (filters) => {
