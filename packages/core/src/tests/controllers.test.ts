@@ -36,7 +36,7 @@ describe("getPaginatedIssues", () => {
     );
     expect(storageMock.getPaginatedIssues).toHaveBeenCalledWith(filters);
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ issues: testIssueArray });
+    expect(response.body).toEqual({ data: { issues: testIssueArray } });
   });
 });
 
@@ -53,7 +53,7 @@ describe("getIssuesTotal", () => {
     );
     expect(storageMock.getIssuesTotal).toHaveBeenCalledWith(filters);
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ total: 3 });
+    expect(response.body).toEqual({ data: { total: 3 } });
   });
 });
 

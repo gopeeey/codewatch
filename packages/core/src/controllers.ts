@@ -12,7 +12,7 @@ export const getPaginatedIssues: Controller<
   { issues: Issue[] }
 > = async (req, storage) => {
   const issues = await storage.getPaginatedIssues(req.body);
-  return { status: 200, body: { issues } };
+  return { status: 200, body: { data: { issues } } };
 };
 
 export const getIssuesTotal: Controller<
@@ -22,7 +22,7 @@ export const getIssuesTotal: Controller<
   { total: number }
 > = async (req, storage) => {
   const total = await storage.getIssuesTotal(req.body);
-  return { status: 200, body: { total } };
+  return { status: 200, body: { data: { total } } };
 };
 
 export const deleteIssues: Controller<{ issueIds: Issue["id"][] }> = async (

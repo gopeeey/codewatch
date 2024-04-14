@@ -64,8 +64,10 @@ export interface ApiResponse<
   Data extends { [key: string]: unknown } | undefined = undefined
 > {
   status: number;
-  body?: Data;
-  message?: string;
+  body?: {
+    message?: string;
+    data?: Data;
+  };
 }
 
 export type Controller<
