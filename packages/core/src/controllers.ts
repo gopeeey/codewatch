@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import {
   Controller,
   GetIssuesFilters,
@@ -56,5 +58,28 @@ export const errorHandler: Controller<
   return {
     status: 500,
     body: { message: "Internal server error", errorMessage, stack },
+  };
+};
+
+export const entryPoint: Controller<
+  { uiPath: string; url: string },
+  {},
+  {},
+  { file: string; send: boolean }
+> = async (req) => {
+  const { uiPath, url } = req.body;
+
+  const filePath = path.join(uiPath, "index.html");
+  let file = await new Promise<string>((resolve, reject) => {
+    fs.readFile(filePath, (err, data) => {
+      if (err) reject(err);
+      else resolve(data.toString());
+    });
+  });
+  file = file.replace("{{>basePath}}", url);
+
+  return {
+    status: 200,
+    body: { data: { file, send: true } },
   };
 };

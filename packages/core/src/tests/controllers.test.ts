@@ -1,5 +1,7 @@
+import fs from "fs";
 import {
   deleteIssues,
+  entryPoint,
   errorHandler,
   getIssuesTotal,
   getPaginatedIssues,
@@ -92,6 +94,33 @@ describe("errorHandler", () => {
       message: "Internal server error",
       errorMessage: error.message,
       stack: error.stack,
+    });
+  });
+});
+
+describe("entryPoint", () => {
+  it("should return a 200 and a file", async () => {
+    const url = "/someurl";
+
+    const readFileSpy = jest.spyOn(fs, "readFile");
+    readFileSpy.mockImplementationOnce(
+      (...args: Parameters<(typeof fs)["readFile"]>) => {
+        const [path, callback] = args;
+        callback(null, Buffer.from("{{>basePath}} hello there"));
+      }
+    );
+
+    const response = await entryPoint(
+      {
+        body: { uiPath: "/some/path", url },
+        query: {},
+        params: {},
+      },
+      storage
+    );
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: { file: `${url} hello there`, send: true },
     });
   });
 });
