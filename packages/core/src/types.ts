@@ -51,25 +51,28 @@ export interface Storage {
 }
 
 export interface ApiRequest<
-  Body extends object | null,
-  Query extends object | null,
-  Params extends object | null
+  Body extends object = {},
+  Query extends object = {},
+  Params extends object = {}
 > {
   body: Body;
   query: Query;
   params: Params;
 }
 
-export interface ApiResponse<Data extends object | null> {
+export interface ApiResponse<
+  Data extends { [key: string]: unknown } | undefined = undefined
+> {
   status: number;
-  body: Data;
+  body?: Data;
+  message?: string;
 }
 
-export type ApiController<
-  Body extends object | null,
-  Query extends object | null,
-  Params extends object | null,
-  Data extends object | null
+export type Controller<
+  Body extends object = {},
+  Query extends object = {},
+  Params extends object = {},
+  Data extends { [key: string]: unknown } | undefined = undefined
 > = (
   req: ApiRequest<Body, Query, Params>,
   storage: Storage
@@ -78,5 +81,5 @@ export type ApiController<
 export interface ApiRoute {
   route: string;
   method: "get" | "post" | "put" | "delete";
-  handler: (request: ApiRequest<any, any, any>) => Promise<ApiResponse<any>>;
+  handler: Controller<any, any, any, any>;
 }

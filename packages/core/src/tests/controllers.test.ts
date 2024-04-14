@@ -1,5 +1,10 @@
-import { getPaginatedIssues } from "../controllers";
-import { GetPaginatedIssuesFilters, Storage } from "../types";
+import {
+  deleteIssues,
+  getIssuesTotal,
+  getPaginatedIssues,
+  resolveIssues,
+} from "../controllers";
+import { GetIssuesFilters, GetPaginatedIssuesFilters, Storage } from "../types";
 import { testIssueArray } from "./samples";
 
 const storageMock: {
@@ -26,11 +31,50 @@ describe("getPaginatedIssues", () => {
       perPage: 10,
     };
     const response = await getPaginatedIssues(
-      { body: filters, query: null, params: null },
+      { body: filters, query: {}, params: {} },
       storage
     );
     expect(storageMock.getPaginatedIssues).toHaveBeenCalledWith(filters);
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(testIssueArray);
+    expect(response.body).toEqual({ issues: testIssueArray });
+  });
+});
+
+describe("getIssuesTotal", () => {
+  it("should return a 200 and a number representing total number of issues for that filter", async () => {
+    storageMock.getIssuesTotal.mockResolvedValue(3);
+    const filters: GetIssuesFilters = {
+      resolved: false,
+      searchString: "something",
+    };
+    const response = await getIssuesTotal(
+      { body: filters, query: {}, params: {} },
+      storage
+    );
+    expect(storageMock.getIssuesTotal).toHaveBeenCalledWith(filters);
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ total: 3 });
+  });
+});
+
+describe("deleteIssues", () => {
+  it("should call storage.deleteIssues", async () => {
+    const ids = ["1", "2", "3"];
+    await deleteIssues(
+      { body: { issueIds: ids }, query: {}, params: {} },
+      storage
+    );
+    expect(storageMock.deleteIssues).toHaveBeenCalledWith(ids);
+  });
+});
+
+describe("resolveIssues", () => {
+  it("should call storage.resolveIssues", async () => {
+    const ids = ["1", "2", "3"];
+    await resolveIssues(
+      { body: { issueIds: ids }, query: {}, params: {} },
+      storage
+    );
+    expect(storageMock.resolveIssues).toHaveBeenCalledWith(ids);
   });
 });
