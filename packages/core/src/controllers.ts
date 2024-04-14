@@ -40,3 +40,21 @@ export const resolveIssues: Controller<{ issueIds: Issue["id"][] }> = async (
   await storage.resolveIssues(req.body.issueIds);
   return { status: 200 };
 };
+
+export const errrorHandler: Controller<
+  { error: unknown },
+  {},
+  {},
+  { message: string }
+> = async (req) => {
+  let errorMessage = "",
+    stack = "";
+  if (req.body.error instanceof Error) {
+    errorMessage = req.body.error.message;
+    if (req.body.error.stack) stack = req.body.error.stack;
+  }
+  return {
+    status: 500,
+    body: { message: "Internal server error", errorMessage, stack },
+  };
+};

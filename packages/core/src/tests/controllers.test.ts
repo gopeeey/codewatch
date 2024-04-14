@@ -1,5 +1,6 @@
 import {
   deleteIssues,
+  errrorHandler,
   getIssuesTotal,
   getPaginatedIssues,
   resolveIssues,
@@ -76,5 +77,21 @@ describe("resolveIssues", () => {
       storage
     );
     expect(storageMock.resolveIssues).toHaveBeenCalledWith(ids);
+  });
+});
+
+describe("errorHandler", () => {
+  it("should return a 500 and an error message", async () => {
+    const error = new Error("Hello world");
+    const response = await errrorHandler(
+      { body: { error }, query: {}, params: {} },
+      storage
+    );
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({
+      message: "Internal server error",
+      errorMessage: error.message,
+      stack: error.stack,
+    });
   });
 });
