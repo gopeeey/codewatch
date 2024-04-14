@@ -1,6 +1,6 @@
 import {
   deleteIssues,
-  errrorHandler,
+  errorHandler,
   getIssuesTotal,
   getPaginatedIssues,
   resolveIssues,
@@ -83,7 +83,7 @@ describe("resolveIssues", () => {
 describe("errorHandler", () => {
   it("should return a 500 and an error message", async () => {
     const error = new Error("Hello world");
-    const response = await errrorHandler(
+    const response = await errorHandler(
       { body: { error }, query: {}, params: {} },
       storage
     );

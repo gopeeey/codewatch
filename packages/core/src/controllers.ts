@@ -41,7 +41,7 @@ export const resolveIssues: Controller<{ issueIds: Issue["id"][] }> = async (
   return { status: 200 };
 };
 
-export const errrorHandler: Controller<
+export const errorHandler: Controller<
   { error: unknown },
   {},
   {},
