@@ -35,7 +35,7 @@ describe("getPaginatedIssues", () => {
     };
     const response = await getPaginatedIssues(
       { body: filters, query: {}, params: {} },
-      storage
+      { storage }
     );
     expect(storageMock.getPaginatedIssues).toHaveBeenCalledWith(filters);
     expect(response.status).toBe(200);
@@ -52,7 +52,7 @@ describe("getIssuesTotal", () => {
     };
     const response = await getIssuesTotal(
       { body: filters, query: {}, params: {} },
-      storage
+      { storage }
     );
     expect(storageMock.getIssuesTotal).toHaveBeenCalledWith(filters);
     expect(response.status).toBe(200);
@@ -65,7 +65,7 @@ describe("deleteIssues", () => {
     const ids = ["1", "2", "3"];
     await deleteIssues(
       { body: { issueIds: ids }, query: {}, params: {} },
-      storage
+      { storage }
     );
     expect(storageMock.deleteIssues).toHaveBeenCalledWith(ids);
   });
@@ -76,21 +76,17 @@ describe("resolveIssues", () => {
     const ids = ["1", "2", "3"];
     await resolveIssues(
       { body: { issueIds: ids }, query: {}, params: {} },
-      storage
+      { storage }
     );
     expect(storageMock.resolveIssues).toHaveBeenCalledWith(ids);
   });
 });
 
 describe("errorHandler", () => {
-  it("should return a 500 and an error message", async () => {
+  it("should return a 500 and an error message", () => {
     const error = new Error("Hello world");
-    const response = await errorHandler(
-      { body: { error }, query: {}, params: {} },
-      storage
-    );
-    expect(response.status).toBe(500);
-    expect(response.body).toEqual({
+    const response = errorHandler(error);
+    expect(response).toEqual({
       message: "Internal server error",
       errorMessage: error.message,
       stack: error.stack,
@@ -110,17 +106,10 @@ describe("entryPoint", () => {
       }
     );
 
-    const response = await entryPoint(
-      {
-        body: { uiPath: "/some/path", url },
-        query: {},
-        params: {},
-      },
-      storage
-    );
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      data: { file: `${url} hello there`, send: true },
+    const response = entryPoint(url);
+    expect(response).toEqual({
+      name: "index.ejs",
+      params: { basePath: url + "/" },
     });
   });
 });

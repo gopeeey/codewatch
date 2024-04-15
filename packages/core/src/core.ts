@@ -20,9 +20,9 @@ export class Core {
     disableConsoleLogs: false,
   };
   private _unhookConsole: (() => void) | null = null;
-  private _closed = false;
+  private static _instance: Core | null = null;
 
-  constructor(private _storage: Storage, options?: CoreOptions) {
+  private constructor(private _storage: Storage, options?: CoreOptions) {
     if (options) {
       const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
         options;
@@ -39,19 +39,27 @@ export class Core {
     }
   }
 
-  async handleError(err: unknown, unhandled?: boolean): Promise<void> {
-    if (this._closed) throw new Error("Cannot handle errors after close");
-    if (!(err instanceof Error)) throw err;
-    if (!err.stack) throw err;
+  static init(storage: Storage, options?: CoreOptions) {
+    if (!Core._instance) Core._instance = new Core(storage, options);
+  }
+
+  static getCore() {
+    if (!Core._instance) throw new Error("Please call initCodewatch first");
+    return Core._instance;
+  }
+
+  static async handleError(err: unknown, unhandled?: boolean): Promise<void> {
+    const instance = Core.getCore();
+    if (!(err instanceof Error) || !err.stack) return;
 
     const now = new Date();
-    const fingerPrint = this._generateFingerprint(err);
+    const fingerPrint = instance._generateFingerprint(err);
     const currentTimestamp = now.toISOString();
     let issueId: Issue["id"] | null = null;
-    issueId = await this._storage.findIssueIdByFingerprint(fingerPrint); // should cache this value
+    issueId = await instance._storage.findIssueIdByFingerprint(fingerPrint); // should cache instance value
 
     if (!issueId) {
-      issueId = await this._storage.createIssue({
+      issueId = await instance._storage.createIssue({
         fingerprint: fingerPrint,
         name: err.name,
         stack: err.stack,
@@ -64,18 +72,18 @@ export class Core {
       });
     }
 
-    this._cleanUpLogs(
-      this._stdoutRecentLogs,
-      now.getTime() - this._stdoutRecentLogs.retentionTime
+    instance._cleanUpLogs(
+      instance._stdoutRecentLogs,
+      now.getTime() - instance._stdoutRecentLogs.retentionTime
     );
-    const stdoutLogs = this._stdoutRecentLogs.logs;
+    const stdoutLogs = instance._stdoutRecentLogs.logs;
 
-    this._cleanUpLogs(
-      this._stderrRecentLogs,
-      now.getTime() - this._stderrRecentLogs.retentionTime
+    instance._cleanUpLogs(
+      instance._stderrRecentLogs,
+      now.getTime() - instance._stderrRecentLogs.retentionTime
     );
-    const stderrLogs = this._stderrRecentLogs.logs;
-    await this._storage.addOccurrence({
+    const stderrLogs = instance._stderrRecentLogs.logs;
+    await instance._storage.addOccurrence({
       issueId,
       message: err.message,
       timestamp: currentTimestamp,
@@ -83,19 +91,20 @@ export class Core {
       stdoutLogs,
     });
 
-    await this._storage.updateLastOccurrenceOnIssue({
+    await instance._storage.updateLastOccurrenceOnIssue({
       issueId,
       timestamp: currentTimestamp,
       message: err.message,
     });
   }
 
-  async close() {
-    this._closed = true;
-    if (this._unhookConsole) this._unhookConsole();
-    this._stderrRecentLogs.logs = [];
-    this._stdoutRecentLogs.logs = [];
-    await this._storage.close();
+  static async close() {
+    const instance = Core.getCore();
+    if (instance._unhookConsole) instance._unhookConsole();
+    instance._stderrRecentLogs.logs = [];
+    instance._stdoutRecentLogs.logs = [];
+    await instance._storage.close();
+    Core._instance = null;
   }
 
   protected _generateFingerprint(err: Error) {

@@ -50,38 +50,68 @@ export interface Storage {
   resolveIssues: (issueIds: Issue["id"][]) => Promise<void>;
 }
 
-export interface ApiRequest<
-  Body extends object = {},
-  Query extends object = {},
-  Params extends object = {}
-> {
-  body: Body;
-  query: Query;
-  params: Params;
+export interface ApiRequest {
+  body: Record<any, any>;
+  query: Record<string, string>;
+  params: Record<string, string>;
 }
 
-export interface ApiResponse<
-  Data extends { [key: string]: unknown } | undefined = undefined
-> {
+export interface ApiResponse {
   status: number;
   body?: {
     message?: string;
-    data?: Data;
+    data?: Record<string, unknown>;
   };
 }
 
-export type Controller<
-  Body extends object = {},
-  Query extends object = {},
-  Params extends object = {},
-  Data extends { [key: string]: unknown } | undefined = undefined
-> = (
-  req: ApiRequest<Body, Query, Params>,
-  storage: Storage
-) => Promise<ApiResponse<Data>>;
+export type ControllerDependencies = {
+  storage: Storage;
+};
+
+export type Controller = (
+  req: ApiRequest,
+  deps: ControllerDependencies
+) => Promise<ApiResponse>;
+
+export type ViewController = (basePath: string) => {
+  name: string;
+  params: Record<string, string>;
+};
+
+export type ErrorHandler = (error: unknown) => {
+  message: string;
+  errorMessage: string;
+  stack: string;
+};
 
 export interface ApiRoute {
-  route: string;
+  route: string | string[];
   method: "get" | "post" | "put" | "delete";
-  handler: Controller<any, any, any, any>;
+  handler: Controller;
+}
+
+export interface ViewRoute {
+  route: string | string[];
+  method: "get";
+  handler: ViewController;
+}
+
+export interface AppRoutes {
+  entryPoint: ViewRoute;
+  apiRoutes: ApiRoute[];
+}
+
+export interface ServerAdapter {
+  setBasePath: (basePath: string) => ServerAdapter;
+  setViewsPath: (viewsPath: string) => ServerAdapter;
+  setStaticPath: (staticsPath: string, staticsRoute: string) => ServerAdapter;
+  setEntryRoute: (entryRoute: string) => ServerAdapter;
+  setErrorHandler: (
+    errorHandler: (err: unknown) => {
+      message: string;
+      errorMessage: string;
+      stack: string;
+    }
+  ) => ServerAdapter;
+  setApiRoutes: (routes: ApiRoute[]) => ServerAdapter;
 }

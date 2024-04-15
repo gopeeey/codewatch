@@ -1,85 +1,55 @@
-import fs from "fs";
-import path from "path";
 import {
   Controller,
+  ErrorHandler,
   GetIssuesFilters,
   GetPaginatedIssuesFilters,
   Issue,
+  ViewController,
 } from "./types";
 
-export const getPaginatedIssues: Controller<
-  GetPaginatedIssuesFilters,
-  {},
-  {},
-  { issues: Issue[] }
-> = async (req, storage) => {
-  const issues = await storage.getPaginatedIssues(req.body);
+export const getPaginatedIssues: Controller = async (req, deps) => {
+  const issues = await deps.storage.getPaginatedIssues(
+    req.body as unknown as GetPaginatedIssuesFilters
+  );
   return { status: 200, body: { data: { issues } } };
 };
 
-export const getIssuesTotal: Controller<
-  GetIssuesFilters,
-  {},
-  {},
-  { total: number }
-> = async (req, storage) => {
-  const total = await storage.getIssuesTotal(req.body);
+export const getIssuesTotal: Controller = async (req, deps) => {
+  const total = await deps.storage.getIssuesTotal(
+    req.body as unknown as GetIssuesFilters
+  );
   return { status: 200, body: { data: { total } } };
 };
 
-export const deleteIssues: Controller<{ issueIds: Issue["id"][] }> = async (
-  req,
-  storage
-) => {
-  await storage.deleteIssues(req.body.issueIds);
+export const deleteIssues: Controller = async (req, deps) => {
+  await deps.storage.deleteIssues(
+    req.body.issueIds as unknown as Issue["id"][]
+  );
   return { status: 200 };
 };
 
-export const resolveIssues: Controller<{ issueIds: Issue["id"][] }> = async (
-  req,
-  storage
-) => {
-  await storage.resolveIssues(req.body.issueIds);
+export const resolveIssues: Controller = async (req, deps) => {
+  await deps.storage.resolveIssues(
+    req.body.issueIds as unknown as Issue["id"][]
+  );
   return { status: 200 };
 };
 
-export const errorHandler: Controller<
-  { error: unknown },
-  {},
-  {},
-  { message: string }
-> = async (req) => {
+export const errorHandler: ErrorHandler = (error) => {
   let errorMessage = "",
     stack = "";
-  if (req.body.error instanceof Error) {
-    errorMessage = req.body.error.message;
-    if (req.body.error.stack) stack = req.body.error.stack;
+  if (error instanceof Error) {
+    errorMessage = error.message;
+    if (error.stack) stack = error.stack;
   }
-  return {
-    status: 500,
-    body: { message: "Internal server error", errorMessage, stack },
-  };
+  return { message: "Internal server error", errorMessage, stack };
 };
 
-export const entryPoint: Controller<
-  { uiPath: string; url: string },
-  {},
-  {},
-  { file: string; send: boolean }
-> = async (req) => {
-  const { uiPath, url } = req.body;
-
-  const filePath = path.join(uiPath, "index.html");
-  let file = await new Promise<string>((resolve, reject) => {
-    fs.readFile(filePath, (err, data) => {
-      if (err) reject(err);
-      else resolve(data.toString());
-    });
-  });
-  file = file.replace("{{>basePath}}", url);
-
+export const entryPoint: ViewController = (basePath) => {
   return {
-    status: 200,
-    body: { data: { file, send: true } },
+    name: "index.ejs",
+    params: {
+      basePath: basePath.endsWith("/") ? basePath : basePath + "/",
+    },
   };
 };
