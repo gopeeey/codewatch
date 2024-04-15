@@ -73,7 +73,7 @@ export class MockStorage implements Storage {
   };
 
   deleteIssues: Storage["deleteIssues"] = async (issueIds) => {
-    this.issues = this.issues.filter((issue) => issueIds.includes(issue.id));
+    this.issues = this.issues.filter((issue) => !issueIds.includes(issue.id));
   };
 
   resolveIssues: Storage["resolveIssues"] = async (issueIds) => {

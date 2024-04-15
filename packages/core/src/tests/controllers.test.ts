@@ -7,78 +7,80 @@ import {
   getPaginatedIssues,
   resolveIssues,
 } from "../controllers";
-import { GetIssuesFilters, GetPaginatedIssuesFilters, Storage } from "../types";
-import { testIssueArray } from "./samples";
+import { Core } from "../core";
+import { GetIssuesFilters, GetPaginatedIssuesFilters } from "../types";
+import { MockStorage } from "./mock_storage";
 
-const storageMock: {
-  [key in keyof Pick<
-    Storage,
-    "getPaginatedIssues" | "getIssuesTotal" | "deleteIssues" | "resolveIssues"
-  >]: jest.Mock;
-} = {
-  getPaginatedIssues: jest.fn(),
-  getIssuesTotal: jest.fn(),
-  deleteIssues: jest.fn(),
-  resolveIssues: jest.fn(),
-};
+const testError = new Error("Hello world");
 
-const storage = storageMock as unknown as Storage;
+beforeEach(() => {
+  MockStorage.createInstance();
+  const storage = MockStorage.getInstance();
+  Core.init(storage, { disableConsoleLogs: false });
+  Core.handleError(testError);
+});
+
+afterEach(async () => {
+  await Core.close();
+});
 
 describe("getPaginatedIssues", () => {
   it("should return a 200 and an array of issues", async () => {
-    storageMock.getPaginatedIssues.mockResolvedValue(testIssueArray);
     const filters: GetPaginatedIssuesFilters = {
       resolved: false,
       searchString: "something",
       page: 1,
       perPage: 10,
     };
+
+    const storage = MockStorage.getInstance();
     const response = await getPaginatedIssues(
       { body: filters, query: {}, params: {} },
       { storage }
     );
-    expect(storageMock.getPaginatedIssues).toHaveBeenCalledWith(filters);
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ data: { issues: testIssueArray } });
+    expect(response.body).toEqual({ data: { issues: storage.issues } });
   });
 });
 
 describe("getIssuesTotal", () => {
   it("should return a 200 and a number representing total number of issues for that filter", async () => {
-    storageMock.getIssuesTotal.mockResolvedValue(3);
     const filters: GetIssuesFilters = {
       resolved: false,
       searchString: "something",
     };
+    const storage = MockStorage.getInstance();
     const response = await getIssuesTotal(
       { body: filters, query: {}, params: {} },
       { storage }
     );
-    expect(storageMock.getIssuesTotal).toHaveBeenCalledWith(filters);
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ data: { total: 3 } });
+    expect(response.body).toEqual({ data: { total: storage.issues.length } });
   });
 });
 
 describe("deleteIssues", () => {
-  it("should call storage.deleteIssues", async () => {
-    const ids = ["1", "2", "3"];
+  it("should delete the given issues from the storage", async () => {
+    const storage = MockStorage.getInstance();
+    expect(storage.issues).toHaveLength(1);
+
     await deleteIssues(
-      { body: { issueIds: ids }, query: {}, params: {} },
+      { body: { issueIds: ["1"] }, query: {}, params: {} },
       { storage }
     );
-    expect(storageMock.deleteIssues).toHaveBeenCalledWith(ids);
+    expect(storage.issues).toHaveLength(0);
   });
 });
 
 describe("resolveIssues", () => {
   it("should call storage.resolveIssues", async () => {
-    const ids = ["1", "2", "3"];
+    const storage = MockStorage.getInstance();
+    expect(storage.issues[0].resolved).toBe(false);
     await resolveIssues(
-      { body: { issueIds: ids }, query: {}, params: {} },
+      { body: { issueIds: ["1"] }, query: {}, params: {} },
       { storage }
     );
-    expect(storageMock.resolveIssues).toHaveBeenCalledWith(ids);
+    expect(storage.issues[0].resolved).toBe(true);
   });
 });
 
