@@ -5,9 +5,10 @@ import {
   getPaginatedIssues,
   resolveIssues,
 } from "./controllers";
+import { AppRoutes } from "./types";
 
-export const apiRoutes = {
-  entryPoint: {
+export const appRoutes: AppRoutes = {
+  entry: {
     route: ["/"],
     method: "get",
     handler: entryPoint,

@@ -15,6 +15,18 @@ afterEach(async () => {
 
 const testError = new Error("Hello world");
 describe("Core", () => {
+  describe("init", () => {
+    it("should add a listener for unhandled errors", async () => {
+      await Core.close();
+      expect(process.listenerCount("uncaughtException")).toBe(0);
+      expect(process.listenerCount("unhandledRejection")).toBe(0);
+      MockStorage.createInstance();
+      Core.init(MockStorage.getInstance());
+      expect(process.listenerCount("uncaughtException")).toBe(1);
+      expect(process.listenerCount("unhandledRejection")).toBe(1);
+    });
+  });
+
   describe("handleError", () => {
     describe("when data is not an error or the error has no stack", () => {
       it("should do nothing", async () => {
@@ -175,6 +187,12 @@ describe("Core", () => {
         if (!(err instanceof Error)) throw new Error("Mock storage not closed");
         expect(err.message).toBe("No mock storage instance");
       }
+    });
+
+    it("should remove the listener for unhandled errors", async () => {
+      await Core.close();
+      expect(process.listenerCount("uncaughtException")).toBe(0);
+      expect(process.listenerCount("unhandledRejection")).toBe(0);
     });
   });
 });

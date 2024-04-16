@@ -4,6 +4,7 @@ export class MockStorage implements Storage {
   private _nextId: number = 1;
   issues: Issue[] = [];
   occurrences: Occurrence[] = [];
+  ready = false;
   private static _instance: MockStorage | null = null;
 
   private constructor() {}
@@ -17,7 +18,9 @@ export class MockStorage implements Storage {
     return MockStorage._instance;
   }
 
-  async init() {}
+  async init() {
+    this.ready = true;
+  }
 
   createIssue: Storage["createIssue"] = async (data) => {
     this.issues.push({

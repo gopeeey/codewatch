@@ -34,6 +34,7 @@ export interface GetPaginatedIssuesFilters extends GetIssuesFilters {
 }
 
 export interface Storage {
+  ready: boolean;
   init: () => Promise<void>;
   createIssue: (data: Omit<Issue, "id" | "resolved">) => Promise<Issue["id"]>;
   addOccurrence: (data: Occurrence) => Promise<void>;
@@ -97,15 +98,18 @@ export interface ViewRoute {
 }
 
 export interface AppRoutes {
-  entryPoint: ViewRoute;
-  apiRoutes: ApiRoute[];
+  entry: ViewRoute;
+  api: ApiRoute[];
 }
 
 export interface ServerAdapter {
   setBasePath: (basePath: string) => ServerAdapter;
   setViewsPath: (viewsPath: string) => ServerAdapter;
   setStaticPath: (staticsPath: string, staticsRoute: string) => ServerAdapter;
-  setEntryRoute: (entryRoute: string) => ServerAdapter;
+  setEntryRoute: (
+    entryRoute: ViewRoute["route"],
+    controller: ViewController
+  ) => ServerAdapter;
   setErrorHandler: (
     errorHandler: (err: unknown) => {
       message: string;

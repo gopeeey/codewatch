@@ -20,9 +20,12 @@ export class Core {
     disableConsoleLogs: false,
   };
   private _unhookConsole: (() => void) | null = null;
+  private _unhookUncaughtException: (() => void) | null = null;
   private static _instance: Core | null = null;
 
   private constructor(private _storage: Storage, options?: CoreOptions) {
+    this._storage.init();
+
     if (options) {
       const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
         options;
@@ -34,9 +37,9 @@ export class Core {
       this._options = { ...this._options, ...theRest };
     }
 
-    if (!this._options.disableConsoleLogs) {
-      this._unhookConsole = this._hookConsole();
-    }
+    if (!this._options.disableConsoleLogs) this._hookConsole();
+
+    this._hookUncaughtException();
   }
 
   static init(storage: Storage, options?: CoreOptions) {
@@ -50,6 +53,7 @@ export class Core {
 
   static async handleError(err: unknown, unhandled?: boolean): Promise<void> {
     const instance = Core.getCore();
+    if (!instance._storage.ready) return;
     if (!(err instanceof Error) || !err.stack) return;
 
     const now = new Date();
@@ -101,13 +105,14 @@ export class Core {
   static async close() {
     const instance = Core.getCore();
     if (instance._unhookConsole) instance._unhookConsole();
+    if (instance._unhookUncaughtException) instance._unhookUncaughtException();
     instance._stderrRecentLogs.logs = [];
     instance._stdoutRecentLogs.logs = [];
     await instance._storage.close();
     Core._instance = null;
   }
 
-  protected _generateFingerprint(err: Error) {
+  private _generateFingerprint(err: Error) {
     // Normalize the error stack
     const stackFrames = (err.stack as string).split("\n").slice(1);
     let normalizedStack = "";
@@ -147,7 +152,7 @@ export class Core {
       this._writeLog(this._stderrRecentLogs, format(...args));
     };
 
-    return () => {
+    this._unhookConsole = () => {
       console.log = oldConsoleLog;
       console.error = oldConsoleErr;
       console.info = oldConsoleInfo;
@@ -214,5 +219,24 @@ export class Core {
     }
 
     return index;
+  }
+
+  private _hookUncaughtException() {
+    const listener = (err: Error) => {
+      Core.handleError(err, true);
+      if (process.listenerCount("uncaughtException") === 1) process.exit(1);
+    };
+
+    const rejectionListener = async (err: unknown) => {
+      await Core.handleError(err, true);
+      if (process.listenerCount("unhandledRejection") === 1) process.exit(1);
+    };
+    process.addListener("uncaughtException", listener);
+    process.addListener("unhandledRejection", rejectionListener);
+
+    this._unhookUncaughtException = () => {
+      process.removeListener("uncaughtException", listener);
+      process.removeListener("unhandledRejection", rejectionListener);
+    };
   }
 }
