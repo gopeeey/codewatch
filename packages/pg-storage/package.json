@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest --runInBand",
     "make-migration": "ts-node-dev src/make-migration.ts",
-    "build": "tsup"
+    "build": "tsup",
+    "build-p-dev": "tsup && yalc publish --push"
   },
   "author": "Samuel Gopeh",
   "license": "ISC",
