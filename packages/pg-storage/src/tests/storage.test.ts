@@ -1,21 +1,22 @@
 import { GetIssuesFilters, Issue, Occurrence } from "@codewatch/core";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage } from "../storage";
+import { DbIssue } from "../types";
 import { CreateIssueData, createCreateIssueData, dbSetup } from "./utils";
 
 const pool = dbSetup();
 
-const storage = new CodewatchPgStorage({
-  user: process.env.POSTGRES_DB_USERNAME,
-  host: process.env.POSTGRES_DB_HOST,
-  database: process.env.POSTGRES_DB_NAME,
-  password: process.env.POSTGRES_DB_PASSWORD,
-  port: Number(process.env.POSTGRES_DB_PORT),
-});
-
-afterAll(async () => {
-  await storage.close();
-}, 5000);
+const getStorage = async (init = true) => {
+  const storage = new CodewatchPgStorage({
+    user: process.env.POSTGRES_DB_USERNAME,
+    host: process.env.POSTGRES_DB_HOST,
+    database: process.env.POSTGRES_DB_NAME,
+    password: process.env.POSTGRES_DB_PASSWORD,
+    port: Number(process.env.POSTGRES_DB_PORT),
+  });
+  if (init) await storage.init();
+  return storage;
+};
 
 describe("init", () => {
   describe("given the migrations table does not exist", () => {
@@ -24,6 +25,7 @@ describe("init", () => {
         SQL`DROP TABLE IF EXISTS codewatch_pg_migrations CASCADE;`
       );
 
+      const storage = await getStorage(false);
       await storage.init();
 
       const { rows } = await pool.query(
@@ -35,6 +37,7 @@ describe("init", () => {
       );
 
       expect(rows[0].exists).toBe(true);
+      await storage.close();
     });
   });
 
@@ -44,7 +47,7 @@ describe("init", () => {
       DROP TABLE IF EXISTS codewatch_pg_migrations CASCADE;
       DROP TABLE IF EXISTS codewatch_pg_issues CASCADE;`
     );
-
+    const storage = await getStorage(false);
     await storage.init();
 
     const { rows } = await pool.query(
@@ -58,12 +61,25 @@ describe("init", () => {
 
     const tablenames = rows.map(({ tablename }) => tablename as string);
     expect(tablenames).toContain("codewatch_pg_issues");
+    await storage.close();
   });
 
   it("should change the storage ready state to true", async () => {
+    const storage = await getStorage(false);
+    expect(storage.ready).toBe(false);
     await storage.init();
 
     expect(storage.ready).toBe(true);
+    await storage.close();
+  });
+});
+
+describe("close", () => {
+  it("should change the storage ready state to false", async () => {
+    const storage = await getStorage();
+    expect(storage.ready).toBe(true);
+    await storage.close();
+    expect(storage.ready).toBe(false);
   });
 });
 
@@ -71,13 +87,16 @@ describe("createIssue", () => {
   it("should create a new error record", async () => {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
+    const storage = await getStorage();
     const id = await storage.createIssue(issueData);
 
-    const { rows } = await pool.query<Pick<Issue, "fingerprint">>(
-      SQL`SELECT fingerprint FROM codewatch_pg_issues;`
+    const { rows } = await pool.query<Pick<DbIssue, "fingerprint" | "id">>(
+      SQL`SELECT fingerprint, id FROM codewatch_pg_issues;`
     );
 
+    expect(rows[0].id.toString()).toBe(id);
     expect(rows[0].fingerprint).toBe(issueData.fingerprint);
+    await storage.close();
   });
 });
 
@@ -85,6 +104,7 @@ describe("addOccurrence", () => {
   it("should create a new occurrence record", async () => {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
+    const storage = await getStorage();
     const issueId = await storage.createIssue(issueData);
 
     const data: Occurrence = {
@@ -111,6 +131,7 @@ describe("addOccurrence", () => {
     expect(rows).toHaveLength(1);
     rows[0].issueId = rows[0].issueId.toString();
     expect(rows[0]).toMatchObject(data);
+    await storage.close();
   });
 });
 
@@ -118,6 +139,7 @@ describe("updateLastOccurrenceOnError", () => {
   it("should update the last occurrence timestamp and increment total occurrences", async () => {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
+    const storage = await getStorage();
     const issueId = await storage.createIssue(issueData);
 
     const occurrence: Occurrence = {
@@ -143,6 +165,7 @@ describe("updateLastOccurrenceOnError", () => {
 
     expect(rows[0].totalOccurrences).toBe(2);
     expect(rows[0].lastOccurrenceTimestamp).toBe(now);
+    await storage.close();
   });
 });
 
@@ -151,11 +174,13 @@ describe("findIssueIdByFingerprint", () => {
     it("should return the id of the record", async () => {
       const now = new Date().toISOString();
       const issueData = createCreateIssueData(now);
+      const storage = await getStorage();
       const issueId = await storage.createIssue(issueData);
 
       const id = await storage.findIssueIdByFingerprint(issueData.fingerprint);
 
       expect(id).toBe(issueId);
+      await storage.close();
     });
   });
 
@@ -163,9 +188,11 @@ describe("findIssueIdByFingerprint", () => {
     it("should return null", async () => {
       const fingerprint = "123456789012345678";
 
+      const storage = await getStorage();
       const id = await storage.findIssueIdByFingerprint(fingerprint);
 
       expect(id).toBeNull();
+      await storage.close();
     });
   });
 });
@@ -197,7 +224,9 @@ const seed = async () => {
   await Promise.all(
     issuesData.map(async ({ timestamp, overrides }) => {
       const issueData = createCreateIssueData(timestamp, overrides);
+      const storage = await getStorage();
       await storage.createIssue(issueData);
+      await storage.close();
     })
   );
 };
@@ -206,6 +235,7 @@ describe("CRUD", () => {
   beforeEach(seed, 5000);
   describe("getPaginatedIssues", () => {
     it("should sort the issues by createdAt in descending order", async () => {
+      const storage = await getStorage();
       const issues = await storage.getPaginatedIssues({
         searchString: "",
         page: 1,
@@ -219,6 +249,7 @@ describe("CRUD", () => {
         lastTimestamp = issue.createdAt;
       }
       expect.assertions(issuesData.length);
+      await storage.close();
     });
 
     it("should paginate the issues", async () => {
@@ -234,6 +265,7 @@ describe("CRUD", () => {
         { page: 2, perPage: 10, expectedFPrint: [] },
       ];
 
+      const storage = await getStorage();
       for (const { page, perPage, expectedFPrint } of testData) {
         const issues = await storage.getPaginatedIssues({
           searchString: "",
@@ -246,6 +278,7 @@ describe("CRUD", () => {
           expectedFPrint
         );
       }
+      await storage.close();
     });
 
     it("should apply the supplied filters", async () => {
@@ -302,6 +335,7 @@ describe("CRUD", () => {
         },
       ];
 
+      const storage = await getStorage();
       for (const { filters, expectedFPrints } of testData) {
         const issues = await storage.getPaginatedIssues({
           ...filters,
@@ -313,6 +347,7 @@ describe("CRUD", () => {
           expectedFPrints
         );
       }
+      await storage.close();
     });
   });
 
@@ -371,11 +406,13 @@ describe("CRUD", () => {
         },
       ];
 
+      const storage = await getStorage();
       for (const { filters, expectedTotal } of testData) {
         const total = await storage.getIssuesTotal(filters);
 
         expect(total).toBe(expectedTotal);
       }
+      await storage.close();
     });
   });
 
@@ -385,6 +422,7 @@ describe("CRUD", () => {
         SQL`SELECT * FROM codewatch_pg_issues LIMIT 2;`
       );
       expect(issues.length).toBe(2);
+      const storage = await getStorage();
       await storage.deleteIssues(issues.map(({ id }) => id.toString()));
       const { rows: deletedIssues } = await pool.query<Issue>(
         SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
@@ -392,6 +430,7 @@ describe("CRUD", () => {
         )});`
       );
       expect(deletedIssues.length).toBe(0);
+      await storage.close();
     });
   });
 
@@ -401,6 +440,7 @@ describe("CRUD", () => {
         SQL`SELECT * FROM codewatch_pg_issues WHERE resolved = false LIMIT 2;`
       );
       expect(issues.length).toBe(2);
+      const storage = await getStorage();
       await storage.resolveIssues(issues.map(({ id }) => id.toString()));
       const { rows: resolvedIssues } = await pool.query<Issue>(
         SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
@@ -411,6 +451,7 @@ describe("CRUD", () => {
         expect(resolved).toBe(true);
       }
       expect.assertions(resolvedIssues.length + 1); // Plus one for the initial assertion we did.
+      await storage.close();
     });
   });
 });

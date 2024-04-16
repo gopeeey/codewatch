@@ -42,6 +42,7 @@ export class CodewatchPgStorage implements Storage {
 
   close: Storage["close"] = async () => {
     await this._pool.end();
+    this.ready = false;
   };
 
   private _runMigrations = async (direction: "up" | "down") => {
