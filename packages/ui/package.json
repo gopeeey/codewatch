@@ -1,6 +1,6 @@
 {
   "name": "@codewatch/ui",
-  "private": true,
+  "private": false,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codewatch/core": "file:.yalc/@codewatch/core",
     "axios": "^1.6.8",
     "clsx": "^2.1.0",
     "moment": "^2.30.1",

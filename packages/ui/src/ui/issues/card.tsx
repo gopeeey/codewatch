@@ -1,11 +1,11 @@
 import ClockIcon from "@assets/clock.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
-import { ErrorData } from "@codewatch/core";
+import { Issue } from "@codewatch/core";
 import { quantifyNumber } from "@lib/utils";
 import { Checkbox } from "@ui/inputs/checkbox";
 import moment from "moment";
 
-type Props = { issue: ErrorData };
+type Props = { issue: Issue };
 export function IssueCard({ issue }: Props) {
   return (
     <div className="flex custom-rule items-center justify-between px-5 py-4 pr-8 transition-all duration-200 hover:bg-input-background-dark cursor-pointer">

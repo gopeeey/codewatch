@@ -1,0 +1,12 @@
+/node_modules
+/src
+tsconfig.json
+tsconfig.node.json
+postcss.config.js
+/index.html
+.eslintrc.cjs
+.gitignore
+tailwind.config.js
+vite.config.ts
+yalc.lock
+.yalc

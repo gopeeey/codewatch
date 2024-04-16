@@ -10,9 +10,9 @@ export function Badge({ content, variant = "default", className }: Props) {
   return (
     <span
       className={clsx(
-        "rounded-xl w-max px-2.5 py-0.5 text-[0.67rem] align-middle text-center text-white font-semibold",
+        "rounded-xl w-max px-2.5 py-0.5 text-[0.67rem] align-middle text-center font-semibold",
         {
-          "bg-error": variant === "error",
+          "bg-error text-white": variant === "error",
           "bg-grey-200 text-black": variant === "default",
         },
         className
