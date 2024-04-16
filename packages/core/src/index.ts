@@ -4,9 +4,6 @@ import { Core, CoreOptions } from "./core";
 import { appRoutes } from "./routes";
 import { ServerAdapter, Storage } from "./types";
 
-export { entryPoint, errorHandler } from "./controllers";
-export * from "./core";
-export * from "./routes";
 export * from "./types";
 
 export interface Config extends CoreOptions {
@@ -15,16 +12,17 @@ export interface Config extends CoreOptions {
 }
 export function initCodewatch({ storage, serverAdapter, ...config }: Config) {
   Core.init(storage, config);
-  const uiBasePath = path.dirname(
-    eval(`require.resolve('@codewatch/ui/package.json')`)
+  const uiBasePath = path.join(
+    path.dirname(require.resolve("@codewatch/ui/package.json")),
+    "dist"
   );
 
   serverAdapter
     .setViewsPath(uiBasePath)
+    .setErrorHandler(errorHandler)
     .setStaticPath(path.join(uiBasePath, "assets"), "/assets")
-    .setEntryRoute(appRoutes.entry.route, appRoutes.entry.handler)
-    .setApiRoutes(appRoutes.api)
-    .setErrorHandler(errorHandler);
+    .setEntryRoute(appRoutes.entry)
+    .setApiRoutes(appRoutes.api, { storage });
 }
 
 export function closeCodewatch() {

@@ -42,7 +42,10 @@ export const errorHandler: ErrorHandler = (error) => {
     errorMessage = error.message;
     if (error.stack) stack = error.stack;
   }
-  return { message: "Internal server error", errorMessage, stack };
+  return {
+    status: 500,
+    body: { message: "Internal server error", data: { errorMessage, stack } },
+  };
 };
 
 export const entryPoint: ViewController = (basePath) => {

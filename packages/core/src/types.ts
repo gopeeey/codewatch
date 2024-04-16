@@ -79,11 +79,7 @@ export type ViewController = (basePath: string) => {
   params: Record<string, string>;
 };
 
-export type ErrorHandler = (error: unknown) => {
-  message: string;
-  errorMessage: string;
-  stack: string;
-};
+export type ErrorHandler = (error: unknown) => ApiResponse;
 
 export interface ApiRoute {
   route: string | string[];
@@ -92,7 +88,7 @@ export interface ApiRoute {
 }
 
 export interface ViewRoute {
-  route: string | string[];
+  route: string[];
   method: "get";
   handler: ViewController;
 }
@@ -106,16 +102,10 @@ export interface ServerAdapter {
   setBasePath: (basePath: string) => ServerAdapter;
   setViewsPath: (viewsPath: string) => ServerAdapter;
   setStaticPath: (staticsPath: string, staticsRoute: string) => ServerAdapter;
-  setEntryRoute: (
-    entryRoute: ViewRoute["route"],
-    controller: ViewController
+  setEntryRoute: (entryRoute: ViewRoute) => ServerAdapter;
+  setErrorHandler: (errorHandler: ErrorHandler) => ServerAdapter;
+  setApiRoutes: (
+    routes: ApiRoute[],
+    deps: ControllerDependencies
   ) => ServerAdapter;
-  setErrorHandler: (
-    errorHandler: (err: unknown) => {
-      message: string;
-      errorMessage: string;
-      stack: string;
-    }
-  ) => ServerAdapter;
-  setApiRoutes: (routes: ApiRoute[]) => ServerAdapter;
 }

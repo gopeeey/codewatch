@@ -89,9 +89,11 @@ describe("errorHandler", () => {
     const error = new Error("Hello world");
     const response = errorHandler(error);
     expect(response).toEqual({
-      message: "Internal server error",
-      errorMessage: error.message,
-      stack: error.stack,
+      status: 500,
+      body: {
+        message: "Internal server error",
+        data: { errorMessage: error.message, stack: error.stack },
+      },
     });
   });
 });
