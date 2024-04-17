@@ -1,28 +1,31 @@
 import { createHash } from "crypto";
 import { format } from "util";
-import { ErrorData, Storage } from "./types";
+import { Issue, StdChannelLog, Storage } from "./types";
 
-export type Options = {
+export type CoreOptions = {
   stdoutLogRetentionTime?: number;
   stderrLogRetentionTime?: number;
   disableConsoleLogs?: boolean;
 };
 
 type RecentLogs = {
-  logs: [number, string][];
+  logs: StdChannelLog[];
   retentionTime: number;
 };
 
 export class Core {
   private _stdoutRecentLogs: RecentLogs = { logs: [], retentionTime: 5000 };
   private _stderrRecentLogs: RecentLogs = { logs: [], retentionTime: 5000 };
-  private _options: Options = {
+  private _options: CoreOptions = {
     disableConsoleLogs: false,
   };
   private _unhookConsole: (() => void) | null = null;
-  private _closed = false;
+  private _unhookUncaughtException: (() => void) | null = null;
+  private static _instance: Core | null = null;
 
-  constructor(private _storage: Storage, options?: Options) {
+  private constructor(private _storage: Storage, options?: CoreOptions) {
+    this._storage.init();
+
     if (options) {
       const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
         options;
@@ -34,28 +37,37 @@ export class Core {
       this._options = { ...this._options, ...theRest };
     }
 
-    if (!this._options.disableConsoleLogs) {
-      this._unhookConsole = this._hookConsole();
-    }
+    if (!this._options.disableConsoleLogs) this._hookConsole();
+
+    this._hookUncaughtException();
   }
 
-  async handleError(err: unknown, unhandled?: boolean): Promise<void> {
-    if (this._closed) throw new Error("Cannot handle errors after close");
-    if (!(err instanceof Error)) throw err;
-    if (!err.stack) throw err;
+  static init(storage: Storage, options?: CoreOptions) {
+    if (!Core._instance) Core._instance = new Core(storage, options);
+  }
+
+  static getCore() {
+    if (!Core._instance) throw new Error("Please call initCodewatch first");
+    return Core._instance;
+  }
+
+  static async handleError(err: unknown, unhandled?: boolean): Promise<void> {
+    const instance = Core.getCore();
+    if (!instance._storage.ready) return;
+    if (!(err instanceof Error) || !err.stack) return;
 
     const now = new Date();
-    const fingerPrint = this._generateFingerprint(err);
+    const fingerPrint = instance._generateFingerprint(err);
     const currentTimestamp = now.toISOString();
-    let errorId: ErrorData["id"] | null = null;
-    errorId = await this._storage.findErrorIdByFingerprint(fingerPrint); // should cache this value
+    let issueId: Issue["id"] | null = null;
+    issueId = await instance._storage.findIssueIdByFingerprint(fingerPrint); // should cache instance value
 
-    if (!errorId) {
-      errorId = await this._storage.createError({
+    if (!issueId) {
+      issueId = await instance._storage.createIssue({
         fingerprint: fingerPrint,
         name: err.name,
         stack: err.stack,
-        totalOccurrences: 1,
+        totalOccurrences: 0,
         lastOccurrenceTimestamp: currentTimestamp,
         lastOccurrenceMessage: err.message,
         muted: false,
@@ -64,40 +76,43 @@ export class Core {
       });
     }
 
-    this._cleanUpLogs(
-      this._stdoutRecentLogs,
-      now.getTime() - this._stdoutRecentLogs.retentionTime
+    instance._cleanUpLogs(
+      instance._stdoutRecentLogs,
+      now.getTime() - instance._stdoutRecentLogs.retentionTime
     );
-    const stdoutLogs = this._stdoutRecentLogs.logs;
+    const stdoutLogs = instance._stdoutRecentLogs.logs;
 
-    this._cleanUpLogs(
-      this._stderrRecentLogs,
-      now.getTime() - this._stderrRecentLogs.retentionTime
+    instance._cleanUpLogs(
+      instance._stderrRecentLogs,
+      now.getTime() - instance._stderrRecentLogs.retentionTime
     );
-    const stderrLogs = this._stderrRecentLogs.logs;
-    await this._storage.addOccurrence({
-      errorId,
+    const stderrLogs = instance._stderrRecentLogs.logs;
+    await instance._storage.addOccurrence({
+      issueId,
       message: err.message,
       timestamp: currentTimestamp,
       stderrLogs,
       stdoutLogs,
     });
 
-    await this._storage.updateLastOccurrenceOnError({
-      errorId,
+    await instance._storage.updateLastOccurrenceOnIssue({
+      issueId,
       timestamp: currentTimestamp,
+      message: err.message,
     });
   }
 
-  async close() {
-    this._closed = true;
-    if (this._unhookConsole) this._unhookConsole();
-    this._stderrRecentLogs.logs = [];
-    this._stdoutRecentLogs.logs = [];
-    await this._storage.close();
+  static async close() {
+    const instance = Core.getCore();
+    if (instance._unhookConsole) instance._unhookConsole();
+    if (instance._unhookUncaughtException) instance._unhookUncaughtException();
+    instance._stderrRecentLogs.logs = [];
+    instance._stdoutRecentLogs.logs = [];
+    await instance._storage.close();
+    Core._instance = null;
   }
 
-  protected _generateFingerprint(err: Error) {
+  private _generateFingerprint(err: Error) {
     // Normalize the error stack
     const stackFrames = (err.stack as string).split("\n").slice(1);
     let normalizedStack = "";
@@ -137,7 +152,7 @@ export class Core {
       this._writeLog(this._stderrRecentLogs, format(...args));
     };
 
-    return () => {
+    this._unhookConsole = () => {
       console.log = oldConsoleLog;
       console.error = oldConsoleErr;
       console.info = oldConsoleInfo;
@@ -148,19 +163,19 @@ export class Core {
   private _writeLog(target: RecentLogs, log: string) {
     const timestamp = Date.now();
     this._cleanUpLogs(target, timestamp - target.retentionTime);
-    target.logs.push([timestamp, log.trim()]);
+    target.logs.push({ timestamp, message: log.trim() });
   }
 
   private _cleanUpLogs(target: RecentLogs, refTimestamp: number) {
     if (!target.logs.length) return;
 
     // If the last log has exceeded the retention time, empty the array
-    if (target.logs[target.logs.length - 1][0] < refTimestamp) {
+    if (target.logs[target.logs.length - 1].timestamp < refTimestamp) {
       target.logs.splice(0, target.logs.length);
     } else {
       // If the first log has exceeded the retention time,
       // delete all logs that have exceeded the retention time
-      if (target.logs[0][0] < refTimestamp) {
+      if (target.logs[0].timestamp < refTimestamp) {
         const indexFinder =
           target.logs.length >= 100
             ? this._findLastExpiredLogIndexBinary
@@ -172,11 +187,11 @@ export class Core {
   }
 
   private _findLastExpiredLogIndexLinear(
-    logs: [number, string][],
+    logs: StdChannelLog[],
     refTimestamp: number
   ) {
     for (let i = 0; i < logs.length; i++) {
-      if (logs[i][0] < refTimestamp) {
+      if (logs[i].timestamp < refTimestamp) {
         return i;
       }
     }
@@ -184,7 +199,7 @@ export class Core {
   }
 
   private _findLastExpiredLogIndexBinary(
-    logs: [number, string][],
+    logs: StdChannelLog[],
     refTimestamp: number
   ) {
     let min = 0,
@@ -193,19 +208,35 @@ export class Core {
 
     while (min < max) {
       const mid = Math.floor((min + max) / 2);
-      if (logs[mid][0] < refTimestamp) {
+      if (logs[mid].timestamp < refTimestamp) {
         min = mid + 1;
         index = mid;
-        if (logs[min] && logs[min][0] >= refTimestamp) return mid;
+        if (logs[min] && logs[min].timestamp >= refTimestamp) return mid;
       } else {
         max = mid - 1;
-        if (logs[max] && logs[max][0] < refTimestamp) return max;
+        if (logs[max] && logs[max].timestamp < refTimestamp) return max;
       }
     }
 
     return index;
   }
-}
 
-// To be honest this is just so I can commit something today
-// I'll resume work on this tomorrow
+  private _hookUncaughtException() {
+    const listener = (err: Error) => {
+      Core.handleError(err, true);
+      if (process.listenerCount("uncaughtException") === 1) process.exit(1);
+    };
+
+    const rejectionListener = async (err: unknown) => {
+      await Core.handleError(err, true);
+      if (process.listenerCount("unhandledRejection") === 1) process.exit(1);
+    };
+    process.addListener("uncaughtException", listener);
+    process.addListener("unhandledRejection", rejectionListener);
+
+    this._unhookUncaughtException = () => {
+      process.removeListener("uncaughtException", listener);
+      process.removeListener("unhandledRejection", rejectionListener);
+    };
+  }
+}

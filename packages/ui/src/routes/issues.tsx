@@ -1,6 +1,6 @@
 import CalendarIcon from "@assets/calendar.svg";
 import SearchIcon from "@assets/search.svg";
-import { ErrorData } from "@codewatch/core";
+import { Issue } from "@codewatch/core";
 import { useDebounce } from "@hooks/use_debounce";
 import { getIssues } from "@lib/data";
 import { AppPage } from "@ui/app_page";
@@ -14,13 +14,13 @@ import { useSearchParams } from "react-router-dom";
 type DatePreset = "1" | "2" | "3" | "4";
 
 export default function IssuesRoute() {
-  const [issues, setIssues] = useState<ErrorData[]>([]);
+  const [issues, setIssues] = useState<Issue[]>([]);
   const [searchParams, setSearchParams] = useSearchParams({});
   const [datePreset, setDatePreset] = useState<DatePreset>(
     dateToPreset(searchParams.get("startDate"), searchParams.get("endDate"))
   );
-  const [currentTab, setCurrentTab] = useState<TabType>(
-    (searchParams.get("resolved") as TabType) ?? "unresolved"
+  const [resolved, setResolved] = useState<Issue["resolved"]>(
+    searchParams.get("resolved") == "true"
   );
   const [searchString, setSearchString] = useState(
     searchParams.get("searchString") ?? ""
@@ -49,7 +49,7 @@ export default function IssuesRoute() {
       (searchParams.get("searchString") !== searchString ||
         searchParams.get("startDate") !== startDate ||
         searchParams.get("endDate") !== endDate ||
-        searchParams.get("resolved") !== currentTab) &&
+        searchParams.get("resolved") !== `${resolved}`) &&
       page !== 1
     ) {
       return setPage(1);
@@ -60,23 +60,15 @@ export default function IssuesRoute() {
       perPage: perPage.toString(),
       startDate,
       endDate,
-      resolved: currentTab,
+      resolved: `${resolved}`,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    searchString,
-    page,
-    perPage,
-    startDate,
-    endDate,
-    currentTab,
-    searchParams,
-  ]);
+  }, [searchString, page, perPage, startDate, endDate, resolved, searchParams]);
 
   useEffect(() => {
     submit();
     //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchString, page, perPage, startDate, endDate, currentTab]);
+  }, [searchString, page, perPage, startDate, endDate, resolved]);
 
   const debouncedSearchStringChange = useDebounce(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -143,8 +135,8 @@ export default function IssuesRoute() {
         </div>
 
         <IssuesTabs
-          current={currentTab}
-          onChange={setCurrentTab}
+          resolved={resolved}
+          onChange={setResolved}
           resolvedCount={resolvedCount}
           unresolvedCount={unresolvedCount}
           className="-mb-[3.54rem]"
@@ -172,9 +164,7 @@ export default function IssuesRoute() {
         <Pagination
           page={page}
           perPage={perPage}
-          totalRows={
-            currentTab === "resolved" ? resolvedCount : unresolvedCount
-          }
+          totalRows={resolved ? resolvedCount : unresolvedCount}
           onChange={setPage}
         />
       </div>

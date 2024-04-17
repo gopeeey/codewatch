@@ -1,3 +1,4 @@
+import { Storage } from "@codewatch/core";
 import { config } from "dotenv";
 import { Pool } from "pg";
 import SQL from "sql-template-strings";
@@ -16,8 +17,8 @@ export const dbSetup = () => {
 
   afterEach(async () => {
     // Truncate each table except migrations
-    await pool.query(SQL`TRUNCATE codewatch_pg_errors CASCADE;`);
-    await pool.query(SQL`TRUNCATE codewatch_pg_errors CASCADE;`);
+    await pool.query(SQL`TRUNCATE codewatch_pg_issues CASCADE;`);
+    await pool.query(SQL`TRUNCATE codewatch_pg_occurrences CASCADE;`);
   }, 5000);
 
   afterAll(async () => {
@@ -32,4 +33,24 @@ export const dbSetup = () => {
   }, 5000);
 
   return pool;
+};
+
+export type CreateIssueData = Parameters<Storage["createIssue"]>[number];
+export const createCreateIssueData = (
+  timestamp: string,
+  overrides?: Partial<CreateIssueData>
+) => {
+  const issue: CreateIssueData = {
+    fingerprint: "123456789012345678",
+    lastOccurrenceTimestamp: timestamp,
+    createdAt: timestamp,
+    lastOccurrenceMessage: "",
+    muted: false,
+    totalOccurrences: 0,
+    unhandled: false,
+    name: "Error 1",
+    stack: "Error 1",
+    ...overrides,
+  };
+  return issue;
 };
