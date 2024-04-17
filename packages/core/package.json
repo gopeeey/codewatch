@@ -7,7 +7,7 @@
     "test": "jest",
     "build": "tsup",
     "dev": "ts-node-dev src/index.ts",
-    "build-p-dev": "tsup && yalc publish --push"
+    "build-pd": "tsup && yalc publish --push"
   },
   "author": "Samuel Gopeh",
   "license": "ISC",

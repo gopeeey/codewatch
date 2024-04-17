@@ -16,12 +16,12 @@ export const appRoutes: AppRoutes = {
   api: [
     {
       route: "/api/issues",
-      method: "get",
+      method: "post",
       handler: getPaginatedIssues,
     },
     {
       route: "/api/issues/total",
-      method: "get",
+      method: "post",
       handler: getIssuesTotal,
     },
     {
