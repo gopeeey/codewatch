@@ -10,7 +10,7 @@ export default function SideBar() {
           <img src={LogoSmall} width={33} alt="logo" />
         </div>
         <div className="ml-3">
-          <div className="text-xl -mt-1 font-black text-white">Codewatch</div>
+          <div className="text-xl -mt-1 font-bold text-white">Codewatch</div>
           <div className="text-sm text-grey-600">Hi there</div>
         </div>
       </div>

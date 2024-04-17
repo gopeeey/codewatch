@@ -23,7 +23,7 @@ export default function NavLink({ children, link, icon, iconAlt }: Props) {
       to={link}
       className={({ isActive }) =>
         clsx(
-          "flex items-center font-black text-sm mb-5 transition-all duration-150",
+          "flex items-center font-bold text-sm mb-5 transition-all duration-150",
           {
             ["text-primary-400"]: isActive,
             ["text-grey-100"]: !isActive,

@@ -8,7 +8,7 @@ export function AppBar({ title, className }: Props) {
   return (
     <nav
       className={clsx(
-        "py-7 flex text-grey-100 text-xl font-black w-full",
+        "py-7 flex text-grey-100 text-xl font-bold w-full",
         className
       )}
     >
