@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsup",
-    "build-p-dev": "tsup && yalc publish --push"
+    "build-pd": "tsup && yalc publish --push"
   },
   "author": "",
   "license": "ISC",

@@ -19,6 +19,7 @@ export class ExpressAdapter implements ServerAdapter {
 
   setApiRoutes: ServerAdapter["setApiRoutes"] = (routes, deps) => {
     if (!this._errorHandler) throw new Error("Set error handler first");
+    this._express.use(express.json());
     const router = express.Router();
 
     routes.forEach((route) => {
