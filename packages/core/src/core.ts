@@ -222,8 +222,8 @@ export class Core {
   }
 
   private _hookUncaughtException() {
-    const listener = (err: Error) => {
-      Core.handleError(err, true);
+    const listener = async (err: Error) => {
+      await Core.handleError(err, true);
       if (process.listenerCount("uncaughtException") === 1) process.exit(1);
     };
 
