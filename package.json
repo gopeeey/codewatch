@@ -1,0 +1,16 @@
+{
+  "name": "@codewatch/root",
+  "version": "1.0.0",
+  "description": "An error logging and monitoring package",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "workspaces": [
+    "packages/@codewatch/core",
+    "packages/@codewatch/pg-storage",
+    "packages/@codewatch/express",
+    "packages/@codewatch/ui"
+  ],
+  "author": "Samuel Gopeh",
+  "license": "ISC"
+}
