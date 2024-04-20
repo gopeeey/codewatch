@@ -1,6 +1,6 @@
 import CalendarIcon from "@assets/calendar.svg";
 import SearchIcon from "@assets/search.svg";
-import { GetIssuesFilters, Issue } from "@codewatch/core";
+import { GetIssuesFilters, Issue } from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
 import { getIssues, getIssuesTotal } from "@lib/data";
 import { AppPage } from "@ui/app_page";

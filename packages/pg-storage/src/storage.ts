@@ -1,4 +1,4 @@
-import { Issue, Storage } from "@codewatch/core";
+import { Issue, Storage } from "@codewatch/types";
 import fs from "fs";
 import path from "path";
 import { Pool, PoolConfig, types as pgTypes } from "pg";

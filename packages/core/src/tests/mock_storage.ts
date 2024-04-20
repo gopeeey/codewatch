@@ -1,4 +1,4 @@
-import { Issue, Occurrence, Storage } from "../types";
+import { Issue, Occurrence, Storage } from "@codewatch/types";
 
 export class MockStorage implements Storage {
   private _nextId: number = 1;

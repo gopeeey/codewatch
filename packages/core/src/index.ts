@@ -1,10 +1,8 @@
+import { ServerAdapter, Storage } from "@codewatch/types";
 import path from "path";
 import { errorHandler } from "./controllers";
 import { Core, CoreOptions } from "./core";
 import { appRoutes } from "./routes";
-import { ServerAdapter, Storage } from "./types";
-
-export * from "./types";
 
 export interface Config extends CoreOptions {
   storage: Storage;

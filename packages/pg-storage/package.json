@@ -7,11 +7,12 @@
     "test": "jest --runInBand",
     "make-migration": "ts-node-dev src/make-migration.ts",
     "build": "tsup",
-    "build-p-dev": "tsup && yalc publish --push"
+    "build-pd": "tsup && yalc publish --push"
   },
   "author": "Samuel Gopeh",
   "license": "ISC",
   "devDependencies": {
+    "@codewatch/types": "file:.yalc/@codewatch/types",
     "@types/jest": "^29.5.12",
     "@types/pg": "^8.11.2",
     "dotenv": "^16.4.5",
@@ -22,7 +23,6 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@codewatch/core": "file:.yalc/@codewatch/core",
     "pg": "^8.11.3",
     "sql-template-strings": "^2.2.2"
   }

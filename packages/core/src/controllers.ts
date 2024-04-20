@@ -5,7 +5,7 @@ import {
   GetPaginatedIssuesFilters,
   Issue,
   ViewController,
-} from "./types";
+} from "@codewatch/types";
 
 export const getPaginatedIssues: Controller = async (req, deps) => {
   const issues = await deps.storage.getPaginatedIssues(

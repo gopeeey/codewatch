@@ -1,4 +1,4 @@
-import { ApiRequest, ServerAdapter } from "@codewatch/core";
+import { ApiRequest, ServerAdapter } from "@codewatch/types";
 import ejs from "ejs";
 import express, { NextFunction, Request, Response } from "express";
 

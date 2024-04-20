@@ -9,7 +9,8 @@
     "packages/@codewatch/core",
     "packages/@codewatch/pg-storage",
     "packages/@codewatch/express",
-    "packages/@codewatch/ui"
+    "packages/@codewatch/ui",
+    "packages/@codewatch/types"
   ],
   "author": "Samuel Gopeh",
   "license": "ISC"

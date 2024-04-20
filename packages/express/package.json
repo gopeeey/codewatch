@@ -10,12 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@codewatch/core": "file:.yalc/@codewatch/core",
     "@codewatch/ui": "file:.yalc/@codewatch/ui",
     "ejs": "^3.1.10",
     "express": "^4.19.2"
   },
   "devDependencies": {
+    "@codewatch/types": "file:.yalc/@codewatch/types",
     "@types/ejs": "^3.1.5",
     "@types/express": "^4.17.21",
     "@types/node": "^20.12.7",

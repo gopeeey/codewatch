@@ -2,7 +2,7 @@ import {
   GetIssuesFilters,
   GetPaginatedIssuesFilters,
   Issue,
-} from "@codewatch/core";
+} from "@codewatch/types";
 import { HttpClient } from "@lib/http_client";
 
 const client = new HttpClient({ baseUrl: "/issues" });

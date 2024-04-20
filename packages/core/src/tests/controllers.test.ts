@@ -1,3 +1,4 @@
+import { GetIssuesFilters, GetPaginatedIssuesFilters } from "@codewatch/types";
 import fs from "fs";
 import {
   deleteIssues,
@@ -8,7 +9,6 @@ import {
   resolveIssues,
 } from "../controllers";
 import { Core } from "../core";
-import { GetIssuesFilters, GetPaginatedIssuesFilters } from "../types";
 import { MockStorage } from "./mock_storage";
 
 const testError = new Error("Hello world");

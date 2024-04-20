@@ -1,6 +1,6 @@
 import ClockIcon from "@assets/clock.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
-import { Issue } from "@codewatch/core";
+import { Issue } from "@codewatch/types";
 import { quantifyNumber } from "@lib/utils";
 import { Checkbox } from "@ui/inputs/checkbox";
 import moment from "moment";

@@ -1,6 +1,6 @@
+import { Issue, StdChannelLog, Storage } from "@codewatch/types";
 import { createHash } from "crypto";
 import { format } from "util";
-import { Issue, StdChannelLog, Storage } from "./types";
 
 export type CoreOptions = {
   stdoutLogRetentionTime?: number;
