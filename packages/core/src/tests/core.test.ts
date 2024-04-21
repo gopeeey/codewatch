@@ -1,5 +1,5 @@
+import { Issue } from "@codewatch/types";
 import { Core } from "../core";
-import { Issue } from "../types";
 import { MockStorage } from "./mock_storage";
 
 beforeEach(() => {

@@ -1,3 +1,4 @@
+import { AppRoutes } from "@codewatch/types";
 import {
   deleteIssues,
   entryPoint,
@@ -5,7 +6,6 @@ import {
   getPaginatedIssues,
   resolveIssues,
 } from "./controllers";
-import { AppRoutes } from "./types";
 
 export const appRoutes: AppRoutes = {
   entry: {
@@ -26,7 +26,7 @@ export const appRoutes: AppRoutes = {
     },
     {
       route: "/api/issues/delete",
-      method: "delete",
+      method: "post",
       handler: deleteIssues,
     },
     {
