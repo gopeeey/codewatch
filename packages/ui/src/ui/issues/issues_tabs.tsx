@@ -1,4 +1,4 @@
-import { Issue } from "@codewatch/core";
+import { Issue } from "@codewatch/types";
 import { quantifyNumber } from "@lib/utils";
 import { TabButton } from "@ui/tabs/button";
 import clsx from "clsx";

@@ -1,4 +1,4 @@
-import { Issue, Occurrence, Storage } from "../types";
+import { Issue, Occurrence, Storage } from "@codewatch/types";
 
 export class MockStorage implements Storage {
   private _nextId: number = 1;
@@ -82,6 +82,12 @@ export class MockStorage implements Storage {
   resolveIssues: Storage["resolveIssues"] = async (issueIds) => {
     issueIds.forEach((issueId) => {
       this._updateIssueById(issueId, { resolved: true });
+    });
+  };
+
+  unresolveIssues: Storage["resolveIssues"] = async (issueIds) => {
+    issueIds.forEach((issueId) => {
+      this._updateIssueById(issueId, { resolved: false });
     });
   };
 }

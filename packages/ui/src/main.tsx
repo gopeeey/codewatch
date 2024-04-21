@@ -11,7 +11,10 @@ declare global {
 }
 const basePath = (window.__basePath__ =
   document.head.querySelector("base")?.getAttribute("href") || "/");
-const router = createBrowserRouter(routes, { basename: basePath });
+console.log("\n\n\nBASE PATH:", basePath);
+const router = createBrowserRouter(routes, {
+  basename: basePath.endsWith("/") ? basePath.slice(0, -1) : basePath,
+});
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

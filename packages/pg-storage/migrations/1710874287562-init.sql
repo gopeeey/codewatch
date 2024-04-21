@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS codewatch_pg_issues (
 );
 
 CREATE INDEX IF NOT EXISTS codewatch_pg_issues_name_idx ON codewatch_pg_issues USING gin ("name" gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS codewatch_pg_issues_created_at_idx ON codewatch_pg_issues USING BRIN("createdAt");
+CREATE INDEX IF NOT EXISTS codewatch_pg_issues_created_at_idx ON codewatch_pg_issues ("createdAt");
 
 CREATE TABLE IF NOT EXISTS codewatch_pg_occurrences (
     id SERIAL PRIMARY KEY,

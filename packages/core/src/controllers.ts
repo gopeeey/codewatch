@@ -1,37 +1,52 @@
 import {
   Controller,
+  DeleteIssues,
   ErrorHandler,
   GetIssuesFilters,
+  GetIssuesTotalResponse,
   GetPaginatedIssuesFilters,
-  Issue,
+  GetPaginatedIssuesResponse,
+  ResolveIssues,
   ViewController,
-} from "./types";
+} from "@codewatch/types";
 
-export const getPaginatedIssues: Controller = async (req, deps) => {
-  const issues = await deps.storage.getPaginatedIssues(
-    req.body as unknown as GetPaginatedIssuesFilters
-  );
+export const getPaginatedIssues: Controller<
+  GetPaginatedIssuesResponse,
+  GetPaginatedIssuesFilters
+> = async (req, deps) => {
+  const issues = await deps.storage.getPaginatedIssues(req.body);
   return { status: 200, body: { data: { issues } } };
 };
 
-export const getIssuesTotal: Controller = async (req, deps) => {
-  const total = await deps.storage.getIssuesTotal(
-    req.body as unknown as GetIssuesFilters
-  );
+export const getIssuesTotal: Controller<
+  GetIssuesTotalResponse,
+  GetIssuesFilters
+> = async (req, deps) => {
+  const total = await deps.storage.getIssuesTotal(req.body);
   return { status: 200, body: { data: { total } } };
 };
 
-export const deleteIssues: Controller = async (req, deps) => {
-  await deps.storage.deleteIssues(
-    req.body.issueIds as unknown as Issue["id"][]
-  );
+export const deleteIssues: Controller<never, DeleteIssues> = async (
+  req,
+  deps
+) => {
+  await deps.storage.deleteIssues(req.body.issueIds);
   return { status: 200 };
 };
 
-export const resolveIssues: Controller = async (req, deps) => {
-  await deps.storage.resolveIssues(
-    req.body.issueIds as unknown as Issue["id"][]
-  );
+export const resolveIssues: Controller<never, ResolveIssues> = async (
+  req,
+  deps
+) => {
+  await deps.storage.resolveIssues(req.body.issueIds);
+  return { status: 200 };
+};
+
+export const unresolveIssues: Controller<never, ResolveIssues> = async (
+  req,
+  deps
+) => {
+  await deps.storage.unresolveIssues(req.body.issueIds);
   return { status: 200 };
 };
 

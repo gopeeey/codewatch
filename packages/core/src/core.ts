@@ -1,6 +1,6 @@
+import { Issue, StdChannelLog, Storage } from "@codewatch/types";
 import { createHash } from "crypto";
 import { format } from "util";
-import { Issue, StdChannelLog, Storage } from "./types";
 
 export type CoreOptions = {
   stdoutLogRetentionTime?: number;
@@ -222,8 +222,8 @@ export class Core {
   }
 
   private _hookUncaughtException() {
-    const listener = (err: Error) => {
-      Core.handleError(err, true);
+    const listener = async (err: Error) => {
+      await Core.handleError(err, true);
       if (process.listenerCount("uncaughtException") === 1) process.exit(1);
     };
 

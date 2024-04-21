@@ -1,3 +1,4 @@
+import { GetIssuesFilters, GetPaginatedIssuesFilters } from "@codewatch/types";
 import fs from "fs";
 import {
   deleteIssues,
@@ -6,9 +7,9 @@ import {
   getIssuesTotal,
   getPaginatedIssues,
   resolveIssues,
+  unresolveIssues,
 } from "../controllers";
 import { Core } from "../core";
-import { GetIssuesFilters, GetPaginatedIssuesFilters } from "../types";
 import { MockStorage } from "./mock_storage";
 
 const testError = new Error("Hello world");
@@ -81,6 +82,18 @@ describe("resolveIssues", () => {
       { storage }
     );
     expect(storage.issues[0].resolved).toBe(true);
+  });
+});
+
+describe("unresolveIssues", () => {
+  it("should call storage.unresolveIssues", async () => {
+    const storage = MockStorage.getInstance();
+    storage.issues[0].resolved = true;
+    await unresolveIssues(
+      { body: { issueIds: ["1"] }, query: {}, params: {} },
+      { storage }
+    );
+    expect(storage.issues[0].resolved).toBe(false);
   });
 });
 

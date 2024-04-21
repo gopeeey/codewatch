@@ -1,4 +1,4 @@
-import { GetIssuesFilters, Issue, Occurrence } from "@codewatch/core";
+import { GetIssuesFilters, Issue, Occurrence } from "@codewatch/types";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage } from "../storage";
 import { DbIssue } from "../types";
@@ -207,11 +207,21 @@ const issuesData: {
     timestamp: isoFromNow(25000),
     overrides: { name: "Nothing like the rest", fingerprint: "123" },
   },
-  { timestamp: isoFromNow(20000), overrides: { fingerprint: "234" } },
+  {
+    timestamp: isoFromNow(20000),
+    overrides: {
+      fingerprint: "234",
+      lastOccurrenceTimestamp: isoFromNow(5001),
+    },
+  },
   { timestamp: isoFromNow(15000), overrides: { fingerprint: "345" } },
   {
     timestamp: isoFromNow(10000),
-    overrides: { name: "Error 2", fingerprint: "456" },
+    overrides: {
+      name: "Error 2",
+      fingerprint: "456",
+      lastOccurrenceTimestamp: isoFromNow(2000),
+    },
   },
   {
     timestamp: isoFromNow(5000),
@@ -234,7 +244,7 @@ const seed = async () => {
 describe("CRUD", () => {
   beforeEach(seed, 5000);
   describe("getPaginatedIssues", () => {
-    it("should sort the issues by createdAt in descending order", async () => {
+    it("should sort the issues by lastOccurrenceTimestamp in descending order", async () => {
       const storage = await getStorage();
       const issues = await storage.getPaginatedIssues({
         searchString: "",
@@ -245,8 +255,8 @@ describe("CRUD", () => {
 
       let lastTimestamp = new Date().toISOString();
       for (const issue of issues) {
-        expect(issue.createdAt < lastTimestamp).toBe(true);
-        lastTimestamp = issue.createdAt;
+        expect(issue.lastOccurrenceTimestamp < lastTimestamp).toBe(true);
+        lastTimestamp = issue.lastOccurrenceTimestamp;
       }
       expect.assertions(issuesData.length);
       await storage.close();
@@ -259,9 +269,9 @@ describe("CRUD", () => {
         expectedFPrint: string[];
       }[] = [
         { page: 1, perPage: 1, expectedFPrint: ["678"] },
-        { page: 2, perPage: 1, expectedFPrint: ["567"] },
-        { page: 1, perPage: 2, expectedFPrint: ["678", "567"] },
-        { page: 2, perPage: 2, expectedFPrint: ["456", "345"] },
+        { page: 2, perPage: 1, expectedFPrint: ["456"] },
+        { page: 1, perPage: 2, expectedFPrint: ["678", "456"] },
+        { page: 2, perPage: 2, expectedFPrint: ["567", "234"] },
         { page: 2, perPage: 10, expectedFPrint: [] },
       ];
 
@@ -288,7 +298,7 @@ describe("CRUD", () => {
       }[] = [
         {
           filters: { searchString: "error", resolved: false },
-          expectedFPrints: ["678", "567", "456", "345", "234"],
+          expectedFPrints: ["678", "456", "567", "234", "345"],
         },
         {
           filters: { searchString: "error 2", resolved: false },
@@ -296,7 +306,7 @@ describe("CRUD", () => {
         },
         {
           filters: { searchString: "", resolved: false },
-          expectedFPrints: ["678", "567", "456", "345", "234", "123"],
+          expectedFPrints: ["678", "456", "567", "234", "345", "123"],
         },
         { filters: { searchString: "", resolved: true }, expectedFPrints: [] },
         {
@@ -305,7 +315,7 @@ describe("CRUD", () => {
             startDate: isoFromNow(10000),
             resolved: false,
           },
-          expectedFPrints: ["678", "567", "456"],
+          expectedFPrints: ["678", "456", "567", "234"],
         },
         {
           filters: {
@@ -313,7 +323,7 @@ describe("CRUD", () => {
             endDate: isoFromNow(15000),
             resolved: false,
           },
-          expectedFPrints: ["345", "234", "123"],
+          expectedFPrints: ["345", "123"],
         },
         {
           filters: {
@@ -322,7 +332,7 @@ describe("CRUD", () => {
             endDate: isoFromNow(10000),
             resolved: false,
           },
-          expectedFPrints: ["456", "345", "234", "123"],
+          expectedFPrints: ["345", "123"],
         },
         {
           filters: {
@@ -376,7 +386,7 @@ describe("CRUD", () => {
             startDate: isoFromNow(10000),
             resolved: false,
           },
-          expectedTotal: 3,
+          expectedTotal: 4,
         },
         {
           filters: {
@@ -384,7 +394,7 @@ describe("CRUD", () => {
             endDate: isoFromNow(15000),
             resolved: false,
           },
-          expectedTotal: 3,
+          expectedTotal: 2,
         },
         {
           filters: {
@@ -393,7 +403,7 @@ describe("CRUD", () => {
             endDate: isoFromNow(10000),
             resolved: false,
           },
-          expectedTotal: 4,
+          expectedTotal: 2,
         },
         {
           filters: {
@@ -451,6 +461,28 @@ describe("CRUD", () => {
         expect(resolved).toBe(true);
       }
       expect.assertions(resolvedIssues.length + 1); // Plus one for the initial assertion we did.
+      await storage.close();
+    });
+  });
+
+  describe("unresolveIssues", () => {
+    it("should update resolved to false on the issues with the supplied ids", async () => {
+      await pool.query(SQL`UPDATE codewatch_pg_issues SET resolved = true;`);
+      const { rows: issues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE resolved = true LIMIT 2;`
+      );
+      expect(issues.length).toBe(2);
+      const storage = await getStorage();
+      await storage.unresolveIssues(issues.map(({ id }) => id.toString()));
+      const { rows: unresolvedIssues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
+          ({ id }) => id
+        )});`
+      );
+      for (const { resolved } of unresolvedIssues) {
+        expect(resolved).toBe(false);
+      }
+      expect.assertions(unresolvedIssues.length + 1); // Plus one for the initial assertion we did.
       await storage.close();
     });
   });

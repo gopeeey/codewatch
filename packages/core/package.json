@@ -7,11 +7,12 @@
     "test": "jest",
     "build": "tsup",
     "dev": "ts-node-dev src/index.ts",
-    "build-p-dev": "tsup && yalc publish --push"
+    "build-pd": "tsup && yalc publish --push"
   },
   "author": "Samuel Gopeh",
   "license": "ISC",
   "devDependencies": {
+    "@codewatch/types": "file:.yalc/@codewatch/types",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.7",
     "jest": "^29.7.0",

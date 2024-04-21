@@ -1,4 +1,4 @@
-import { Issue, Storage } from "@codewatch/core";
+import { Issue, Storage } from "@codewatch/types";
 import fs from "fs";
 import path from "path";
 import { Pool, PoolConfig, types as pgTypes } from "pg";
@@ -204,15 +204,19 @@ export class CodewatchPgStorage implements Storage {
     }
 
     if (filters.startDate) {
-      query.append(SQL` AND "createdAt" >= ${new Date(filters.startDate)} `);
+      query.append(
+        SQL` AND "lastOccurrenceTimestamp" >= ${new Date(filters.startDate)} `
+      );
     }
 
     if (filters.endDate) {
-      query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
+      query.append(
+        SQL` AND "lastOccurrenceTimestamp" <= ${new Date(filters.endDate)} `
+      );
     }
 
     query.append(
-      SQL` ORDER BY "createdAt" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
+      SQL` ORDER BY "lastOccurrenceTimestamp" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
     );
 
     const { rows } = await this._pool.query<DbIssue>(query);
@@ -228,11 +232,15 @@ export class CodewatchPgStorage implements Storage {
     }
 
     if (filters.startDate) {
-      query.append(SQL` AND "createdAt" >= ${new Date(filters.startDate)} `);
+      query.append(
+        SQL` AND "lastOccurrenceTimestamp" >= ${new Date(filters.startDate)} `
+      );
     }
 
     if (filters.endDate) {
-      query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
+      query.append(
+        SQL` AND "lastOccurrenceTimestamp" <= ${new Date(filters.endDate)} `
+      );
     }
     const { rows } = await this._pool.query<{ count: number }>(query);
     return rows[0].count;
@@ -247,6 +255,12 @@ export class CodewatchPgStorage implements Storage {
   resolveIssues: Storage["resolveIssues"] = async (issueIds) => {
     await this._pool.query(SQL`
       UPDATE codewatch_pg_issues SET resolved = true WHERE id = ANY(${issueIds});
+    `);
+  };
+
+  unresolveIssues: Storage["resolveIssues"] = async (issueIds) => {
+    await this._pool.query(SQL`
+      UPDATE codewatch_pg_issues SET resolved = false WHERE id = ANY(${issueIds});
     `);
   };
 }

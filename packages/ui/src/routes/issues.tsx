@@ -1,14 +1,20 @@
 import CalendarIcon from "@assets/calendar.svg";
 import SearchIcon from "@assets/search.svg";
-import { Issue } from "@codewatch/core";
+import { GetIssuesFilters, Issue } from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
-import { getIssues } from "@lib/data";
+import {
+  deleteIssues,
+  getIssues,
+  getIssuesTotal,
+  resolveIssues,
+  unresolveIssues,
+} from "@lib/data";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
 import { Checkbox, Select, TextField } from "@ui/inputs";
-import { IssueCard, IssuesTabs, TabType } from "@ui/issues";
+import { IssueCard, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
-import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 type DatePreset = "1" | "2" | "3" | "4";
@@ -36,6 +42,8 @@ export default function IssuesRoute() {
   const [endDate, setEndDate] = useState(
     searchParams.get("endDate") ?? Date.now().toString()
   );
+  const [selectedIds, setSelectedIds] = useState<Issue["id"][]>([]);
+  const prevFilterStr = useRef("");
 
   useEffect(() => {
     if (datePreset !== "4") {
@@ -54,6 +62,7 @@ export default function IssuesRoute() {
     ) {
       return setPage(1);
     }
+    setSelectedIds([]);
     setSearchParams({
       searchString,
       page: page.toString(),
@@ -81,22 +90,72 @@ export default function IssuesRoute() {
     const startDate = searchParams.get("startDate") ?? "";
     const endDate = searchParams.get("endDate") ?? "";
     if (!startDate || !endDate) return;
-    const {
-      issues: newIssues,
-      resolvedCount: nrc,
-      unresolvedCount: nurc,
-    } = await getIssues({
+
+    const filters: GetIssuesFilters = {
       searchString: searchParams.get("searchString") ?? "",
-      page: Number(searchParams.get("page")) ?? 1,
-      perPage: Number(searchParams.get("perPage")) ?? 15,
       startDate,
       endDate,
-      resolved: (searchParams.get("resolved") as TabType) ?? "unresolved",
+      resolved,
+    };
+
+    const currentFilterStr = JSON.stringify(filters);
+    if (currentFilterStr !== prevFilterStr.current) {
+      const newTotal = await getIssuesTotal(filters);
+      if (newTotal != null) {
+        const setter = resolved ? setResolvedCount : setUnresolvedCount;
+        setter(newTotal);
+      }
+
+      if (resolved) {
+        // also fetch unresolved total
+        const uTotal = await getIssuesTotal({ ...filters, resolved: false });
+        if (uTotal != null) setUnresolvedCount(uTotal);
+      }
+      prevFilterStr.current = currentFilterStr;
+    }
+
+    const newIssues = await getIssues({
+      ...filters,
+      page: Number(searchParams.get("page")) ?? 1,
+      perPage: Number(searchParams.get("perPage")) ?? 15,
     });
-    setIssues(newIssues);
-    setResolvedCount(nrc);
-    setUnresolvedCount(nurc);
+    if (newIssues != null) setIssues(newIssues);
+
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  const delIssues = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const deleted = await deleteIssues(selectedIds);
+    if (deleted) {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
+    setSelectedIds([]);
+  }, [selectedIds, fetchIssues]);
+
+  const resIssues = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const successful = await resolveIssues(selectedIds);
+    if (successful && !resolved) {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
+    setSelectedIds([]);
+  }, [selectedIds, resolved, fetchIssues]);
+
+  const unResIssues = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const successful = await unresolveIssues(selectedIds);
+    if (successful && resolved) {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
+    setSelectedIds([]);
+  }, [selectedIds, resolved, fetchIssues]);
 
   useEffect(() => {
     fetchIssues();
@@ -137,7 +196,7 @@ export default function IssuesRoute() {
         <IssuesTabs
           resolved={resolved}
           onChange={setResolved}
-          resolvedCount={resolvedCount}
+          resolvedCount={0}
           unresolvedCount={unresolvedCount}
           className="-mb-[3.54rem]"
         />
@@ -146,9 +205,23 @@ export default function IssuesRoute() {
       <div className="px-5 py-3 custom-rule flex justify-between pr-8">
         {/* Actions */}
         <div className="flex items-center">
-          <Checkbox label="" />
-          <ActionButton label="Resolve" onClick={() => {}} />
-          <ActionButton label="Delete" onClick={() => {}} className="ml-3" />
+          <Checkbox
+            label=""
+            checked={issues.every((issue) => selectedIds.includes(issue.id))}
+            onClick={() => {
+              if (issues.every((issue) => selectedIds.includes(issue.id))) {
+                setSelectedIds([]);
+              } else {
+                setSelectedIds(issues.map((issue) => issue.id));
+              }
+            }}
+          />
+          {resolved ? (
+            <ActionButton label="Unresolve" onClick={unResIssues} />
+          ) : (
+            <ActionButton label="Resolve" onClick={resIssues} />
+          )}
+          <ActionButton label="Delete" onClick={delIssues} className="ml-3" />
         </div>
 
         {/* Table Header */}
@@ -157,7 +230,20 @@ export default function IssuesRoute() {
 
       {/* Issues */}
       {issues.map((issue) => (
-        <IssueCard key={issue.id} issue={issue} />
+        <IssueCard
+          key={issue.id}
+          issue={issue}
+          selected={selectedIds.includes(issue.id)}
+          onSelect={() => {
+            setSelectedIds((prev) => {
+              if (prev.includes(issue.id)) {
+                return prev.filter((id) => id !== issue.id);
+              } else {
+                return [...prev, issue.id];
+              }
+            });
+          }}
+        />
       ))}
 
       <div className="py-10 pr-8 flex justify-end">

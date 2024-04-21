@@ -1,66 +1,88 @@
-import axios, { AxiosError } from "axios";
-import { HttpError } from "./errors";
+import axios, { Axios, AxiosError, AxiosResponse } from "axios";
+import { toast } from "react-toastify";
 
 interface ClientConfigInterface {
   baseUrl?: string;
 }
 
-interface PostRequestArgsInterface {
+type PostBody = object;
+
+type PostRequestArgsInterface<T extends PostBody = PostBody> = {
   url: string;
-  body: { [key: string]: unknown };
-}
+  body: T;
+};
 
 export class HttpClient {
   private readonly _baseUrl: Exclude<
     ClientConfigInterface["baseUrl"],
     undefined
-  > = window.__basePath__ + "api";
+  > = "api";
+
+  private readonly _axios: Axios;
 
   constructor(args?: ClientConfigInterface) {
     if (args) {
       if (args.baseUrl) this._baseUrl += args.baseUrl;
     }
+
+    this._axios = axios.create({ baseURL: this._baseUrl });
   }
 
-  static errorHandler(err: unknown): never {
+  private errorHandler(err: unknown) {
+    let message = "Sorry an error occurred";
+
     if (err instanceof AxiosError) {
-      const httpError = new HttpError({
-        message: err.response?.data?.message || err.message,
-        data: err.response?.data,
-      });
-      if (err.code) httpError.statusCode = parseInt(err.code, 10);
-
-      throw httpError;
+      message = err.response?.data?.message || err.message;
+      if (err.response?.data?.data) console.log(err.response.data.data);
+    } else if (err instanceof Error) {
+      message = err.message;
     }
 
-    if (err instanceof Error) {
-      const httpError = new HttpError({
-        message: err.message,
-      });
-
-      throw httpError;
-    }
-
-    throw err;
+    toast.error(message, { autoClose: 4000 });
+    return { error: true as const };
   }
 
-  async post<ResDataType>(args: PostRequestArgsInterface) {
+  handleResponse<ResDataType>(res: AxiosResponse) {
+    return { error: false as const, data: res.data?.data as ResDataType };
+  }
+
+  async post<ResDataType, ReqDataType extends PostBody = PostBody>(
+    args: PostRequestArgsInterface<ReqDataType>
+  ) {
     try {
-      const url = this._baseUrl + args.url;
-      const res = await axios.post(url, args.body);
-      return res.data as ResDataType;
+      const res = await this._axios.post(args.url, args.body);
+      return this.handleResponse<ResDataType>(res);
     } catch (err) {
-      HttpClient.errorHandler(err);
+      return this.errorHandler(err);
     }
   }
 
   async get<ResDataType>(url: string) {
     try {
-      const fullUrl = this._baseUrl + url;
-      const res = await axios.get(fullUrl);
-      return res.data as ResDataType;
+      const res = await this._axios.get(url);
+      return this.handleResponse<ResDataType>(res);
     } catch (err) {
-      HttpClient.errorHandler(err);
+      return this.errorHandler(err);
+    }
+  }
+
+  async put<ResDataType, ReqDataType extends PostBody = PostBody>(
+    args: PostRequestArgsInterface<ReqDataType>
+  ) {
+    try {
+      const res = await this._axios.put(args.url, args.body);
+      return this.handleResponse<ResDataType>(res);
+    } catch (err) {
+      return this.errorHandler(err);
+    }
+  }
+
+  async delete<ResDataType>(url: string) {
+    try {
+      const res = await this._axios.delete(url);
+      return this.handleResponse<ResDataType>(res);
+    } catch (err) {
+      return this.errorHandler(err);
     }
   }
 }

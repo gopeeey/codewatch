@@ -1,0 +1,12 @@
+{
+  "name": "@codewatch/root",
+  "version": "1.0.0",
+  "description": "An error logging and monitoring package",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-pd": "npm run build-pd -w @codewatch/types && npm run build-pd -w @codewatch/core && npm run build-pd -w @codewatch/postgres && npm run build-pd -w @codewatch/ui && npm run build-pd -w @codewatch/express"
+  },
+  "workspaces": [],
+  "author": "Samuel Gopeh",
+  "license": "ISC"
+}
