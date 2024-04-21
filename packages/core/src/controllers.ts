@@ -2,19 +2,26 @@ import {
   Controller,
   ErrorHandler,
   GetIssuesFilters,
+  GetIssuesTotalResponse,
   GetPaginatedIssuesFilters,
+  GetPaginatedIssuesResponse,
   Issue,
   ViewController,
 } from "@codewatch/types";
 
-export const getPaginatedIssues: Controller = async (req, deps) => {
+export const getPaginatedIssues: Controller<
+  GetPaginatedIssuesResponse
+> = async (req, deps) => {
   const issues = await deps.storage.getPaginatedIssues(
     req.body as unknown as GetPaginatedIssuesFilters
   );
   return { status: 200, body: { data: { issues } } };
 };
 
-export const getIssuesTotal: Controller = async (req, deps) => {
+export const getIssuesTotal: Controller<GetIssuesTotalResponse> = async (
+  req,
+  deps
+) => {
   const total = await deps.storage.getIssuesTotal(
     req.body as unknown as GetIssuesFilters
   );
