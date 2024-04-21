@@ -7,6 +7,7 @@ import {
   getIssuesTotal,
   getPaginatedIssues,
   resolveIssues,
+  unresolveIssues,
 } from "../controllers";
 import { Core } from "../core";
 import { MockStorage } from "./mock_storage";
@@ -81,6 +82,18 @@ describe("resolveIssues", () => {
       { storage }
     );
     expect(storage.issues[0].resolved).toBe(true);
+  });
+});
+
+describe("unresolveIssues", () => {
+  it("should call storage.unresolveIssues", async () => {
+    const storage = MockStorage.getInstance();
+    storage.issues[0].resolved = true;
+    await unresolveIssues(
+      { body: { issueIds: ["1"] }, query: {}, params: {} },
+      { storage }
+    );
+    expect(storage.issues[0].resolved).toBe(false);
   });
 });
 

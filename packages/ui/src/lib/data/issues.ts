@@ -6,6 +6,7 @@ import {
   GetPaginatedIssuesResponse,
   Issue,
   ResolveIssues,
+  UnresolveIssues,
 } from "@codewatch/types";
 import { HttpClient } from "@lib/http_client";
 
@@ -125,7 +126,7 @@ export async function unresolveIssues(issueIds: ResolveIssues["issueIds"]) {
   if (isDev) {
     return true;
   }
-  const { error } = await client.post<never, ResolveIssues>({
+  const { error } = await client.put<never, UnresolveIssues>({
     url: "/unresolve",
     body: { issueIds },
   });

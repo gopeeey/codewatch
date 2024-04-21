@@ -1,4 +1,4 @@
-import { Storage } from "@codewatch/core";
+import { Storage } from "@codewatch/types";
 import { config } from "dotenv";
 import { Pool } from "pg";
 import SQL from "sql-template-strings";

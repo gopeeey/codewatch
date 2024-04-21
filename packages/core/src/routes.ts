@@ -5,6 +5,7 @@ import {
   getIssuesTotal,
   getPaginatedIssues,
   resolveIssues,
+  unresolveIssues,
 } from "./controllers";
 
 export const appRoutes: AppRoutes = {
@@ -33,6 +34,11 @@ export const appRoutes: AppRoutes = {
       route: "/api/issues/resolve",
       method: "put",
       handler: resolveIssues,
+    },
+    {
+      route: "/api/issues/unresolve",
+      method: "put",
+      handler: unresolveIssues,
     },
   ],
 };

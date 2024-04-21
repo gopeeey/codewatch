@@ -42,6 +42,14 @@ export const resolveIssues: Controller<never, ResolveIssues> = async (
   return { status: 200 };
 };
 
+export const unresolveIssues: Controller<never, ResolveIssues> = async (
+  req,
+  deps
+) => {
+  await deps.storage.unresolveIssues(req.body.issueIds);
+  return { status: 200 };
+};
+
 export const errorHandler: ErrorHandler = (error) => {
   let errorMessage = "",
     stack = "";

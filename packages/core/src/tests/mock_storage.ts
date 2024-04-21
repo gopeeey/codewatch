@@ -84,4 +84,10 @@ export class MockStorage implements Storage {
       this._updateIssueById(issueId, { resolved: true });
     });
   };
+
+  unresolveIssues: Storage["resolveIssues"] = async (issueIds) => {
+    issueIds.forEach((issueId) => {
+      this._updateIssueById(issueId, { resolved: false });
+    });
+  };
 }
