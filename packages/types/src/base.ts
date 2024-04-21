@@ -13,6 +13,7 @@ export interface Issue {
 }
 
 export type StdChannelLog = { timestamp: number; message: string };
+
 export interface Occurrence {
   issueId: Issue["id"];
   message: string;

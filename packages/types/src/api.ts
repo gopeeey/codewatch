@@ -1,9 +1,16 @@
 import { Storage } from "./storage";
 
-export interface ApiRequest {
-  body: Record<any, any>;
-  query: Record<string, string>;
-  params: Record<string, string>;
+type ReqBody = Record<any, any>;
+type ReqQuery = Record<string, string>;
+type ReqParams = Record<string, string>;
+export interface ApiRequest<
+  Body extends ReqBody = ReqBody,
+  Query extends ReqQuery = ReqBody,
+  Params extends ReqParams = ReqBody
+> {
+  body: Body;
+  query: Query;
+  params: Params;
 }
 
 type BaseResponseBody = { message?: string; data?: Record<string, any> };
@@ -16,8 +23,13 @@ export type ControllerDependencies = {
   storage: Storage;
 };
 
-export type Controller<ResponseBody extends BaseResponseBody = {}> = (
-  req: ApiRequest,
+export type Controller<
+  ResponseBody extends BaseResponseBody = BaseResponseBody,
+  RequestBody extends ReqBody = ReqBody,
+  RequestQuery extends ReqQuery = ReqBody,
+  RequestParams extends ReqParams = ReqBody
+> = (
+  req: ApiRequest<RequestBody, RequestQuery, RequestParams>,
   deps: ControllerDependencies
 ) => Promise<ApiResponse<ResponseBody>>;
 
@@ -31,7 +43,7 @@ export type ErrorHandler = (error: unknown) => ApiResponse;
 export interface ApiRoute {
   route: string | string[];
   method: "get" | "post" | "put" | "delete";
-  handler: Controller;
+  handler: Controller<any, any, any, any>;
 }
 
 export interface ViewRoute {

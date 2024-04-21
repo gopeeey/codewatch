@@ -1,16 +1,5 @@
 import { Issue, Occurrence } from "./base";
-
-export type GetIssuesFilters = {
-  searchString: string;
-  startDate?: string;
-  endDate?: string;
-  resolved: boolean;
-};
-
-export interface GetPaginatedIssuesFilters extends GetIssuesFilters {
-  page: number;
-  perPage: number;
-}
+import { GetIssuesFilters, GetPaginatedIssuesFilters } from "./requests";
 
 export interface Storage {
   ready: boolean;
@@ -28,4 +17,5 @@ export interface Storage {
   getIssuesTotal: (filters: GetIssuesFilters) => Promise<number>;
   deleteIssues: (issueIds: Issue["id"][]) => Promise<void>;
   resolveIssues: (issueIds: Issue["id"][]) => Promise<void>;
+  unresolveIssues: (issueIds: Issue["id"][]) => Promise<void>;
 }
