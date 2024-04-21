@@ -2,7 +2,13 @@ import CalendarIcon from "@assets/calendar.svg";
 import SearchIcon from "@assets/search.svg";
 import { GetIssuesFilters, Issue } from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
-import { getIssues, getIssuesTotal } from "@lib/data";
+import {
+  deleteIssues,
+  getIssues,
+  getIssuesTotal,
+  resolveIssues,
+  unresolveIssues,
+} from "@lib/data";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
 import { Checkbox, Select, TextField } from "@ui/inputs";
@@ -56,6 +62,7 @@ export default function IssuesRoute() {
     ) {
       return setPage(1);
     }
+    setSelectedIds([]);
     setSearchParams({
       searchString,
       page: page.toString(),
@@ -117,6 +124,30 @@ export default function IssuesRoute() {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  const delIssues = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const deleted = await deleteIssues(selectedIds);
+    if (deleted) await fetchIssues();
+    setSelectedIds([]);
+  }, [selectedIds, fetchIssues]);
+
+  const resIssues = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const successful = await resolveIssues(selectedIds);
+    if (successful && !resolved) await fetchIssues();
+    setSelectedIds([]);
+  }, [selectedIds, resolved, fetchIssues]);
+
+  const unResIssues = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const successful = await unresolveIssues(selectedIds);
+    if (successful && resolved) await fetchIssues();
+    setSelectedIds([]);
+  }, [selectedIds, resolved, fetchIssues]);
+
   useEffect(() => {
     fetchIssues();
   }, [fetchIssues]);
@@ -176,8 +207,12 @@ export default function IssuesRoute() {
               }
             }}
           />
-          <ActionButton label="Resolve" onClick={() => {}} />
-          <ActionButton label="Delete" onClick={() => {}} className="ml-3" />
+          {resolved ? (
+            <ActionButton label="Unresolve" onClick={unResIssues} />
+          ) : (
+            <ActionButton label="Resolve" onClick={resIssues} />
+          )}
+          <ActionButton label="Delete" onClick={delIssues} className="ml-3" />
         </div>
 
         {/* Table Header */}

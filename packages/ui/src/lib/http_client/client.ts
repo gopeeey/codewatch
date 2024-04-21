@@ -5,10 +5,12 @@ interface ClientConfigInterface {
   baseUrl?: string;
 }
 
-interface PostRequestArgsInterface {
+type PostBody = object;
+
+type PostRequestArgsInterface<T extends PostBody = PostBody> = {
   url: string;
-  body: object;
-}
+  body: T;
+};
 
 export class HttpClient {
   private readonly _baseUrl: Exclude<
@@ -31,7 +33,7 @@ export class HttpClient {
 
     if (err instanceof AxiosError) {
       message = err.response?.data?.message || err.message;
-      if (err.response?.data.data) console.log(err.response.data.data);
+      if (err.response?.data?.data) console.log(err.response.data.data);
     } else if (err instanceof Error) {
       message = err.message;
     }
@@ -41,10 +43,12 @@ export class HttpClient {
   }
 
   handleResponse<ResDataType>(res: AxiosResponse) {
-    return { error: false as const, data: res.data.data as ResDataType };
+    return { error: false as const, data: res.data?.data as ResDataType };
   }
 
-  async post<ResDataType>(args: PostRequestArgsInterface) {
+  async post<ResDataType, ReqDataType extends PostBody = PostBody>(
+    args: PostRequestArgsInterface<ReqDataType>
+  ) {
     try {
       const res = await this._axios.post(args.url, args.body);
       return this.handleResponse<ResDataType>(res);
@@ -62,7 +66,9 @@ export class HttpClient {
     }
   }
 
-  async put<ResDataType>(args: PostRequestArgsInterface) {
+  async put<ResDataType, ReqDataType extends PostBody = PostBody>(
+    args: PostRequestArgsInterface<ReqDataType>
+  ) {
     try {
       const res = await this._axios.put(args.url, args.body);
       return this.handleResponse<ResDataType>(res);

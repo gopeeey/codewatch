@@ -1,7 +1,11 @@
 import {
+  DeleteIssues,
   GetIssuesFilters,
+  GetIssuesTotalResponse,
   GetPaginatedIssuesFilters,
+  GetPaginatedIssuesResponse,
   Issue,
+  ResolveIssues,
 } from "@codewatch/types";
 import { HttpClient } from "@lib/http_client";
 
@@ -57,7 +61,10 @@ export async function getIssues(filters: GetPaginatedIssuesFilters) {
     ];
     return issues;
   }
-  const res = await client.post<{ issues: Issue[] }>({
+  const res = await client.post<
+    GetPaginatedIssuesResponse["data"],
+    GetPaginatedIssuesFilters
+  >({
     url: "/",
     body: {
       ...filters,
@@ -75,7 +82,10 @@ export async function getIssuesTotal(filters: GetIssuesFilters) {
     return 140 as number | null;
   }
 
-  const res = await client.post<{ total: number }>({
+  const res = await client.post<
+    GetIssuesTotalResponse["data"],
+    GetIssuesFilters
+  >({
     url: "/total",
     body: {
       ...filters,
@@ -85,4 +95,40 @@ export async function getIssuesTotal(filters: GetIssuesFilters) {
   });
   if (res.error) return null;
   return res.data.total;
+}
+
+export async function deleteIssues(issueIds: DeleteIssues["issueIds"]) {
+  if (isDev) {
+    return true;
+  }
+  const { error } = await client.post<never, DeleteIssues>({
+    url: "/delete",
+    body: { issueIds },
+  });
+
+  return !error;
+}
+
+export async function resolveIssues(issueIds: ResolveIssues["issueIds"]) {
+  if (isDev) {
+    return true;
+  }
+  const { error } = await client.put<never, ResolveIssues>({
+    url: "/resolve",
+    body: { issueIds },
+  });
+
+  return !error;
+}
+
+export async function unresolveIssues(issueIds: ResolveIssues["issueIds"]) {
+  if (isDev) {
+    return true;
+  }
+  const { error } = await client.post<never, ResolveIssues>({
+    url: "/unresolve",
+    body: { issueIds },
+  });
+
+  return !error;
 }
