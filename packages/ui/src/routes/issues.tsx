@@ -128,7 +128,10 @@ export default function IssuesRoute() {
     if (!selectedIds.length) return;
 
     const deleted = await deleteIssues(selectedIds);
-    if (deleted) await fetchIssues();
+    if (deleted) {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
     setSelectedIds([]);
   }, [selectedIds, fetchIssues]);
 
@@ -136,7 +139,10 @@ export default function IssuesRoute() {
     if (!selectedIds.length) return;
 
     const successful = await resolveIssues(selectedIds);
-    if (successful && !resolved) await fetchIssues();
+    if (successful && !resolved) {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
     setSelectedIds([]);
   }, [selectedIds, resolved, fetchIssues]);
 
@@ -144,7 +150,10 @@ export default function IssuesRoute() {
     if (!selectedIds.length) return;
 
     const successful = await unresolveIssues(selectedIds);
-    if (successful && resolved) await fetchIssues();
+    if (successful && resolved) {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
     setSelectedIds([]);
   }, [selectedIds, resolved, fetchIssues]);
 
