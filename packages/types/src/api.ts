@@ -6,22 +6,20 @@ export interface ApiRequest {
   params: Record<string, string>;
 }
 
-export interface ApiResponse {
+type BaseResponseBody = { message?: string; data?: Record<string, any> };
+export interface ApiResponse<Body extends BaseResponseBody = {}> {
   status: number;
-  body?: {
-    message?: string;
-    data?: Record<string, unknown>;
-  };
+  body?: Body;
 }
 
 export type ControllerDependencies = {
   storage: Storage;
 };
 
-export type Controller = (
+export type Controller<ResponseBody extends BaseResponseBody = {}> = (
   req: ApiRequest,
   deps: ControllerDependencies
-) => Promise<ApiResponse>;
+) => Promise<ApiResponse<ResponseBody>>;
 
 export type ViewController = (basePath: string) => {
   name: string;
