@@ -11,7 +11,7 @@ import {
 } from "@lib/data";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
-import { Checkbox, Select, TextField } from "@ui/inputs";
+import { Checkbox, DateRangePicker, Select, TextField } from "@ui/inputs";
 import { IssueCard, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
@@ -43,6 +43,8 @@ export default function IssuesRoute() {
     searchParams.get("endDate") ?? Date.now().toString()
   );
   const [selectedIds, setSelectedIds] = useState<Issue["id"][]>([]);
+  const [openDateRangePicker, setOpenDateRangePicker] =
+    useState<boolean>(false);
   const prevFilterStr = useRef("");
 
   useEffect(() => {
@@ -184,12 +186,19 @@ export default function IssuesRoute() {
               {
                 display: "Custom",
                 value: "4",
-                onSelect: () => console.log("onSelect"),
+                onSelect: () => setOpenDateRangePicker(true),
               },
             ]}
             value={datePreset}
             className="ml-5"
             startAdornment={<img src={CalendarIcon} alt="search" width={14} />}
+            id="date-range-picker"
+          />
+
+          <DateRangePicker
+            anchorId="date-range-picker"
+            open={openDateRangePicker}
+            onClose={() => setOpenDateRangePicker(false)}
           />
         </div>
 

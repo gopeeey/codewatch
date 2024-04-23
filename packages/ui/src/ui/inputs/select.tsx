@@ -10,6 +10,8 @@ type Props = {
   options: { display: string; value: string; onSelect?: () => unknown }[];
   className?: string;
   startAdornment?: React.ReactNode;
+  containerRef?: React.MutableRefObject<HTMLDivElement | null>;
+  id?: string;
 };
 
 export function Select({
@@ -18,6 +20,7 @@ export function Select({
   value,
   onChange,
   options,
+  id,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [displayValue, setDisplayValue] = useState("");
@@ -53,7 +56,7 @@ export function Select({
   };
 
   return (
-    <div className={clsx("relative", className)} ref={clickAwayRef}>
+    <div className={clsx("relative", className)} ref={clickAwayRef} id={id}>
       {/* Input box */}
       <div
         className={clsx(

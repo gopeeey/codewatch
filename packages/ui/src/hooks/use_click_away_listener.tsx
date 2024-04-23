@@ -10,7 +10,9 @@ export default function useClickAwayListener(callback: () => unknown) {
       }
     }
 
-    document.addEventListener("click", handleClickOutside);
+    setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 100);
 
     return () => {
       document.removeEventListener("click", handleClickOutside);
