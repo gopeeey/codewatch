@@ -36,4 +36,8 @@ body {
   .custom-disabled {
     @apply opacity-50 pointer-events-none;
   }
+
+  .transition-everything {
+    @apply transition-all duration-200
+  }
 }
