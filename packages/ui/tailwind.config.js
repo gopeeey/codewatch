@@ -15,6 +15,7 @@ export default {
       },
       colors: {
         "primary-400": "#67985F",
+        "primary-300": "#80A979",
         "input-background": "#3B4758",
         "input-background-dark": "#2b333f",
         background: "#161B21",
