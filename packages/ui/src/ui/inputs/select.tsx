@@ -7,7 +7,12 @@ import { useCallback, useEffect, useState } from "react";
 type Props = {
   onChange: (val: string) => void;
   value: string;
-  options: { display: string; value: string; onSelect?: () => unknown }[];
+  options: {
+    display: string;
+    listDisplay?: string;
+    value: string;
+    onSelect?: () => unknown;
+  }[];
   className?: string;
   startAdornment?: React.ReactNode;
   containerRef?: React.MutableRefObject<HTMLDivElement | null>;
@@ -98,7 +103,7 @@ export function Select({
             )}
             onClick={() => handleSelect(option)}
           >
-            {option.display}
+            {option.listDisplay || option.display}
           </div>
         ))}
       </div>

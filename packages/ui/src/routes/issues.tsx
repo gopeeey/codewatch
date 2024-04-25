@@ -14,6 +14,7 @@ import { ActionButton } from "@ui/buttons";
 import { Checkbox, DateRangePicker, Select, TextField } from "@ui/inputs";
 import { IssueCard, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
+import moment from "moment";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -184,7 +185,12 @@ export default function IssuesRoute() {
               { display: "Last 3 days", value: "2" },
               { display: "Last 7 days", value: "3" },
               {
-                display: "Custom",
+                display: `${moment(Number(startDate)).format(
+                  "DD MMM, YYYY h:mm:ss A"
+                )} - ${moment(Number(endDate)).format(
+                  "DD MMM, YYYY h:mm:ss A"
+                )}`,
+                listDisplay: "Custom",
                 value: "4",
                 onSelect: () => setOpenDateRangePicker(true),
               },
@@ -198,6 +204,12 @@ export default function IssuesRoute() {
           <DateRangePicker
             open={openDateRangePicker}
             onClose={() => setOpenDateRangePicker(false)}
+            defaultStartDate={new Date(Number(startDate)).toISOString()}
+            defaultEndDate={new Date(Number(endDate)).toISOString()}
+            onChange={(start, end) => {
+              setStartDate(new Date(start).getTime().toString());
+              setEndDate(new Date(end).getTime().toString());
+            }}
           />
         </div>
 

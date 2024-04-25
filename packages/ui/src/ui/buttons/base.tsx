@@ -1,10 +1,10 @@
 import clsx from "clsx";
 import { MouseEvent } from "react";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface BaseButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   onClick?: (e?: MouseEvent<HTMLButtonElement>) => void;
   className?: string;
-  active?: boolean;
   disabled?: boolean;
   padded?: boolean;
 }
@@ -16,7 +16,7 @@ export function ButtonBase({
   padded,
   children,
   ...props
-}: ButtonProps) {
+}: BaseButtonProps) {
   return (
     <button
       onClick={(e) => {

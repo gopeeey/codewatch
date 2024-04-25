@@ -7,6 +7,7 @@ type Props = {
   handleMinutesChange: (minutes: string) => void;
   handleSecondsChange: (seconds: string) => void;
   handlePeriodChange: (period: string) => void;
+  defaultTime: moment.Moment;
 };
 
 export function TimePickerComponent({
@@ -14,6 +15,7 @@ export function TimePickerComponent({
   handleMinutesChange,
   handlePeriodChange,
   handleSecondsChange,
+  defaultTime,
 }: Props) {
   return (
     <div className="flex justify-between items-center relative mask-timer">
@@ -22,6 +24,7 @@ export function TimePickerComponent({
         range={[12, ...generateRange(1, 11)].map((num) => num.toString())}
         onSelect={handleHourChange}
         id="hours"
+        defaultValue={defaultTime.format("h")}
       />
       <span className="z-10 font-bold">:</span>
       <RangeSelector
@@ -30,6 +33,7 @@ export function TimePickerComponent({
         )}
         onSelect={handleMinutesChange}
         id="minutes"
+        defaultValue={defaultTime.format("mm")}
       />
       <span className="z-10 font-bold">:</span>
       <RangeSelector
@@ -38,13 +42,15 @@ export function TimePickerComponent({
         )}
         onSelect={handleSecondsChange}
         id="seconds"
+        defaultValue={defaultTime.format("ss")}
       />
       <RangeSelector
         range={["am", "pm"]}
         onSelect={handlePeriodChange}
         id="period"
+        defaultValue={defaultTime.format("a")}
       />
-      <div className="w-full h-9 bg-pane-background absolute z-0"></div>
+      <div className="w-full h-9 bg-primary-400 absolute rounded-md z-0"></div>
     </div>
   );
 }
@@ -53,15 +59,14 @@ type RangeSelectorProps = {
   id: string;
   range: string[];
   onSelect: (range: string) => void;
+  defaultValue: string;
 };
-function RangeSelector({ id, range, onSelect }: RangeSelectorProps) {
-  const handleRangeClick = useCallback(
-    (range: string) => {
-      onSelect(range);
-    },
-    [onSelect]
-  );
-
+function RangeSelector({
+  id,
+  range,
+  onSelect,
+  defaultValue,
+}: RangeSelectorProps) {
   useEffect(() => {
     const root = document.getElementById(`${id}_root`);
     if (!root) return;
@@ -81,6 +86,20 @@ function RangeSelector({ id, range, onSelect }: RangeSelectorProps) {
     };
   }, [onSelect, id]);
 
+  const scrollToSelect = useCallback(
+    (val: string) => {
+      const el = document.getElementById(`${id}_${val}`);
+      if (!el) return;
+
+      el.scrollIntoView({ block: "center" });
+    },
+    [id]
+  );
+
+  useEffect(() => {
+    if (defaultValue) scrollToSelect(defaultValue);
+  }, [defaultValue, scrollToSelect]);
+
   return (
     <div
       id={`${id}_root`}
@@ -89,8 +108,9 @@ function RangeSelector({ id, range, onSelect }: RangeSelectorProps) {
       {range.map((val) => (
         <ButtonBase
           key={val}
-          onClick={() => handleRangeClick(val)}
-          className="snap-center px-8"
+          onClick={() => scrollToSelect(val)}
+          className="snap-center px-8 hover:bg-primary-400/70 rounded-md transition-everything"
+          id={`${id}_${val}`}
         >
           {val}
         </ButtonBase>

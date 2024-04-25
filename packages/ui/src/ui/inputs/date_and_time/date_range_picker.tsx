@@ -1,22 +1,32 @@
+import { Button } from "@ui/buttons";
 import { ButtonBase } from "@ui/buttons/base";
 import { Card } from "@ui/card";
 import { Modal } from "@ui/modal";
 import moment, { Moment } from "moment";
 import { useCallback, useState } from "react";
-import { Calendar } from "./calendar";
+import { RangeCalendar } from "./range_calendar";
 import { TimePickerComponent } from "./time_picker_component";
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  defaultStartDate?: string;
+  defaultEndDate?: string;
+  onChange: (startDate: string, endDate: string) => void;
 };
 
 type SelectionType = "start" | "end";
 type SelectionMode = "date" | "time";
 
-export function DateRangePicker({ open, onClose }: Props) {
-  const [startDate, setStartDate] = useState(moment());
-  const [endDate, setEndDate] = useState(moment());
+export function DateRangePicker({
+  open,
+  onClose,
+  defaultStartDate,
+  defaultEndDate,
+  onChange,
+}: Props) {
+  const [startDate, setStartDate] = useState(moment(defaultStartDate));
+  const [endDate, setEndDate] = useState(moment(defaultEndDate));
   const [selectionMode, setSelectionMode] = useState<SelectionMode>("date");
   const [selectionType, setSelectionType] = useState<SelectionType>("start");
 
@@ -88,17 +98,29 @@ export function DateRangePicker({ open, onClose }: Props) {
     [selectionType, startDate, endDate]
   );
 
+  const handleSubmit = useCallback(() => {
+    onChange(startDate.format(), endDate.format());
+    handleClose();
+  }, [onChange, handleClose, startDate, endDate]);
+
   return (
     <Modal open={open} onClose={handleClose}>
       <Card className="!bg-background absolute origin-center transition-everything w-[26rem] py-7 shadow-transparent">
         {selectionMode === "date" ? (
-          <Calendar />
+          <RangeCalendar
+            defaultStart={defaultStartDate ? moment(defaultStartDate) : null}
+            defaultEnd={defaultEndDate ? moment(defaultEndDate) : null}
+            currentSelectionType={selectionType}
+            onEndChange={(date) => setEndDate(date)}
+            onStartChange={(date) => setStartDate(date)}
+          />
         ) : (
           <TimePickerComponent
             handleHourChange={handleHourChange}
             handleMinutesChange={handleMinutesChange}
             handlePeriodChange={handlePeriodChange}
             handleSecondsChange={handleSecondsChange}
+            defaultTime={selectionType === "start" ? startDate : endDate}
           />
         )}
 
@@ -116,6 +138,10 @@ export function DateRangePicker({ open, onClose }: Props) {
             setMode={setSelectionMode}
             setType={setSelectionType}
           />
+        </div>
+
+        <div className="flex justify-end px-3.5 mt-7">
+          <Button onClick={handleSubmit}>Ok</Button>
         </div>
       </Card>
     </Modal>

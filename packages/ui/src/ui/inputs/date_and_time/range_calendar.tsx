@@ -3,10 +3,24 @@ import ChevronRightIcon from "@assets/chevron-right.svg";
 import { ButtonBase } from "@ui/buttons";
 import clsx from "clsx";
 import moment from "moment";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-export function Calendar() {
-  const [focusDate, setFocusDate] = useState(moment());
+type Props = {
+  defaultStart: moment.Moment | null;
+  defaultEnd: moment.Moment | null;
+  onStartChange: (date: moment.Moment) => void;
+  onEndChange: (date: moment.Moment) => void;
+  currentSelectionType: "start" | "end";
+};
+export function RangeCalendar({
+  defaultStart,
+  defaultEnd,
+  onStartChange,
+  onEndChange,
+}: Props) {
+  const [focusDate, setFocusDate] = useState(defaultStart || moment());
+  const [start, setStart] = useState(defaultStart);
+  const [end, setEnd] = useState(defaultEnd);
 
   const dateRange = useMemo(() => {
     const start = focusDate.clone().startOf("month").startOf("week");
@@ -20,6 +34,29 @@ export function Calendar() {
 
     return dates;
   }, [focusDate]);
+
+  const handleClick = useCallback(
+    (d: moment.Moment) => {
+      const date = d.clone();
+      setFocusDate(date);
+
+      if (start && end) {
+        setStart(date);
+        setEnd(null);
+        return;
+      }
+
+      if (start) return setEnd(date);
+
+      setStart(date);
+    },
+    [start, end]
+  );
+
+  useEffect(() => {
+    if (start) onStartChange(start);
+    if (end) onEndChange(end);
+  }, [start, end, onStartChange, onEndChange]);
 
   return (
     <>
@@ -62,7 +99,16 @@ export function Calendar() {
 
         {dateRange.map((date) => (
           <div
-            className="relative py-3 px-3 flex justify-center items-center"
+            className={clsx(
+              "relative py-3.5 px-3 flex justify-center items-center",
+              {
+                "bg-primary-400/20": date.isBetween(start, end, "day"),
+                "bg-gradient-to-r from-transparent to-primary-400/20":
+                  date.isSame(start, "day"),
+                "bg-gradient-to-l from-transparent to-primary-400/20":
+                  date.isSame(end, "day"),
+              }
+            )}
             key={date.toISOString()}
           >
             <ButtonBase
@@ -74,8 +120,11 @@ export function Calendar() {
                     moment(),
                     "day"
                   ),
+                  "bg-primary-400 hover:bg-primary-400":
+                    date.isSame(start, "day") || date.isSame(end, "day"),
                 }
               )}
+              onClick={() => handleClick(date)}
             >
               {date.get("date")}
             </ButtonBase>
