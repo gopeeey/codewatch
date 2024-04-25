@@ -3,7 +3,7 @@ import NavLink from "./link";
 
 export default function SideBar() {
   return (
-    <aside className="w-72 flex-shrink-0 px-6 py-8 h-screen bg-pane-background shadow">
+    <aside className="w-72 flex-shrink-0 px-6 py-8 h-screen bg-pane-background shadow sticky top-0">
       {/* Logo and greeting */}
       <div className="flex items-start">
         <div className="flex-shrink-0">

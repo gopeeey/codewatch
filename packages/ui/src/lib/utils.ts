@@ -45,3 +45,11 @@ export function quantifyNumber(number: number) {
   if (number >= 1000000) return `${Math.floor((number / 1000000) * 10) / 10}M`;
   return `${Math.floor((number / 1000) * 10) / 10}K`;
 }
+
+export function generateRange(start: number, end: number) {
+  const range = [];
+  for (let i = start; i <= end; i++) {
+    range.push(i);
+  }
+  return range;
+}

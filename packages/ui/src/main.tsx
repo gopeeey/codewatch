@@ -11,7 +11,7 @@ declare global {
 }
 const basePath = (window.__basePath__ =
   document.head.querySelector("base")?.getAttribute("href") || "/");
-console.log("\n\n\nBASE PATH:", basePath);
+
 const router = createBrowserRouter(routes, {
   basename: basePath.endsWith("/") ? basePath.slice(0, -1) : basePath,
 });

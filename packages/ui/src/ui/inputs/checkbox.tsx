@@ -27,7 +27,7 @@ export function Checkbox({
             "w-4 h-4 mr-3 appearance-none border border-1 border-grey-700 rounded-[0.35rem] checked:bg-[url('/src/assets/checkbox.svg')] checked:border-none cursor-pointer",
             { "custom-disabled": disabled }
           )}
-          checked={checked}
+          {...(checked != undefined ? { checked, readOnly: true } : {})}
           onChange={onChange}
           onClick={onClick}
         />
