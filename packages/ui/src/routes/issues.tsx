@@ -196,7 +196,6 @@ export default function IssuesRoute() {
           />
 
           <DateRangePicker
-            anchorId="date-range-picker"
             open={openDateRangePicker}
             onClose={() => setOpenDateRangePicker(false)}
           />
