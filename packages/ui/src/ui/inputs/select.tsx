@@ -96,7 +96,7 @@ export function Select({
           <div
             key={option.value}
             className={clsx(
-              "px-4 py-2 cursor-pointer min-w-max hover:bg-primary-400 hover:text-white transition-all duration-200",
+              "px-4 py-2 cursor-pointer min-w-max hover:bg-pane-background hover:text-white transition-all duration-200",
               {
                 "bg-primary-400 text-white": option.value === value,
               }

@@ -22,7 +22,7 @@ export function PaginationButton({
     <ButtonBase
       onClick={onClick}
       className={clsx(
-        "text-center  min-w-8 py-1.5 bg-background mx-[0.5px] hover:bg-primary-400",
+        "text-center  min-w-8 py-1.5 bg-background mx-[0.5px] hover:bg-pane-background",
         {
           "rounded-l-xl": position === "first",
           "rounded-r-xl": position === "last",
