@@ -30,6 +30,7 @@ export function Checkbox({
           {...(checked != undefined ? { checked, readOnly: true } : {})}
           onChange={onChange}
           onClick={onClick}
+          disabled={disabled}
         />
         {label}
       </label>

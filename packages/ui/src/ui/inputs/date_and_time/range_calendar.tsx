@@ -69,7 +69,7 @@ export function RangeCalendar({
         <div className="flex items-center">
           <ButtonBase
             padded
-            className="px-2.5 rounded-lg hover:bg-pane-background transition-everything"
+            className="px-2.5 rounded-lg hover:bg-input-background-dark transition-everything"
             onClick={() => {
               setFocusDate((prev) => prev.clone().subtract(1, "month"));
             }}
@@ -77,7 +77,7 @@ export function RangeCalendar({
             <img src={ChevronLeftIcon} alt="chevron left" width={7} />
           </ButtonBase>
           <ButtonBase
-            className="ml-4 -mr-2.5 px-2.5 py-2 rounded-lg hover:bg-pane-background transition-everything"
+            className="ml-4 -mr-2.5 px-2.5 py-2 rounded-lg hover:bg-input-background-dark transition-everything"
             onClick={() => {
               setFocusDate((prev) => prev.clone().add(1, "month"));
             }}
@@ -113,7 +113,7 @@ export function RangeCalendar({
           >
             <ButtonBase
               className={clsx(
-                "absolute w-9 h-9 text-sm text-center rounded-md hover:bg-pane-background",
+                "absolute w-9 h-9 text-sm text-center rounded-md hover:bg-input-background-dark",
                 {
                   "text-grey-900": !date.isSame(focusDate, "month"),
                   "border-dashed border border-primary-400": date.isSame(

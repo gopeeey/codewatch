@@ -9,10 +9,11 @@ import {
   resolveIssues,
   unresolveIssues,
 } from "@lib/data";
+import { generateRange } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
 import { Checkbox, DateRangePicker, Select, TextField } from "@ui/inputs";
-import { IssueCard, IssuesTabs } from "@ui/issues";
+import { IssueCard, IssueCardSkeleton, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
 import moment from "moment";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
@@ -46,6 +47,7 @@ export default function IssuesRoute() {
   const [selectedIds, setSelectedIds] = useState<Issue["id"][]>([]);
   const [openDateRangePicker, setOpenDateRangePicker] =
     useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
   const prevFilterStr = useRef("");
 
   useEffect(() => {
@@ -94,6 +96,7 @@ export default function IssuesRoute() {
     const endDate = searchParams.get("endDate") ?? "";
     if (!startDate || !endDate) return;
 
+    setLoading(true);
     const filters: GetIssuesFilters = {
       searchString: searchParams.get("searchString") ?? "",
       startDate,
@@ -123,7 +126,7 @@ export default function IssuesRoute() {
       perPage: Number(searchParams.get("perPage")) ?? 15,
     });
     if (newIssues != null) setIssues(newIssues);
-
+    setLoading(false);
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -227,7 +230,10 @@ export default function IssuesRoute() {
         <div className="flex items-center">
           <Checkbox
             label=""
-            checked={issues.every((issue) => selectedIds.includes(issue.id))}
+            checked={
+              Boolean(issues.length) &&
+              issues.every((issue) => selectedIds.includes(issue.id))
+            }
             onClick={() => {
               if (issues.every((issue) => selectedIds.includes(issue.id))) {
                 setSelectedIds([]);
@@ -235,13 +241,27 @@ export default function IssuesRoute() {
                 setSelectedIds(issues.map((issue) => issue.id));
               }
             }}
+            disabled={loading}
           />
           {resolved ? (
-            <ActionButton label="Unresolve" onClick={unResIssues} />
+            <ActionButton
+              label="Unresolve"
+              onClick={unResIssues}
+              disabled={loading}
+            />
           ) : (
-            <ActionButton label="Resolve" onClick={resIssues} />
+            <ActionButton
+              label="Resolve"
+              onClick={resIssues}
+              disabled={loading}
+            />
           )}
-          <ActionButton label="Delete" onClick={delIssues} className="ml-3" />
+          <ActionButton
+            label="Delete"
+            onClick={delIssues}
+            className="ml-3"
+            disabled={loading}
+          />
         </div>
 
         {/* Table Header */}
@@ -249,22 +269,24 @@ export default function IssuesRoute() {
       </div>
 
       {/* Issues */}
-      {issues.map((issue) => (
-        <IssueCard
-          key={issue.id}
-          issue={issue}
-          selected={selectedIds.includes(issue.id)}
-          onSelect={() => {
-            setSelectedIds((prev) => {
-              if (prev.includes(issue.id)) {
-                return prev.filter((id) => id !== issue.id);
-              } else {
-                return [...prev, issue.id];
-              }
-            });
-          }}
-        />
-      ))}
+      {loading
+        ? generateRange(1, 4).map((num) => <IssueCardSkeleton key={num} />)
+        : issues.map((issue) => (
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              selected={selectedIds.includes(issue.id)}
+              onSelect={() => {
+                setSelectedIds((prev) => {
+                  if (prev.includes(issue.id)) {
+                    return prev.filter((id) => id !== issue.id);
+                  } else {
+                    return [...prev, issue.id];
+                  }
+                });
+              }}
+            />
+          ))}
 
       <div className="py-10 pr-8 flex justify-end">
         <Pagination

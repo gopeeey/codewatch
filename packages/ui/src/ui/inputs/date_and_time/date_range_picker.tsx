@@ -173,14 +173,14 @@ function DisplayDateButton({
   return (
     <div className="flex items-center text-primary-300">
       <ButtonBase
-        className="hover:bg-pane-background transition-everything"
+        className="hover:bg-input-background-dark transition-everything"
         onClick={handleDateClick}
       >
         {date.format("DD MMM, YYYY")}
       </ButtonBase>
 
       <ButtonBase
-        className="hover:bg-pane-background transition-everything ml-1.5"
+        className="hover:bg-input-background-dark transition-everything ml-1.5"
         onClick={handleTimeClick}
       >
         {date.format("h:mm:ss A")}

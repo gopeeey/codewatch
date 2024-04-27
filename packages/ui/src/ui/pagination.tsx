@@ -8,9 +8,16 @@ type Props = {
   perPage: number;
   totalRows: number;
   onChange: (page: number) => void;
+  disabled?: boolean;
 };
 
-export function Pagination({ page, perPage, totalRows, onChange }: Props) {
+export function Pagination({
+  page,
+  perPage,
+  totalRows,
+  onChange,
+  disabled,
+}: Props) {
   const totalPages = Math.ceil(totalRows / perPage);
   const pages = generatePagination(page, totalPages);
   return (
@@ -22,7 +29,7 @@ export function Pagination({ page, perPage, totalRows, onChange }: Props) {
         }}
         position="edge"
         className="mr-3"
-        disabled={page === 1}
+        disabled={page === 1 || disabled}
       />
       {pages.map((cPage, index) => (
         <PaginationButton
@@ -48,6 +55,7 @@ export function Pagination({ page, perPage, totalRows, onChange }: Props) {
               : "middle"
           }
           active={cPage === page}
+          disabled={disabled}
         />
       ))}
       <PaginationButton
@@ -57,7 +65,7 @@ export function Pagination({ page, perPage, totalRows, onChange }: Props) {
         }}
         position="edge"
         className="ml-3"
-        disabled={page === Number(pages[pages.length - 1])}
+        disabled={page === Number(pages[pages.length - 1]) || disabled}
       />
     </div>
   );
