@@ -20,7 +20,7 @@ export function IssuesTabs({
   className,
 }: Props) {
   return (
-    <div className={clsx("flex items-center justify-center", className)}>
+    <div className={clsx("flex items-center xl:justify-center", className)}>
       <TabButton
         label="Unresolved"
         onClick={() => onChange(false)}

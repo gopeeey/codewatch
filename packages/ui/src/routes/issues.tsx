@@ -170,8 +170,8 @@ export default function IssuesRoute() {
   return (
     <AppPage title="Issues" cardClassName="px-0 py-0">
       {/* Filters and Tabs */}
-      <div className="px-5 py-6 pr-8 flex justify-between custom-rule">
-        <div className="flex">
+      <div className="px-5 py-6 sm:pr-8 custom-rule flex flex-col justify-start xl:flex-row xl:justify-between">
+        <div className="flex flex-col sm:flex-row">
           <TextField
             inputProps={{
               placeholder: "Search issues",
@@ -179,6 +179,7 @@ export default function IssuesRoute() {
               defaultValue: searchString,
             }}
             startAdornment={<img src={SearchIcon} alt="search" width={14} />}
+            className="w-full sm:w-1/2 xl:w-auto"
           />
 
           <Select
@@ -199,7 +200,7 @@ export default function IssuesRoute() {
               },
             ]}
             value={datePreset}
-            className="ml-5"
+            className="mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto"
             startAdornment={<img src={CalendarIcon} alt="search" width={14} />}
             id="date-range-picker"
           />
@@ -221,11 +222,11 @@ export default function IssuesRoute() {
           onChange={setResolved}
           resolvedCount={0}
           unresolvedCount={unresolvedCount}
-          className="-mb-[3.54rem]"
+          className="mt-6 -mb-[1.547rem] xl:mt-0 xl:-mb-[3.54rem]"
         />
       </div>
 
-      <div className="px-5 py-3 custom-rule flex justify-between pr-8">
+      <div className="px-5 py-5 xl:py-3 custom-rule flex justify-between pr-8">
         {/* Actions */}
         <div className="flex items-center">
           <Checkbox
@@ -243,6 +244,7 @@ export default function IssuesRoute() {
             }}
             disabled={loading}
           />
+
           {resolved ? (
             <ActionButton
               label="Unresolve"
@@ -256,6 +258,7 @@ export default function IssuesRoute() {
               disabled={loading}
             />
           )}
+
           <ActionButton
             label="Delete"
             onClick={delIssues}

@@ -18,9 +18,16 @@ export function AppPage({
   cardClassName,
 }: Props) {
   return (
-    <main className={clsx("px-12 w-full", className)}>
+    <main className={clsx("sm:px-12 w-full", className)}>
       <AppBar title={title} className={clsx("mb-7", appBarClassName)} />
-      <Card className={cardClassName}>{children}</Card>
+      <Card
+        className={clsx(
+          "!rounded-t-xl !rounded-b-none sm:!rounded-xl min-h-screen lg:min-h-fit",
+          cardClassName
+        )}
+      >
+        {children}
+      </Card>
     </main>
   );
 }

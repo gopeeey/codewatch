@@ -65,15 +65,17 @@ export function Select({
       {/* Input box */}
       <div
         className={clsx(
-          "bg-background flex items-center cursor-pointer rounded-xl px-3.5 py-2.5 focus-within:outline focus-within:outline-primary-400 focus-within:outline-2 focus-within:outline-offset-3"
+          "bg-background flex items-center justify-between cursor-pointer rounded-xl px-3.5 py-2.5 focus-within:outline focus-within:outline-primary-400 focus-within:outline-2 focus-within:outline-offset-3"
         )}
         tabIndex={0}
         onClick={handleClick}
       >
-        {startAdornment ? (
-          <span className="mr-3 -mt-0.5">{startAdornment}</span>
-        ) : null}
-        {displayValue}
+        <div className="flex items-center">
+          {startAdornment ? (
+            <span className="mr-3 -mt-0.5">{startAdornment}</span>
+          ) : null}
+          {displayValue}
+        </div>
 
         <img
           src={ChevronDownIcon}
@@ -88,7 +90,7 @@ export function Select({
       {/* Drop down */}
       <div
         className={clsx(
-          "bg-background shadow rounded-lg absolute py-3 min-w-full mt-3 origin-top scale-y-0 transition-all duration-300 opacity-0",
+          "bg-background shadow rounded-lg absolute py-3 z-20 min-w-full mt-3 origin-top scale-y-0 transition-all duration-300 opacity-0",
           { "opacity-100 scale-y-100": isOpen }
         )}
       >
