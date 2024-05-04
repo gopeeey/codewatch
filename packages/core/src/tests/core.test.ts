@@ -122,6 +122,33 @@ describe("Core", () => {
           expect(savedOccurrence.stderrLogs[0].message).toBe(errLogBeforeError);
           expect(savedOccurrence.stderrLogs[1].message).toBe(errLogBeforeError);
         });
+
+        it("should only retain logs for the specified amount of time", async () => {
+          await Core.close();
+          MockStorage.createInstance();
+          const storage = MockStorage.getInstance();
+          Core.init(storage, {
+            stderrLogRetentionTime: 100,
+            stdoutLogRetentionTime: 100,
+          });
+
+          const logBeforeError =
+            "something logged to the console before the error";
+          console.log(logBeforeError);
+          console.log(logBeforeError);
+          console.error(logBeforeError);
+
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
+          console.log(logBeforeError);
+
+          await Core.handleError(testError);
+
+          const savedOccurrence = storage.occurrences[0];
+
+          expect(savedOccurrence.stdoutLogs).toHaveLength(1); // Should have just 1 because of the console.log after the 200ms timeout
+          expect(savedOccurrence.stderrLogs).toHaveLength(0);
+        });
       });
 
       describe("given logs are disabled", () => {
