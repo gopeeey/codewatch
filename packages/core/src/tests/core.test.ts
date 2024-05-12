@@ -1,5 +1,5 @@
 import { Issue } from "@codewatch/types";
-import { Core } from "../core";
+import { CaptureDataOpts, Core } from "../core";
 import { MockStorage } from "./mock_storage";
 
 beforeEach(() => {
@@ -27,7 +27,7 @@ describe("Core", () => {
     });
   });
 
-  describe("handleError", () => {
+  describe("captureError", () => {
     describe("when data is not an error or the error has no stack", () => {
       it("should do nothing", async () => {
         const dataSet = [
@@ -40,7 +40,7 @@ describe("Core", () => {
         ];
 
         for (const data of dataSet) {
-          await Core.handleError(data);
+          await Core.captureError(data);
           const storage = MockStorage.getInstance();
           expect(storage.issues.length).toBe(0);
         }
@@ -53,7 +53,7 @@ describe("Core", () => {
           const storage = MockStorage.getInstance();
           expect(storage.issues).toHaveLength(0);
 
-          await Core.handleError(testError);
+          await Core.captureError(testError);
           const expected: Omit<Issue, "fingerprint"> = {
             id: "1",
             resolved: false,
@@ -73,11 +73,11 @@ describe("Core", () => {
 
       describe("given the error already exists in the storage", () => {
         it("should not create a new error in the storage", async () => {
-          await Core.handleError(testError);
+          await Core.captureError(testError);
           const storage = MockStorage.getInstance();
           expect(storage.issues).toHaveLength(1);
           const prevIssue = Object.assign(storage.issues[0], {});
-          await Core.handleError(testError);
+          await Core.captureError(testError);
           expect(storage.issues).toHaveLength(1);
           expect(prevIssue).toMatchObject({
             ...storage.issues[0],
@@ -102,7 +102,7 @@ describe("Core", () => {
           const storage = MockStorage.getInstance();
           expect(storage.occurrences).toHaveLength(0);
 
-          await Core.handleError(testError);
+          await Core.captureError(testError);
 
           expect(storage.occurrences).toHaveLength(1);
 
@@ -142,7 +142,7 @@ describe("Core", () => {
 
           console.log(logBeforeError);
 
-          await Core.handleError(testError);
+          await Core.captureError(testError);
 
           const savedOccurrence = storage.occurrences[0];
 
@@ -164,7 +164,7 @@ describe("Core", () => {
           console.error(logBeforeError);
 
           expect(storage.occurrences).toHaveLength(0);
-          await Core.handleError(testError);
+          await Core.captureError(testError);
 
           expect(storage.occurrences).toHaveLength(1);
           const savedOccurrence = storage.occurrences[0];
@@ -182,14 +182,14 @@ describe("Core", () => {
       });
 
       it("should increment the total occurrences of the existing error and update the last occurrence time", async () => {
-        await Core.handleError(testError);
+        await Core.captureError(testError);
         const timeAtFirst = Date.now();
 
         await new Promise((resolve) => {
           setTimeout(resolve, 1000);
         });
 
-        await Core.handleError(testError);
+        await Core.captureError(testError);
 
         const storage = MockStorage.getInstance();
         expect(storage.issues).toHaveLength(1);
@@ -200,6 +200,65 @@ describe("Core", () => {
         expect(
           new Date(issue.lastOccurrenceTimestamp).getTime()
         ).toBeGreaterThan(timeAtFirst);
+      });
+    });
+  });
+
+  describe("captureData", () => {
+    describe("when data is not an object", () => {
+      it("should do nothing", async () => {
+        const dataSet = ["Hello world", 1, [1, 3, 4], true, null, undefined];
+
+        for (const data of dataSet) {
+          await Core.captureData(data as object);
+          const storage = MockStorage.getInstance();
+          expect(storage.issues.length).toBe(0);
+        }
+      });
+    });
+
+    describe("when data is an object", () => {
+      it("should save the data to the storage", async () => {
+        const storage = MockStorage.getInstance();
+        expect(storage.issues).toHaveLength(0);
+
+        const anonymous = "AnonymousData";
+        const scenarios: {
+          args: [Record<any, any>, CaptureDataOpts?];
+          expected: Pick<Issue, "name" | "lastOccurrenceMessage">;
+        }[] = [
+          {
+            args: [{ test: "test" }],
+            expected: { name: anonymous, lastOccurrenceMessage: "" },
+          },
+          {
+            args: [{ test: "test" }, { name: "My Data" }],
+            expected: { name: "My Data", lastOccurrenceMessage: "" },
+          },
+          {
+            args: [
+              { something: "it all" },
+              { name: "SomethingElse", message: "something else entirely" },
+            ],
+            expected: {
+              name: "SomethingElse",
+              lastOccurrenceMessage: "something else entirely",
+            },
+          },
+        ];
+
+        for (let i = 0; i < scenarios.length; i++) {
+          const scenario = scenarios[i];
+          await Core.captureData(scenario.args[0], scenario.args[1]);
+          expect(storage.issues).toHaveLength(1);
+          const issue = storage.issues[0];
+          expect(issue).toMatchObject(scenario.expected);
+          expect(storage.occurrences).toHaveLength(1);
+          const occurrence = storage.occurrences[0];
+          expect(occurrence).toMatchObject({ extraData: scenario.args[0] });
+          storage.issues = [];
+          storage.occurrences = [];
+        }
       });
     });
   });

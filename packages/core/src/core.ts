@@ -1,4 +1,4 @@
-import { Issue, StdChannelLog, Storage } from "@codewatch/types";
+import { Issue, Occurrence, StdChannelLog, Storage } from "@codewatch/types";
 import { createHash } from "crypto";
 import { format } from "util";
 
@@ -11,6 +11,11 @@ export type CoreOptions = {
 type RecentLogs = {
   logs: StdChannelLog[];
   retentionTime: number;
+};
+
+export type CaptureDataOpts = {
+  name?: string;
+  message?: string;
 };
 
 export class Core {
@@ -51,16 +56,30 @@ export class Core {
     return Core._instance;
   }
 
-  static async handleError(err: unknown, unhandled?: boolean): Promise<void> {
+  static async captureError(
+    err: unknown,
+    unhandled?: boolean,
+    extraData?: Occurrence["extraData"]
+  ): Promise<void> {
     const instance = Core.getCore();
     if (!instance._storage.ready) return;
     if (!(err instanceof Error) || !err.stack) return;
+    if (extraData) {
+      if (typeof extraData === "object" && !Array.isArray(extraData)) {
+        extraData = JSON.parse(JSON.stringify(extraData));
+      } else {
+        console.warn(
+          "Invalid extraData passed to captureError. extraData must be an object"
+        );
+        extraData = {};
+      }
+    }
 
     const now = new Date();
-    const fingerPrint = instance._generateFingerprint(err);
+    const fingerPrint = instance._generateFingerprint(err.stack);
     const currentTimestamp = now.toISOString();
     let issueId: Issue["id"] | null = null;
-    issueId = await instance._storage.findIssueIdByFingerprint(fingerPrint); // should cache instance value
+    issueId = await instance._storage.findIssueIdByFingerprint(fingerPrint);
 
     if (!issueId) {
       issueId = await instance._storage.createIssue({
@@ -93,6 +112,7 @@ export class Core {
       timestamp: currentTimestamp,
       stderrLogs,
       stdoutLogs,
+      extraData,
     });
 
     await instance._storage.updateLastOccurrenceOnIssue({
@@ -100,6 +120,21 @@ export class Core {
       timestamp: currentTimestamp,
       message: err.message,
     });
+  }
+
+  static async captureData(
+    data: Record<any, any>,
+    options: CaptureDataOpts = {}
+  ) {
+    if (typeof data !== "object" || Array.isArray(data) || data == null) return;
+    const metaClass = class extends Error {
+      constructor() {
+        super();
+        this.name = options.name || "AnonymousData";
+        this.message = options.message || "";
+      }
+    };
+    await Core.captureError(new metaClass(), false, data);
   }
 
   static async close() {
@@ -112,9 +147,9 @@ export class Core {
     Core._instance = null;
   }
 
-  private _generateFingerprint(err: Error) {
+  private _generateFingerprint(stack: string) {
     // Normalize the error stack
-    const stackFrames = (err.stack as string).split("\n").slice(1);
+    const stackFrames = (stack as string).split("\n").slice(1);
     let normalizedStack = "";
     const cwd = process.cwd();
     for (const frame of stackFrames) {
@@ -223,12 +258,12 @@ export class Core {
 
   private _hookUncaughtException() {
     const listener = async (err: Error) => {
-      await Core.handleError(err, true);
+      await Core.captureError(err, true);
       if (process.listenerCount("uncaughtException") === 1) process.exit(1);
     };
 
     const rejectionListener = async (err: unknown) => {
-      await Core.handleError(err, true);
+      await Core.captureError(err, true);
       if (process.listenerCount("unhandledRejection") === 1) process.exit(1);
     };
     process.addListener("uncaughtException", listener);
@@ -240,5 +275,3 @@ export class Core {
     };
   }
 }
-
-// Couldn't work on this because of work. Will get back tomorrow.

@@ -28,5 +28,5 @@ export function closeCodewatch() {
 }
 
 export function captureError(err: unknown) {
-  Core.handleError(err, false);
+  Core.captureError(err, false);
 }

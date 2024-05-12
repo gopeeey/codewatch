@@ -18,7 +18,7 @@ beforeEach(() => {
   MockStorage.createInstance();
   const storage = MockStorage.getInstance();
   Core.init(storage, { disableConsoleLogs: false });
-  Core.handleError(testError);
+  Core.captureError(testError);
 });
 
 afterEach(async () => {
