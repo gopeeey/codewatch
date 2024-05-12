@@ -20,4 +20,5 @@ export interface Occurrence {
   timestamp: string;
   stdoutLogs: StdChannelLog[];
   stderrLogs: StdChannelLog[];
+  extraData?: Record<any, any>;
 }
