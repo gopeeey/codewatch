@@ -1,9 +1,12 @@
+import { SideBarContext } from "@lib/contexts";
 import SideBar from "@ui/side_bar";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Layout() {
+  const [showSideBar, setShowSideBar] = useState(true);
   return (
     <div className="flex bg-background min-h-full text-grey-100">
       <ToastContainer
@@ -13,8 +16,13 @@ export default function Layout() {
         newestOnTop={false}
         theme="colored"
       />
-      <SideBar />
-      <Outlet />
+
+      <SideBarContext.Provider
+        value={{ show: showSideBar, setShow: setShowSideBar }}
+      >
+        <SideBar />
+        <Outlet />
+      </SideBarContext.Provider>
     </div>
   );
 }

@@ -39,6 +39,13 @@ export default {
         xs: ["0.68rem", "0.94rem"],
         sm: ["0.835rem", "1.1rem"],
       },
+      keyframes: {
+        shimmer: {
+          "100%": {
+            transform: "translateX(100%)",
+          },
+        },
+      },
     },
   },
   plugins: [],

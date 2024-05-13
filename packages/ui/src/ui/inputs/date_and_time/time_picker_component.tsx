@@ -109,7 +109,7 @@ function RangeSelector({
         <ButtonBase
           key={val}
           onClick={() => scrollToSelect(val)}
-          className="snap-center px-8 hover:bg-primary-400/70 rounded-md transition-everything"
+          className="snap-center px-8 hover:bg-input-background-dark/70 rounded-md transition-everything"
           id={`${id}_${val}`}
         >
           {val}

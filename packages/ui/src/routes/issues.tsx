@@ -9,10 +9,11 @@ import {
   resolveIssues,
   unresolveIssues,
 } from "@lib/data";
+import { generateRange } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
 import { Checkbox, DateRangePicker, Select, TextField } from "@ui/inputs";
-import { IssueCard, IssuesTabs } from "@ui/issues";
+import { IssueCard, IssueCardSkeleton, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
 import moment from "moment";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
@@ -46,6 +47,7 @@ export default function IssuesRoute() {
   const [selectedIds, setSelectedIds] = useState<Issue["id"][]>([]);
   const [openDateRangePicker, setOpenDateRangePicker] =
     useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
   const prevFilterStr = useRef("");
 
   useEffect(() => {
@@ -94,6 +96,7 @@ export default function IssuesRoute() {
     const endDate = searchParams.get("endDate") ?? "";
     if (!startDate || !endDate) return;
 
+    setLoading(true);
     const filters: GetIssuesFilters = {
       searchString: searchParams.get("searchString") ?? "",
       startDate,
@@ -123,7 +126,7 @@ export default function IssuesRoute() {
       perPage: Number(searchParams.get("perPage")) ?? 15,
     });
     if (newIssues != null) setIssues(newIssues);
-
+    setLoading(false);
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -167,8 +170,8 @@ export default function IssuesRoute() {
   return (
     <AppPage title="Issues" cardClassName="px-0 py-0">
       {/* Filters and Tabs */}
-      <div className="px-5 py-6 pr-8 flex justify-between custom-rule">
-        <div className="flex">
+      <div className="px-5 py-6 sm:pr-8 custom-rule flex flex-col justify-start xl:flex-row xl:justify-between">
+        <div className="flex flex-col sm:flex-row">
           <TextField
             inputProps={{
               placeholder: "Search issues",
@@ -176,6 +179,7 @@ export default function IssuesRoute() {
               defaultValue: searchString,
             }}
             startAdornment={<img src={SearchIcon} alt="search" width={14} />}
+            className="w-full sm:w-1/2 xl:w-auto"
           />
 
           <Select
@@ -196,7 +200,7 @@ export default function IssuesRoute() {
               },
             ]}
             value={datePreset}
-            className="ml-5"
+            className="mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto"
             startAdornment={<img src={CalendarIcon} alt="search" width={14} />}
             id="date-range-picker"
           />
@@ -218,16 +222,19 @@ export default function IssuesRoute() {
           onChange={setResolved}
           resolvedCount={0}
           unresolvedCount={unresolvedCount}
-          className="-mb-[3.54rem]"
+          className="mt-6 -mb-[1.547rem] xl:mt-0 xl:-mb-[3.54rem]"
         />
       </div>
 
-      <div className="px-5 py-3 custom-rule flex justify-between pr-8">
+      <div className="px-5 py-5 xl:py-3 custom-rule flex justify-between pr-8">
         {/* Actions */}
         <div className="flex items-center">
           <Checkbox
             label=""
-            checked={issues.every((issue) => selectedIds.includes(issue.id))}
+            checked={
+              Boolean(issues.length) &&
+              issues.every((issue) => selectedIds.includes(issue.id))
+            }
             onClick={() => {
               if (issues.every((issue) => selectedIds.includes(issue.id))) {
                 setSelectedIds([]);
@@ -235,13 +242,29 @@ export default function IssuesRoute() {
                 setSelectedIds(issues.map((issue) => issue.id));
               }
             }}
+            disabled={loading}
           />
+
           {resolved ? (
-            <ActionButton label="Unresolve" onClick={unResIssues} />
+            <ActionButton
+              label="Unresolve"
+              onClick={unResIssues}
+              disabled={loading}
+            />
           ) : (
-            <ActionButton label="Resolve" onClick={resIssues} />
+            <ActionButton
+              label="Resolve"
+              onClick={resIssues}
+              disabled={loading}
+            />
           )}
-          <ActionButton label="Delete" onClick={delIssues} className="ml-3" />
+
+          <ActionButton
+            label="Delete"
+            onClick={delIssues}
+            className="ml-3"
+            disabled={loading}
+          />
         </div>
 
         {/* Table Header */}
@@ -249,22 +272,24 @@ export default function IssuesRoute() {
       </div>
 
       {/* Issues */}
-      {issues.map((issue) => (
-        <IssueCard
-          key={issue.id}
-          issue={issue}
-          selected={selectedIds.includes(issue.id)}
-          onSelect={() => {
-            setSelectedIds((prev) => {
-              if (prev.includes(issue.id)) {
-                return prev.filter((id) => id !== issue.id);
-              } else {
-                return [...prev, issue.id];
-              }
-            });
-          }}
-        />
-      ))}
+      {loading
+        ? generateRange(1, 4).map((num) => <IssueCardSkeleton key={num} />)
+        : issues.map((issue) => (
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              selected={selectedIds.includes(issue.id)}
+              onSelect={() => {
+                setSelectedIds((prev) => {
+                  if (prev.includes(issue.id)) {
+                    return prev.filter((id) => id !== issue.id);
+                  } else {
+                    return [...prev, issue.id];
+                  }
+                });
+              }}
+            />
+          ))}
 
       <div className="py-10 pr-8 flex justify-end">
         <Pagination

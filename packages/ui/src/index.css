@@ -16,9 +16,19 @@
   }
 } */
 
+html {
+  font-size: 13px;
+}
+
+@media only screen and (min-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+}
+
 body {
   letter-spacing: 0.02rem;
-  font-size: 14px;
+  
   font-family: "Poppins", sans-serif;
 }
 
@@ -58,4 +68,5 @@ body {
   .transition-everything {
     @apply transition-all duration-200
   }
+
 }

@@ -3,6 +3,7 @@ import ErrorRedIcon from "@assets/error-red.svg";
 import { Issue } from "@codewatch/types";
 import { quantifyNumber } from "@lib/utils";
 import { Checkbox } from "@ui/inputs/checkbox";
+import { Skeleton } from "@ui/skeleton";
 import moment from "moment";
 
 type Props = { issue: Issue; selected: boolean; onSelect: () => void };
@@ -46,6 +47,28 @@ export function IssueCard({ issue, selected, onSelect }: Props) {
       <span className="text-base text-grey-600">
         {quantifyNumber(issue.totalOccurrences)}
       </span>
+    </div>
+  );
+}
+
+export function IssueCardSkeleton() {
+  return (
+    <div className="flex custom-rule items-center justify-between px-5 py-4 pr-8 transition-all duration-200 hover:bg-input-background-dark cursor-pointer">
+      {/* Details and checkbox */}
+      <div className="flex items-start">
+        <Skeleton className="w-4 h-4" />
+
+        <div className="ml-3">
+          <Skeleton className="w-44 h-5" />
+
+          <Skeleton className="w-72 h-4" containerClassName="mt-2" />
+
+          <Skeleton className="w-40 h-3" containerClassName="mt-2" />
+        </div>
+      </div>
+
+      {/* Occurence count */}
+      <Skeleton className="w-5 h-5" />
     </div>
   );
 }
