@@ -10,7 +10,7 @@ import {
 
 export const appRoutes: AppRoutes = {
   entry: {
-    route: ["/"],
+    route: ["/", "/issues", "/statistics", "/issues/:id"],
     method: "get",
     handler: entryPoint,
   },
