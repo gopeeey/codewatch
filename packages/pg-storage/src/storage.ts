@@ -135,14 +135,18 @@ export class CodewatchPgStorage implements Storage {
         message, 
         timestamp,
         "stdoutLogs",
-        "stderrLogs"
+        "stderrLogs",
+        "extraData",
+        "systemInfo"
       )
       VALUES (
         ${data.issueId}, 
         ${data.message}, 
         ${data.timestamp},
         ${data.stdoutLogs},
-        ${data.stderrLogs}
+        ${data.stderrLogs},
+        ${data.extraData},
+        ${data.systemInfo}
       );
     `);
   };

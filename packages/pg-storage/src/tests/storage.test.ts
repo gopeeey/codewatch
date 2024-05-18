@@ -117,6 +117,14 @@ describe("addOccurrence", () => {
       stdoutLogs: [
         { timestamp: 534564567, message: "something was logged here too" },
       ],
+      extraData: { foo: "bar" },
+      systemInfo: {
+        appMemoryUsage: 1234,
+        appUptime: 1234,
+        deviceMemory: 1234,
+        deviceUptime: 1234,
+        freeMemory: 1234,
+      },
     };
     await storage.addOccurrence(data);
 
