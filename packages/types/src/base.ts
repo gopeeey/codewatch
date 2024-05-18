@@ -14,6 +14,14 @@ export interface Issue {
 
 export type StdChannelLog = { timestamp: number; message: string };
 
+export type SystemInfo = {
+  deviceMemory: number;
+  freeMemory: number;
+  appMemoryUsage: number;
+  deviceUptime: number;
+  appUptime: number;
+};
+
 export interface Occurrence {
   issueId: Issue["id"];
   message: string;
@@ -21,4 +29,5 @@ export interface Occurrence {
   stdoutLogs: StdChannelLog[];
   stderrLogs: StdChannelLog[];
   extraData?: Record<any, any>;
+  systemInfo?: SystemInfo;
 }
