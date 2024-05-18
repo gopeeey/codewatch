@@ -6,13 +6,14 @@ import clsx from "clsx";
 import { useContext } from "react";
 import { ButtonBase } from "./buttons";
 
-type Props = { title: string; className?: string };
-export function AppBar({ title, className }: Props) {
+type Props = { title: string; className?: string; dim?: boolean };
+export function AppBar({ title, className, dim }: Props) {
   const { setShow } = useContext(SideBarContext);
   return (
     <nav
       className={clsx(
-        "px-6 sm:px-0 py-7 flex text-grey-100 text-xl font-bold w-full",
+        "px-6 sm:px-0 py-7 flex text-grey-100 text-xl font-medium w-full",
+        { ["opacity-30"]: dim },
         className
       )}
     >

@@ -246,25 +246,18 @@ export default function IssuesRoute() {
           />
 
           {resolved ? (
-            <ActionButton
-              label="Unresolve"
-              onClick={unResIssues}
-              disabled={loading}
-            />
+            <ActionButton onClick={unResIssues} disabled={loading}>
+              Unresolve
+            </ActionButton>
           ) : (
-            <ActionButton
-              label="Resolve"
-              onClick={resIssues}
-              disabled={loading}
-            />
+            <ActionButton onClick={resIssues} disabled={loading}>
+              Resolve
+            </ActionButton>
           )}
 
-          <ActionButton
-            label="Delete"
-            onClick={delIssues}
-            className="ml-3"
-            disabled={loading}
-          />
+          <ActionButton onClick={delIssues} className="ml-3" disabled={loading}>
+            Delete
+          </ActionButton>
         </div>
 
         {/* Table Header */}
