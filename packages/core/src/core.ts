@@ -1,5 +1,12 @@
-import { Issue, Occurrence, StdChannelLog, Storage } from "@codewatch/types";
+import {
+  Issue,
+  Occurrence,
+  StdChannelLog,
+  Storage,
+  SystemInfo,
+} from "@codewatch/types";
 import { createHash } from "crypto";
+import os from "os";
 import { format } from "util";
 
 export type CoreOptions = {
@@ -113,6 +120,7 @@ export class Core {
       stderrLogs,
       stdoutLogs,
       extraData,
+      systemInfo: instance._getSysInfo(),
     });
 
     await instance._storage.updateLastOccurrenceOnIssue({
@@ -273,5 +281,17 @@ export class Core {
       process.removeListener("uncaughtException", listener);
       process.removeListener("unhandledRejection", rejectionListener);
     };
+  }
+
+  private _getSysInfo() {
+    const sysInfo: SystemInfo = {
+      deviceMemory: os.totalmem(),
+      freeMemory: os.freemem(),
+      appMemoryUsage: process.memoryUsage.rss(),
+      deviceUptime: os.uptime(),
+      appUptime: process.uptime(),
+    };
+
+    return sysInfo;
   }
 }
