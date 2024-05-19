@@ -144,7 +144,7 @@ export default function IssueDetails() {
           </div>
         </div>
       }
-      cardClassName="!p-0"
+      cardClassName="!p-0 overflow-hidden"
     >
       <div className="py-6 px-5 flex justify-between custom-rule">
         {dateRangeElement}{" "}
