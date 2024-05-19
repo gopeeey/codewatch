@@ -1,4 +1,3 @@
-import CalendarIcon from "@assets/calendar.svg";
 import SearchIcon from "@assets/search.svg";
 import { GetIssuesFilters, Issue } from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
@@ -12,21 +11,20 @@ import {
 import { generateRange } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
-import { Checkbox, DateRangePicker, Select, TextField } from "@ui/inputs";
+import { Checkbox, TextField, useDateRange } from "@ui/inputs";
 import { IssueCard, IssueCardSkeleton, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
-import moment from "moment";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-
-type DatePreset = "1" | "2" | "3" | "4";
 
 export default function IssuesRoute() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [searchParams, setSearchParams] = useSearchParams({});
-  const [datePreset, setDatePreset] = useState<DatePreset>(
-    dateToPreset(searchParams.get("startDate"), searchParams.get("endDate"))
-  );
+  const { startDate, endDate, dateRangeElement } = useDateRange({
+    initialStartDate: searchParams.get("startDate"),
+    initialEndDate: searchParams.get("endDate"),
+    selectClassName: "mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto",
+  });
   const [resolved, setResolved] = useState<Issue["resolved"]>(
     searchParams.get("resolved") == "true"
   );
@@ -37,25 +35,9 @@ export default function IssuesRoute() {
   const [perPage] = useState(Number(searchParams.get("perPage") ?? 15));
   const [resolvedCount, setResolvedCount] = useState(0);
   const [unresolvedCount, setUnresolvedCount] = useState(0);
-  const [startDate, setStartDate] = useState(
-    searchParams.get("startDate") ??
-      (Date.now() - 3 * 24 * 60 * 60 * 1000).toString()
-  );
-  const [endDate, setEndDate] = useState(
-    searchParams.get("endDate") ?? Date.now().toString()
-  );
   const [selectedIds, setSelectedIds] = useState<Issue["id"][]>([]);
-  const [openDateRangePicker, setOpenDateRangePicker] =
-    useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const prevFilterStr = useRef("");
-
-  useEffect(() => {
-    if (datePreset !== "4") {
-      setStartDate(presetToDate(datePreset));
-      setEndDate(Date.now().toString());
-    }
-  }, [datePreset]);
 
   const submit = useCallback(() => {
     if (
@@ -182,39 +164,7 @@ export default function IssuesRoute() {
             className="w-full sm:w-1/2 xl:w-auto"
           />
 
-          <Select
-            onChange={(val) => setDatePreset(val as DatePreset)}
-            options={[
-              { display: "Last 24 hours", value: "1" },
-              { display: "Last 3 days", value: "2" },
-              { display: "Last 7 days", value: "3" },
-              {
-                display: `${moment(Number(startDate)).format(
-                  "DD MMM, YYYY h:mm:ss A"
-                )} - ${moment(Number(endDate)).format(
-                  "DD MMM, YYYY h:mm:ss A"
-                )}`,
-                listDisplay: "Custom",
-                value: "4",
-                onSelect: () => setOpenDateRangePicker(true),
-              },
-            ]}
-            value={datePreset}
-            className="mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto"
-            startAdornment={<img src={CalendarIcon} alt="search" width={14} />}
-            id="date-range-picker"
-          />
-
-          <DateRangePicker
-            open={openDateRangePicker}
-            onClose={() => setOpenDateRangePicker(false)}
-            defaultStartDate={new Date(Number(startDate)).toISOString()}
-            defaultEndDate={new Date(Number(endDate)).toISOString()}
-            onChange={(start, end) => {
-              setStartDate(new Date(start).getTime().toString());
-              setEndDate(new Date(end).getTime().toString());
-            }}
-          />
+          {dateRangeElement}
         </div>
 
         <IssuesTabs
@@ -294,37 +244,4 @@ export default function IssuesRoute() {
       </div>
     </AppPage>
   );
-}
-
-function dateToPreset(startDate?: string | null, endDate?: string | null) {
-  if (!startDate) return "2";
-  const now = Date.now();
-  if (endDate && Number(endDate) !== now) return "4";
-  const diff = now - new Date(startDate).getTime();
-
-  switch (diff) {
-    case 24 * 60 * 60 * 1000:
-      return "1";
-    case 3 * 24 * 60 * 60 * 1000:
-      return "2";
-    case 7 * 24 * 60 * 60 * 1000:
-      return "3";
-    default:
-      return "4";
-  }
-}
-
-function presetToDate(preset: ReturnType<typeof dateToPreset>) {
-  const now = Date.now();
-
-  switch (preset) {
-    case "1":
-      return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
-    case "2":
-      return new Date(now - 3 * 24 * 60 * 60 * 1000).getTime().toString();
-    case "3":
-      return new Date(now - 7 * 24 * 60 * 60 * 1000).getTime().toString();
-    default:
-      return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
-  }
 }

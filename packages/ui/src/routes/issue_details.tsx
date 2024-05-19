@@ -2,11 +2,16 @@ import ArchiveIcon from "@assets/archive-tiny.svg";
 import ClockIcon from "@assets/clock.svg";
 import DeleteIcon from "@assets/delete-tiny.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
+import { Occurrence } from "@codewatch/types";
 import { AppPage } from "@ui/app_page";
 import { ActionButton, Button, ButtonBase } from "@ui/buttons";
+import { useDateRange } from "@ui/inputs";
+import { OccurrenceDetails } from "@ui/issues";
 import moment from "moment";
+import { nanoid } from "nanoid";
+import { useSearchParams } from "react-router-dom";
 
-const issue = {
+const testIssue = {
   fingerprint: "2345678",
   id: "2345678",
   lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
@@ -21,7 +26,51 @@ const issue = {
   resolved: false,
 };
 
+interface UiOccurrence extends Occurrence {
+  id: string;
+}
+
+const testOccurrences: UiOccurrence[] = [
+  {
+    id: nanoid(),
+    issueId: "1",
+    message: "Something went wrong",
+    stderrLogs: [],
+    stdoutLogs: [],
+    timestamp: "2024-04-10T13:59:33.021Z",
+    extraData: { foo: "bar" },
+    systemInfo: {
+      appMemoryUsage: 1234,
+      appUptime: 1234,
+      deviceMemory: 1234,
+      deviceUptime: 1234,
+      freeMemory: 1234,
+    },
+  },
+  {
+    id: nanoid(),
+    issueId: "1",
+    message: "Another thing went right though",
+    stderrLogs: [],
+    stdoutLogs: [],
+    timestamp: "2024-04-10T13:59:33.021Z",
+    extraData: { foo: "bar" },
+    systemInfo: {
+      appMemoryUsage: 1234,
+      appUptime: 1234,
+      deviceMemory: 1234,
+      deviceUptime: 1234,
+      freeMemory: 1234,
+    },
+  },
+];
+
 export default function IssueDetails() {
+  const [searchParams] = useSearchParams({});
+  const { dateRangeElement } = useDateRange({
+    initialStartDate: searchParams.get("startDate"),
+    initialEndDate: searchParams.get("endDate"),
+  });
   return (
     <AppPage
       title="Issues"
@@ -31,7 +80,7 @@ export default function IssueDetails() {
           <div className="flex justify-between">
             <div className="grow">
               <ButtonBase
-                className="text-primary-400 font-medium"
+                className="text-primary-400 font-medium text-[0.9rem]"
                 onClick={() => window.history.back()}
               >
                 &#60; Back to list
@@ -41,19 +90,19 @@ export default function IssueDetails() {
               </h5>
             </div>
 
-            <Button className="px-9 py-3 h-fit rounded-[0.9em] text-[0.9rem]">
+            <Button className="px-9 py-3 h-fit rounded-xl text-[0.9rem]">
               Resolve
             </Button>
           </div>
 
-          <div className="text-[0.72rem] flex mt-3">
+          <div className="text-[0.76rem] flex mt-3">
             <span className="flex text-grey-800">
               <img src={ClockIcon} alt="clock" width={11} className="mr-1" />
-              {moment(issue.lastOccurrenceTimestamp).fromNow()} |{" "}
-              {moment(issue.createdAt).fromNow(true)} old
+              {moment(testIssue.lastOccurrenceTimestamp).fromNow()} |{" "}
+              {moment(testIssue.createdAt).fromNow(true)} old
             </span>
 
-            {issue.unhandled ? (
+            {testIssue.unhandled ? (
               <span className="flex ml-3 text-error-bright">
                 <img
                   src={ErrorRedIcon}
@@ -95,8 +144,19 @@ export default function IssueDetails() {
           </div>
         </div>
       }
+      cardClassName="!p-0"
     >
-      Hello
+      <div className="py-6 px-5 flex justify-between custom-rule">
+        {dateRangeElement}{" "}
+        <div className="text-grey-600 flex flex-col items-center">
+          <span className="text-sm">Occurrences</span>{" "}
+          <span className="text-xl mt-1">3k</span>
+        </div>
+      </div>
+
+      {testOccurrences.map((occurrence) => (
+        <OccurrenceDetails key={occurrence.id} occurrence={occurrence} />
+      ))}
     </AppPage>
   );
 }
