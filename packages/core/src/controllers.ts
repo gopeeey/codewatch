@@ -2,10 +2,13 @@ import {
   Controller,
   DeleteIssues,
   ErrorHandler,
+  GetIssueByIdResponse,
   GetIssuesFilters,
   GetIssuesTotalResponse,
   GetPaginatedIssuesFilters,
   GetPaginatedIssuesResponse,
+  GetPaginatedOccurrencesFilters,
+  GetPaginatedOccurrencesResponse,
   ResolveIssues,
   ViewController,
 } from "@codewatch/types";
@@ -16,6 +19,25 @@ export const getPaginatedIssues: Controller<
 > = async (req, deps) => {
   const issues = await deps.storage.getPaginatedIssues(req.body);
   return { status: 200, body: { data: { issues } } };
+};
+
+export const getPaginatedOccurrences: Controller<
+  GetPaginatedOccurrencesResponse,
+  GetPaginatedOccurrencesFilters
+> = async (req, deps) => {
+  const occurrences = await deps.storage.getPaginatedOccurrences(req.body);
+  return { status: 200, body: { data: { occurrences } } };
+};
+
+export const getIssueById: Controller<
+  GetIssueByIdResponse,
+  {},
+  {},
+  { id: string }
+> = async (req, deps) => {
+  const issue = await deps.storage.findIssueById(req.params.id);
+  if (!issue) return { status: 404 };
+  return { status: 200, body: { data: { issue } } };
 };
 
 export const getIssuesTotal: Controller<

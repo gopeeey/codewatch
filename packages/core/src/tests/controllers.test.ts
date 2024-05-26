@@ -1,16 +1,23 @@
-import { GetIssuesFilters, GetPaginatedIssuesFilters } from "@codewatch/types";
+import {
+  GetIssuesFilters,
+  GetPaginatedIssuesFilters,
+  GetPaginatedOccurrencesFilters,
+} from "@codewatch/types";
 import fs from "fs";
 import {
   deleteIssues,
   entryPoint,
   errorHandler,
+  getIssueById,
   getIssuesTotal,
   getPaginatedIssues,
+  getPaginatedOccurrences,
   resolveIssues,
   unresolveIssues,
 } from "../controllers";
 import { Core } from "../core";
 import { MockStorage } from "./mock_storage";
+import { testIssueArray } from "./samples";
 
 const testError = new Error("Hello world");
 
@@ -41,6 +48,41 @@ describe("getPaginatedIssues", () => {
     );
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ data: { issues: storage.issues } });
+  });
+});
+
+describe("getPaginatedOccurrences", () => {
+  it("should return a 200 and an array of occurrences", async () => {
+    const filters: GetPaginatedOccurrencesFilters = {
+      startDate: "2020-01-01",
+      endDate: "2020-01-01",
+      issueId: "1",
+      page: 1,
+      perPage: 10,
+    };
+
+    const storage = MockStorage.getInstance();
+    const response = await getPaginatedOccurrences(
+      { body: filters, query: {}, params: {} },
+      { storage }
+    );
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: { occurrences: storage.occurrences },
+    });
+  });
+});
+
+describe("getIssueById", () => {
+  it("should return a 200 and an issue object", async () => {
+    const storage = MockStorage.getInstance();
+    storage.issues = testIssueArray;
+    const response = await getIssueById(
+      { params: { id: testIssueArray[0].id }, body: {}, query: {} },
+      { storage }
+    );
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ data: { issue: testIssueArray[0] } });
   });
 });
 
