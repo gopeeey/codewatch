@@ -6,12 +6,17 @@ import {
   GetPaginatedIssuesResponse,
   Issue,
   ResolveIssues,
+  StdChannelLog,
   UnresolveIssues,
 } from "@codewatch/types";
 import { HttpClient } from "@lib/http_client";
 
 const client = new HttpClient({ baseUrl: "/issues" });
 const isDev = import.meta.env.MODE === "development";
+
+export interface StdChannelLogWithId extends StdChannelLog {
+  id: string;
+}
 
 export async function getIssues(filters: GetPaginatedIssuesFilters) {
   if (isDev) {

@@ -28,7 +28,7 @@ html {
 
 body {
   letter-spacing: 0.02rem;
-  
+
   font-family: "Poppins", sans-serif;
 }
 
@@ -52,7 +52,17 @@ body {
 
   .mask-timer {
     -webkit-mask-image: linear-gradient(black, transparent);
-    mask-image: linear-gradient(transparent, rgba(0, 0, 0, 0.2), black, rgba(0, 0, 0, 0.2), transparent);
+    mask-image: linear-gradient(
+      transparent,
+      rgba(0, 0, 0, 0.2),
+      black,
+      rgba(0, 0, 0, 0.2),
+      transparent
+    );
+  }
+
+  .custom-shadow {
+    box-shadow: 0em 0.2em 10px 1px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -66,7 +76,6 @@ body {
   }
 
   .transition-everything {
-    @apply transition-all duration-200
+    @apply transition-all duration-200;
   }
-
 }
