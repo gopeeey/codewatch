@@ -19,7 +19,7 @@ export interface Storage {
   findIssueById: (id: Issue["id"]) => Promise<Issue | null>;
   close: () => Promise<void>;
   getPaginatedIssues: (filters: GetPaginatedIssuesFilters) => Promise<Issue[]>;
-  getPaginatedOccurrenes: (
+  getPaginatedOccurrences: (
     filters: GetPaginatedOccurrencesFilters
   ) => Promise<Occurrence[]>;
   getIssuesTotal: (filters: GetIssuesFilters) => Promise<number>;
