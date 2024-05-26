@@ -90,4 +90,14 @@ export class MockStorage implements Storage {
       this._updateIssueById(issueId, { resolved: false });
     });
   };
+
+  findIssueById: Storage["findIssueById"] = async (id) => {
+    return this.issues.find((issue) => issue.id === id) || null;
+  };
+
+  getPaginatedOccurrences: Storage["getPaginatedOccurrences"] = async (
+    filters
+  ) => {
+    return this.occurrences;
+  };
 }
