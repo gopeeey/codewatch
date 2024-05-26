@@ -1,7 +1,7 @@
 import ChevronDownIcon from "@assets/chevron-down.svg";
 import ClockIcon from "@assets/clock.svg";
-import { Occurrence, SystemInfo } from "@codewatch/types";
-import { StdChannelLogWithId } from "@lib/data";
+import { Occurrence } from "@codewatch/types";
+import { OccurrenceWithId } from "@lib/data";
 import { displayDuration, displayMemory } from "@lib/utils";
 import clsx from "clsx";
 import moment from "moment";
@@ -11,42 +11,7 @@ import "react18-json-view/src/style.css";
 import { InfoCard } from "./info_card";
 
 type Props = {
-  occurrence: Occurrence;
-};
-
-const exampleJson = {
-  name: "example",
-  version: "1.0.0",
-  description: "Example",
-  number: 123,
-  main: "index.js",
-  scripts: {
-    test: 'echo "Error: no test specified" && exit 1',
-  },
-  keywords: ["dog", "cat", "cow"],
-  author: "",
-  license: "ISC",
-};
-
-const exampleLogs: StdChannelLogWithId[] = [
-  {
-    id: "1",
-    timestamp: 1716627173037,
-    message: `INTERNAL ERROR: Something went wrong\n at main (c:\\Users\\Me\\Documents\\MyApp\\app.js:9:15)\n at Object. (c:\\Users\\Me\\Documents\\MyApp\\app.js:17:1)\n at Module._compile (module.js:460:26)\n at Object.Module._extensions..js (module.js:478:10)\n at Module.load (module.js:355:32)\n at Function.Module._load (module.js:310:12)\n at Function.Module.runMain (module.js:501:10)\n at startup (node.js:129:16)\n at node.js:814:3`,
-  },
-  {
-    id: "2",
-    timestamp: 1716627175089,
-    message: "Something went wrong just now",
-  },
-];
-
-const exampleSysInfo: SystemInfo = {
-  appMemoryUsage: 1234,
-  appUptime: 1234,
-  deviceMemory: 789879,
-  deviceUptime: 1,
-  freeMemory: 1234,
+  occurrence: OccurrenceWithId;
 };
 
 const normalPadding = "py-4 px-5";
@@ -87,61 +52,69 @@ export function OccurrenceDetails({ occurrence }: Props) {
         })}
       >
         <div className="p-5">
-          <InfoCard title="Manually Captured Data">
-            <JsonView src={exampleJson} />
-          </InfoCard>
+          {occurrence.extraData ? (
+            <InfoCard title="Manually Captured Data">
+              <JsonView src={occurrence.extraData} />
+            </InfoCard>
+          ) : null}
 
-          <InfoCard title="Stdout logs" className="mt-12">
-            <div className="mt-2">
-              {exampleLogs.map((log) => (
-                <div key={log.id} className="mb-8">
-                  <LogBlock log={log} />
-                </div>
-              ))}
-            </div>
-          </InfoCard>
+          {occurrence.stdoutLogs.length > 0 ? (
+            <InfoCard title="Stdout logs" className="mt-12">
+              <div className="mt-2">
+                {occurrence.stdoutLogs.map((log) => (
+                  <div key={log.id} className="mb-8">
+                    <LogBlock log={log} />
+                  </div>
+                ))}
+              </div>
+            </InfoCard>
+          ) : null}
 
-          <InfoCard title="Stderr logs" className="mt-12">
-            <div className="mt-2">
-              {exampleLogs.map((log) => (
-                <div key={log.id} className="mb-8">
-                  <LogBlock log={log} />
-                </div>
-              ))}
-            </div>
-          </InfoCard>
+          {occurrence.stderrLogs.length > 0 ? (
+            <InfoCard title="Stderr logs" className="mt-12">
+              <div className="mt-2">
+                {occurrence.stderrLogs.map((log) => (
+                  <div key={log.id} className="mb-8">
+                    <LogBlock log={log} />
+                  </div>
+                ))}
+              </div>
+            </InfoCard>
+          ) : null}
 
-          <InfoCard title="System Info" className="mt-12">
-            <div className="py-1">
-              {[
-                {
-                  name: "Device Memory",
-                  value: displayMemory(exampleSysInfo.deviceMemory),
-                },
-                {
-                  name: "Free Memory",
-                  value: displayMemory(exampleSysInfo.freeMemory),
-                },
-                {
-                  name: "App Memory Usage",
-                  value: displayMemory(exampleSysInfo.appMemoryUsage),
-                },
-                {
-                  name: "Device Uptime",
-                  value: displayDuration(exampleSysInfo.deviceUptime),
-                },
-                {
-                  name: "App Uptime",
-                  value: displayDuration(exampleSysInfo.appUptime),
-                },
-              ].map((info) => (
-                <div key={info.name} className="mb-2">
-                  <span className="text-grey-600">{info.name}</span>
-                  <span className="pl-2 text-white">{info.value}</span>
-                </div>
-              ))}
-            </div>
-          </InfoCard>
+          {occurrence.systemInfo ? (
+            <InfoCard title="System Info" className="mt-12">
+              <div className="py-1">
+                {[
+                  {
+                    name: "Device Memory",
+                    value: displayMemory(occurrence.systemInfo.deviceMemory),
+                  },
+                  {
+                    name: "Free Memory",
+                    value: displayMemory(occurrence.systemInfo.freeMemory),
+                  },
+                  {
+                    name: "App Memory Usage",
+                    value: displayMemory(occurrence.systemInfo.appMemoryUsage),
+                  },
+                  {
+                    name: "Device Uptime",
+                    value: displayDuration(occurrence.systemInfo.deviceUptime),
+                  },
+                  {
+                    name: "App Uptime",
+                    value: displayDuration(occurrence.systemInfo.appUptime),
+                  },
+                ].map((info) => (
+                  <div key={info.name} className="mb-2">
+                    <span className="text-grey-600">{info.name}</span>
+                    <span className="pl-2 text-white">{info.value}</span>
+                  </div>
+                ))}
+              </div>
+            </InfoCard>
+          ) : null}
         </div>
       </div>
     </div>

@@ -3,7 +3,9 @@ import ChevronDownIcon from "@assets/chevron-down.svg";
 import ClockIcon from "@assets/clock.svg";
 import DeleteIcon from "@assets/delete-tiny.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
-import { Occurrence } from "@codewatch/types";
+import { GetPaginatedOccurrencesFilters, Issue } from "@codewatch/types";
+import { OccurrenceWithId, getIssue, getOccurrences } from "@lib/data";
+import { quantifyNumber } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton, Button, ButtonBase } from "@ui/buttons";
 import { useDateRange } from "@ui/inputs";
@@ -11,73 +13,116 @@ import { OccurrenceDetails } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
 import clsx from "clsx";
 import moment from "moment";
-import { nanoid } from "nanoid";
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 
-const testIssue = {
-  fingerprint: "2345678",
-  id: "2345678",
-  lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
-  lastOccurrenceMessage: "That's why this dashboard exists",
-  muted: false,
-  name: "It has crashed oooo!!!",
-  stack:
-    "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)\n at main (c:\\Users\\Me\\Documents\\MyApp\\app.js:9:15)\n at Object. (c:\\Users\\Me\\Documents\\MyApp\\app.js:17:1)\n at Module._compile (module.js:460:26)\n at Object.Module._extensions..js (module.js:478:10)\n at Module.load (module.js:355:32)\n at Function.Module._load (module.js:310:12)\n at Function.Module.runMain (module.js:501:10)\n at startup (node.js:129:16)\n at node.js:814:3",
-  totalOccurrences: 230,
-  unhandled: true,
-  createdAt: "2024-04-10T13:59:33.021Z",
-  resolved: false,
-};
-
-interface UiOccurrence extends Occurrence {
-  id: string;
-}
-
-const testOccurrences: UiOccurrence[] = [
-  {
-    id: nanoid(),
-    issueId: "1",
-    message: "Something went wrong",
-    stderrLogs: [],
-    stdoutLogs: [],
-    timestamp: "2024-04-10T13:59:33.021Z",
-    extraData: { foo: "bar" },
-    systemInfo: {
-      appMemoryUsage: 1234,
-      appUptime: 1234,
-      deviceMemory: 1234,
-      deviceUptime: 1234,
-      freeMemory: 1234,
-    },
-  },
-  {
-    id: nanoid(),
-    issueId: "1",
-    message: "Another thing went right though",
-    stderrLogs: [],
-    stdoutLogs: [],
-    timestamp: "2024-04-10T13:59:33.021Z",
-    extraData: { foo: "bar" },
-    systemInfo: {
-      appMemoryUsage: 1234,
-      appUptime: 1234,
-      deviceMemory: 1234,
-      deviceUptime: 1234,
-      freeMemory: 1234,
-    },
-  },
-];
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 15;
 
 export default function IssueDetails() {
-  const [searchParams] = useSearchParams({});
-  const { dateRangeElement } = useDateRange({
+  const [searchParams, setSearchParams] = useSearchParams({});
+  const urlParams = useParams<{ issueId: string }>();
+  const {
+    startDate,
+    endDate,
+    setStartDate,
+    setEndDate,
+    setDatePreset,
+    dateRangeElement,
+  } = useDateRange({
     initialStartDate: searchParams.get("startDate"),
     initialEndDate: searchParams.get("endDate"),
   });
-  const [page, setPage] = useState(Number(searchParams.get("page") ?? 1));
-  const [perPage] = useState(Number(searchParams.get("perPage") ?? 15));
+  const [page, setPage] = useState(
+    Number(searchParams.get("page") ?? DEFAULT_PAGE)
+  );
+  const [perPage] = useState(
+    Number(searchParams.get("perPage") ?? DEFAULT_PAGE_SIZE)
+  );
   const [stackOpen, setStackOpen] = useState(false);
+  const [issue, setIssue] = useState<Issue | null>(null);
+  const [occurrences, setOccurrences] = useState<OccurrenceWithId[]>([]);
+  const occurrencesRef = useRef<string | null>(null);
+  const issueRef = useRef<string | null>(null);
+
+  const fetchIssue = useCallback(async () => {
+    if (!urlParams.issueId || issueRef.current == urlParams.issueId) return;
+    const issue = await getIssue(urlParams.issueId);
+    if (!issue) return;
+    setIssue(issue);
+    issueRef.current = urlParams.issueId;
+    const startDateParam = searchParams.get("startDate");
+    const endDateParam = searchParams.get("endDate");
+    if (!startDateParam || !endDateParam) {
+      setDatePreset("4");
+      setStartDate(`${new Date(issue.createdAt).getTime()}`);
+      setEndDate(`${Date.now()}`);
+    }
+  }, [urlParams, searchParams, setStartDate, setEndDate, setDatePreset]);
+
+  const fetchOccurrences = useCallback(async () => {
+    if (!issue) return;
+
+    const filterStartDate = searchParams.get("startDate") ?? issue.createdAt;
+    const filterEndDate =
+      searchParams.get("endDate") ?? new Date().toISOString();
+    const page = Number(searchParams.get("page")) ?? DEFAULT_PAGE;
+    const perPage = Number(searchParams.get("perPage")) ?? DEFAULT_PAGE_SIZE;
+
+    const filters: GetPaginatedOccurrencesFilters = {
+      issueId: issue.id,
+      startDate: filterStartDate,
+      endDate: filterEndDate,
+      page,
+      perPage,
+    };
+
+    const serialized = JSON.stringify(filters);
+    if (serialized === occurrencesRef.current) return;
+
+    const resOccurrences = await getOccurrences(filters);
+    if (resOccurrences == null) return;
+    setOccurrences(resOccurrences);
+    occurrencesRef.current = serialized;
+  }, [issue, searchParams]);
+
+  const submit = useCallback(() => {
+    if (
+      (searchParams.get("startDate") !== startDate ||
+        searchParams.get("endDate") !== endDate) &&
+      page !== 1
+    ) {
+      return setPage(1);
+    }
+
+    setSearchParams(
+      {
+        page: page.toString(),
+        perPage: perPage.toString(),
+        startDate,
+        endDate,
+      },
+      { replace: true }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, perPage, startDate, endDate, searchParams]);
+
+  useEffect(() => {
+    submit();
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, perPage, startDate, endDate]);
+
+  useEffect(() => {
+    console.log("fetching occurrences");
+    fetchOccurrences();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, issue]);
+
+  useEffect(() => {
+    fetchIssue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlParams]);
+  if (!issue) return null;
   return (
     <AppPage
       title="Issues"
@@ -93,7 +138,7 @@ export default function IssueDetails() {
                 &#60; Back to list
               </ButtonBase>
               <h5 className="text-[1.75rem] font-medium m-0 p-0 leading-none">
-                Unhandled Promise Rejection. This is an issue
+                {issue.name}
               </h5>
             </div>
 
@@ -105,11 +150,11 @@ export default function IssueDetails() {
           <div className="text-[0.76rem] flex mt-3">
             <span className="flex text-grey-800">
               <img src={ClockIcon} alt="clock" width={11} className="mr-1" />
-              {moment(testIssue.lastOccurrenceTimestamp).fromNow()} |{" "}
-              {moment(testIssue.createdAt).fromNow(true)} old
+              {moment(issue.lastOccurrenceTimestamp).fromNow()} |{" "}
+              {moment(issue.createdAt).fromNow(true)} old
             </span>
 
-            {testIssue.unhandled ? (
+            {issue.unhandled ? (
               <span className="flex ml-3 text-error-bright">
                 <img
                   src={ErrorRedIcon}
@@ -172,7 +217,7 @@ export default function IssueDetails() {
                 }
               )}
             >
-              {testIssue.stack.split("\n").map((line, index) => (
+              {issue.stack.split("\n").map((line, index) => (
                 <div key={index} className="mb-1">
                   {line}
                 </div>
@@ -187,11 +232,13 @@ export default function IssueDetails() {
         {dateRangeElement}{" "}
         <div className="text-grey-600 flex flex-col items-center">
           <span className="text-sm">Occurrences</span>{" "}
-          <span className="text-xl mt-1">3k</span>
+          <span className="text-xl mt-1">
+            {quantifyNumber(issue.totalOccurrences)}
+          </span>
         </div>
       </div>
 
-      {testOccurrences.map((occurrence) => (
+      {occurrences.map((occurrence) => (
         <OccurrenceDetails key={occurrence.id} occurrence={occurrence} />
       ))}
 
@@ -199,7 +246,7 @@ export default function IssueDetails() {
         <Pagination
           page={page}
           perPage={perPage}
-          totalRows={343}
+          totalRows={issue.totalOccurrences}
           onChange={setPage}
         />
       </div>

@@ -21,7 +21,7 @@ const routes: RouteObject[] = [
         Component: StatisticsRoute,
       },
       {
-        path: "/issues/:id",
+        path: "/issues/:issueId",
         Component: IssueDetails,
       },
     ],
