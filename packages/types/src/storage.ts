@@ -1,5 +1,9 @@
 import { Issue, Occurrence } from "./base";
-import { GetIssuesFilters, GetPaginatedIssuesFilters } from "./requests";
+import {
+  GetIssuesFilters,
+  GetPaginatedIssuesFilters,
+  GetPaginatedOccurrencesFilters,
+} from "./requests";
 
 export interface Storage {
   ready: boolean;
@@ -12,8 +16,12 @@ export interface Storage {
   findIssueIdByFingerprint: (
     fingerprint: Issue["fingerprint"]
   ) => Promise<Issue["id"] | null>;
+  findIssueById: (id: Issue["id"]) => Promise<Issue | null>;
   close: () => Promise<void>;
   getPaginatedIssues: (filters: GetPaginatedIssuesFilters) => Promise<Issue[]>;
+  getPaginatedOccurrenes: (
+    filters: GetPaginatedOccurrencesFilters
+  ) => Promise<Occurrence[]>;
   getIssuesTotal: (filters: GetIssuesFilters) => Promise<number>;
   deleteIssues: (issueIds: Issue["id"][]) => Promise<void>;
   resolveIssues: (issueIds: Issue["id"][]) => Promise<void>;
