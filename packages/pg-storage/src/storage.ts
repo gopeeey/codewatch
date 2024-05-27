@@ -1,4 +1,4 @@
-import { Issue, Storage } from "@codewatch/types";
+import { Issue, Occurrence, Storage } from "@codewatch/types";
 import fs from "fs";
 import path from "path";
 import { Pool, PoolConfig, types as pgTypes } from "pg";
@@ -266,5 +266,29 @@ export class CodewatchPgStorage implements Storage {
     await this._pool.query(SQL`
       UPDATE codewatch_pg_issues SET resolved = false WHERE id = ANY(${issueIds});
     `);
+  };
+
+  findIssueById: Storage["findIssueById"] = async (id) => {
+    const { rows } = await this._pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${Number(id)};`
+    );
+    if (!rows.length) return null;
+    return this._standardizeIssues(rows)[0];
+  };
+
+  getPaginatedOccurrences: Storage["getPaginatedOccurrences"] = async (
+    filters
+  ) => {
+    const offset = (filters.page - 1) * filters.perPage;
+    const query = SQL`
+    SELECT * FROM codewatch_pg_occurrences 
+    WHERE "issueId" = ${Number(filters.issueId)}
+    AND timestamp >= ${new Date(filters.startDate)}
+    AND timestamp <= ${new Date(filters.endDate)}
+    ORDER BY timestamp DESC OFFSET ${offset} LIMIT ${filters.perPage};
+    `;
+
+    const { rows } = await this._pool.query<Occurrence>(query);
+    return rows;
   };
 }

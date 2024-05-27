@@ -18,6 +18,12 @@ export const dbSetup = () => {
   afterEach(async () => {
     // Truncate each table except migrations
     await pool.query(SQL`TRUNCATE codewatch_pg_issues CASCADE;`);
+    await pool.query(
+      SQL`ALTER SEQUENCE codewatch_pg_issues_id_seq RESTART WITH 1;`
+    );
+    await pool.query(
+      SQL`ALTER SEQUENCE codewatch_pg_occurrences_id_seq RESTART WITH 1;`
+    );
     await pool.query(SQL`TRUNCATE codewatch_pg_occurrences CASCADE;`);
   }, 5000);
 

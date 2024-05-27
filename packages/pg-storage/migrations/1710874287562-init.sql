@@ -19,7 +19,7 @@ CREATE INDEX IF NOT EXISTS codewatch_pg_issues_name_idx ON codewatch_pg_issues U
 CREATE INDEX IF NOT EXISTS codewatch_pg_issues_created_at_idx ON codewatch_pg_issues ("createdAt");
 
 CREATE TABLE IF NOT EXISTS codewatch_pg_occurrences (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     "issueId" INTEGER NOT NULL,
     message TEXT DEFAULT '',
     timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
