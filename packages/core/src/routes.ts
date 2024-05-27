@@ -2,8 +2,10 @@ import { AppRoutes } from "@codewatch/types";
 import {
   deleteIssues,
   entryPoint,
+  getIssueById,
   getIssuesTotal,
   getPaginatedIssues,
+  getPaginatedOccurrences,
   resolveIssues,
   unresolveIssues,
 } from "./controllers";
@@ -19,6 +21,11 @@ export const appRoutes: AppRoutes = {
       route: "/api/issues",
       method: "post",
       handler: getPaginatedIssues,
+    },
+    {
+      route: "/api/issues/:id",
+      method: "get",
+      handler: getIssueById,
     },
     {
       route: "/api/issues/total",
@@ -39,6 +46,12 @@ export const appRoutes: AppRoutes = {
       route: "/api/issues/unresolve",
       method: "put",
       handler: unresolveIssues,
+    },
+
+    {
+      route: "/api/occurrences",
+      method: "post",
+      handler: getPaginatedOccurrences,
     },
   ],
 };
