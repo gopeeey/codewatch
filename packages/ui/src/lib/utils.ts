@@ -61,7 +61,10 @@ export function displayMemory(bytes: number) {
 }
 
 export function displayDuration(seconds: number) {
-  if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
+  if (seconds < 60)
+    return `${Math.floor(seconds)} second${
+      Math.floor(seconds) === 1 ? "" : "s"
+    }`;
 
   if (seconds < 60 * 60) {
     const mins = Math.floor(seconds / 60);

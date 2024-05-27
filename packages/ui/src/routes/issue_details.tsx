@@ -43,22 +43,18 @@ export default function IssueDetails() {
   const [issue, setIssue] = useState<Issue | null>(null);
   const [occurrences, setOccurrences] = useState<OccurrenceWithId[]>([]);
   const occurrencesRef = useRef<string | null>(null);
-  const issueRef = useRef<string | null>(null);
+  const urlParamsRef = useRef<string | null>(null);
 
   const fetchIssue = useCallback(async () => {
-    if (!urlParams.issueId || issueRef.current == urlParams.issueId) return;
+    if (!urlParams.issueId || urlParamsRef.current == urlParams.issueId) return;
+    urlParamsRef.current = urlParams.issueId;
     const issue = await getIssue(urlParams.issueId);
-    if (!issue) return;
-    setIssue(issue);
-    issueRef.current = urlParams.issueId;
-    const startDateParam = searchParams.get("startDate");
-    const endDateParam = searchParams.get("endDate");
-    if (!startDateParam || !endDateParam) {
-      setDatePreset("4");
-      setStartDate(`${new Date(issue.createdAt).getTime()}`);
-      setEndDate(`${Date.now()}`);
+    if (!issue) {
+      urlParamsRef.current = null;
+      return;
     }
-  }, [urlParams, searchParams, setStartDate, setEndDate, setDatePreset]);
+    setIssue(issue);
+  }, [urlParams]);
 
   const fetchOccurrences = useCallback(async () => {
     if (!issue) return;
@@ -87,6 +83,7 @@ export default function IssueDetails() {
   }, [issue, searchParams]);
 
   const submit = useCallback(() => {
+    if (!issue) return;
     if (
       (searchParams.get("startDate") !== startDate ||
         searchParams.get("endDate") !== endDate) &&
@@ -105,7 +102,7 @@ export default function IssueDetails() {
       { replace: true }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, perPage, startDate, endDate, searchParams]);
+  }, [page, perPage, startDate, endDate, searchParams, issue]);
 
   useEffect(() => {
     submit();
@@ -113,14 +110,26 @@ export default function IssueDetails() {
   }, [page, perPage, startDate, endDate]);
 
   useEffect(() => {
-    console.log("fetching occurrences");
-    fetchOccurrences();
+    if (!issue) return;
+    const startDateParam = searchParams.get("startDate");
+    const endDateParam = searchParams.get("endDate");
+    if (!startDateParam || !endDateParam) {
+      setDatePreset("4");
+      setStartDate(`${new Date(issue.createdAt).getTime()}`);
+      setEndDate(`${Date.now()}`);
+    } else {
+      fetchOccurrences();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, issue]);
 
   useEffect(() => {
     fetchIssue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlParams]);
+
+  useEffect(() => {
+    console.log("This is the mounter", urlParams);
   }, [urlParams]);
   if (!issue) return null;
   return (
@@ -147,7 +156,7 @@ export default function IssueDetails() {
             </Button>
           </div>
 
-          <div className="text-[0.76rem] flex mt-3">
+          <div className="text-[0.82rem] flex mt-3">
             <span className="flex text-grey-800">
               <img src={ClockIcon} alt="clock" width={11} className="mr-1" />
               {moment(issue.lastOccurrenceTimestamp).fromNow()} |{" "}

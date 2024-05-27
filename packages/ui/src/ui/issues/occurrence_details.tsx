@@ -33,7 +33,7 @@ export function OccurrenceDetails({ occurrence }: Props) {
       >
         <div>
           <h4 className="font-medium text-base">{occurrence.message}</h4>
-          <span className="flex text-grey-800 text-[0.76rem] mt-1">
+          <span className="flex text-grey-800 text-[0.82rem] mt-[0.1rem]">
             <img src={ClockIcon} alt="clock" width={11} className="mr-1" />
             {moment(occurrence.timestamp).format("ddd MMM Do YYYY, h:mm:ss A")}
           </span>
