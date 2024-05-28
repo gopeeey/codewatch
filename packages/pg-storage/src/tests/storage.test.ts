@@ -3,6 +3,7 @@ import {
   GetPaginatedOccurrencesFilters,
   Issue,
   Occurrence,
+  UpdateLastOccurrenceOnIssueType,
 } from "@codewatch/types";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage } from "../storage";
@@ -155,29 +156,27 @@ describe("updateLastOccurrenceOnError", () => {
     const storage = await getStorage();
     const issueId = await storage.createIssue(issueData);
 
-    const occurrence: Occurrence = {
+    const newStackString = "Something";
+
+    const data: UpdateLastOccurrenceOnIssueType = {
       issueId,
       message: "Error 1",
       timestamp: now,
-      stderrLogs: [
-        { timestamp: 1234567, message: "something was logged here" },
-      ],
-      stdoutLogs: [
-        { timestamp: 534564567, message: "something was logged here too" },
-      ],
+      stack: newStackString,
     };
 
-    await storage.updateLastOccurrenceOnIssue(occurrence);
-    await storage.updateLastOccurrenceOnIssue(occurrence);
+    await storage.updateLastOccurrenceOnIssue(data);
+    await storage.updateLastOccurrenceOnIssue(data);
 
     const { rows } = await pool.query<
-      Pick<Issue, "totalOccurrences" | "lastOccurrenceTimestamp">
+      Pick<Issue, "totalOccurrences" | "lastOccurrenceTimestamp" | "stack">
     >(
-      SQL`SELECT "totalOccurrences", "lastOccurrenceTimestamp" FROM codewatch_pg_issues;`
+      SQL`SELECT "totalOccurrences", "lastOccurrenceTimestamp", "stack" FROM codewatch_pg_issues;`
     );
 
     expect(rows[0].totalOccurrences).toBe(2);
     expect(rows[0].lastOccurrenceTimestamp).toBe(now);
+    expect(rows[0].stack).toBe(newStackString);
     await storage.close();
   });
 });

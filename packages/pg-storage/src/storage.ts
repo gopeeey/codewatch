@@ -193,7 +193,8 @@ export class CodewatchPgStorage implements Storage {
       UPDATE codewatch_pg_issues SET 
       "lastOccurrenceTimestamp" = ${data.timestamp},
       "lastOccurrenceMessage" = ${data.message},
-      "totalOccurrences" = "totalOccurrences" + 1
+      "totalOccurrences" = "totalOccurrences" + 1,
+      "stack" = ${data.stack}
       WHERE id = ${data.issueId};
     `);
   };
