@@ -26,7 +26,7 @@ export function OccurrenceDetails({ occurrence }: Props) {
           normalPadding,
           "sticky top-0 z-10 bg-pane-background flex justify-between cursor-pointer hover:bg-input-background-dark transition-everything",
           {
-            ["custom-shadow"]: open,
+            ["custom-shadow !bg-input-background-dark"]: open,
           }
         )}
         onClick={() => setOpen((prev) => !prev)}
@@ -53,13 +53,13 @@ export function OccurrenceDetails({ occurrence }: Props) {
       >
         <div className="p-5">
           {occurrence.extraData ? (
-            <InfoCard title="Manually Captured Data">
+            <InfoCard title="Manually Captured Data" className="mb-12">
               <JsonView src={occurrence.extraData} />
             </InfoCard>
           ) : null}
 
           {occurrence.stdoutLogs.length > 0 ? (
-            <InfoCard title="Stdout logs" className="mt-12">
+            <InfoCard title="Stdout logs" className="mb-12">
               <div className="mt-2">
                 {occurrence.stdoutLogs.map((log) => (
                   <div key={log.id} className="mb-8">
@@ -71,7 +71,7 @@ export function OccurrenceDetails({ occurrence }: Props) {
           ) : null}
 
           {occurrence.stderrLogs.length > 0 ? (
-            <InfoCard title="Stderr logs" className="mt-12">
+            <InfoCard title="Stderr logs" className="mb-12">
               <div className="mt-2">
                 {occurrence.stderrLogs.map((log) => (
                   <div key={log.id} className="mb-8">
@@ -83,7 +83,7 @@ export function OccurrenceDetails({ occurrence }: Props) {
           ) : null}
 
           {occurrence.systemInfo ? (
-            <InfoCard title="System Info" className="mt-12">
+            <InfoCard title="System Info">
               <div className="py-1">
                 {[
                   {

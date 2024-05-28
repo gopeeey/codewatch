@@ -84,12 +84,16 @@ export async function getOccurrences(filters: GetPaginatedOccurrencesFilters) {
     });
 
     if (res.error) return null;
-    const occurrences: OccurrenceWithId[] = res.data.occurrences.map((occ) => ({
-      ...occ,
-      id: nanoid(),
-      stderrLogs: occ.stderrLogs.map((log) => ({ ...log, id: nanoid() })),
-      stdoutLogs: occ.stdoutLogs.map((log) => ({ ...log, id: nanoid() })),
-    }));
+    const occurrences: OccurrenceWithId[] = res.data.occurrences.map((occ) => {
+      occ.stderrLogs.reverse();
+      occ.stdoutLogs.reverse();
+      return {
+        ...occ,
+        id: nanoid(),
+        stderrLogs: occ.stderrLogs.map((log) => ({ ...log, id: nanoid() })),
+        stdoutLogs: occ.stdoutLogs.map((log) => ({ ...log, id: nanoid() })),
+      };
+    });
     return occurrences;
   }
 }

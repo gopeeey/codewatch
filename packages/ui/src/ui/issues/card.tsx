@@ -19,15 +19,15 @@ export function IssueCard({ issue, selected, onSelect }: Props) {
           <div>
             <div className="text-base font-medium">{issue.name}</div>
 
-            <div className="text-grey-700 text-sm">
+            <div className="text-grey-700 text-[0.9rem]">
               {issue.lastOccurrenceMessage}
             </div>
 
-            <div className="mt-0.5 text-[0.68rem] flex">
+            <div className="mt-0.5 text-[0.75rem] flex">
               <span className="flex text-grey-800">
                 <img src={ClockIcon} alt="clock" width={11} className="mr-1" />
-                {moment(issue.lastOccurrenceTimestamp).fromNow()} |{" "}
-                {moment(issue.createdAt).fromNow(true)} old
+                {moment(issue.createdAt).fromNow(true)} old | last seen{" "}
+                {moment(issue.lastOccurrenceTimestamp).fromNow()}
               </span>
 
               {issue.unhandled ? (

@@ -128,9 +128,6 @@ export default function IssueDetails() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlParams]);
 
-  useEffect(() => {
-    console.log("This is the mounter", urlParams);
-  }, [urlParams]);
   if (!issue) return null;
   return (
     <AppPage
@@ -237,7 +234,7 @@ export default function IssueDetails() {
       }
       cardClassName="!p-0"
     >
-      <div className="py-4 px-5 flex justify-between custom-rule">
+      <div className="py-4 px-5 flex justify-between items-center custom-rule">
         {dateRangeElement}{" "}
         <div className="text-grey-600 flex flex-col items-center">
           <span className="text-sm">Occurrences</span>{" "}

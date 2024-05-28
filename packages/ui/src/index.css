@@ -62,7 +62,7 @@ body {
   }
 
   .custom-shadow {
-    box-shadow: 0em 0.2em 10px 1px rgba(0, 0, 0, 0.2);
+    box-shadow: 0em 0.2em 10px 1px rgba(0, 0, 0, 0.1);
   }
 }
 
