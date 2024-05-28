@@ -83,7 +83,7 @@ export class Core {
     }
 
     const now = new Date();
-    const fingerPrint = instance._generateFingerprint(err.stack);
+    const fingerPrint = instance._generateFingerprint(err.name, err.stack);
     const currentTimestamp = now.toISOString();
     let issueId: Issue["id"] | null = null;
     issueId = await instance._storage.findIssueIdByFingerprint(fingerPrint);
@@ -163,9 +163,12 @@ export class Core {
     Core._instance = null;
   }
 
-  private _generateFingerprint(stack: string) {
+  private _generateFingerprint(name: string, stack: string) {
     // Normalize the error stack
-    const stackFrames = (stack as string).split("\n").slice(1);
+    const stackFrames = (stack as string)
+      .replace(/\d+:\d+/g, "") // removes line and column numbers
+      .split("\n")
+      .slice(1);
     let normalizedStack = "";
     const cwd = process.cwd();
     for (const frame of stackFrames) {
