@@ -50,6 +50,7 @@ export class MockStorage implements Storage {
       lastOccurrenceTimestamp: data.timestamp,
       lastOccurrenceMessage: data.message,
       totalOccurrences: issue.totalOccurrences + 1,
+      stack: data.stack,
     });
   };
 

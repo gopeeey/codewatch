@@ -127,6 +127,7 @@ export class Core {
       issueId,
       timestamp: currentTimestamp,
       message: err.message,
+      stack: err.stack,
     });
   }
 
@@ -142,7 +143,14 @@ export class Core {
         this.message = options.message || "";
       }
     };
-    await Core.captureError(new metaClass(), false, data);
+    const error = new metaClass();
+    // Remove current location from the stack
+    if (error.stack) {
+      const lines = error.stack.split("\n");
+      lines.splice(1, 2);
+      error.stack = lines.join("\n");
+    }
+    await Core.captureError(error, false, data);
   }
 
   static async close() {
