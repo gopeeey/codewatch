@@ -209,19 +209,15 @@ export class CodewatchPgStorage implements Storage {
     }
 
     if (filters.startDate) {
-      query.append(
-        SQL` AND "lastOccurrenceTimestamp" >= ${new Date(filters.startDate)} `
-      );
+      query.append(SQL` AND "createdAt" >= ${new Date(filters.startDate)} `);
     }
 
     if (filters.endDate) {
-      query.append(
-        SQL` AND "lastOccurrenceTimestamp" <= ${new Date(filters.endDate)} `
-      );
+      query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
     }
 
     query.append(
-      SQL` ORDER BY "lastOccurrenceTimestamp" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
+      SQL` ORDER BY "createdAt" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
     );
 
     const { rows } = await this._pool.query<DbIssue>(query);

@@ -255,8 +255,9 @@ const seed = async () => {
 
 describe("Seed required CRUD", () => {
   beforeEach(seed, 5000);
+  const fPrintSortFn = (a: string, b: string) => Number(a) - Number(b);
   describe("getPaginatedIssues", () => {
-    it("should sort the issues by lastOccurrenceTimestamp in descending order", async () => {
+    it("should sort the issues by createdAt in descending order", async () => {
       const storage = await getStorage();
       const issues = await storage.getPaginatedIssues({
         searchString: "",
@@ -265,10 +266,10 @@ describe("Seed required CRUD", () => {
         resolved: false,
       });
 
-      let lastTimestamp = new Date().toISOString();
+      let lastCreatedAt = new Date().toISOString();
       for (const issue of issues) {
-        expect(issue.lastOccurrenceTimestamp < lastTimestamp).toBe(true);
-        lastTimestamp = issue.lastOccurrenceTimestamp;
+        expect(issue.createdAt < lastCreatedAt).toBe(true);
+        lastCreatedAt = issue.createdAt;
       }
       expect.assertions(issuesData.length);
       await storage.close();
@@ -281,9 +282,9 @@ describe("Seed required CRUD", () => {
         expectedFPrint: string[];
       }[] = [
         { page: 1, perPage: 1, expectedFPrint: ["678"] },
-        { page: 2, perPage: 1, expectedFPrint: ["456"] },
-        { page: 1, perPage: 2, expectedFPrint: ["678", "456"] },
-        { page: 2, perPage: 2, expectedFPrint: ["567", "234"] },
+        { page: 2, perPage: 1, expectedFPrint: ["567"] },
+        { page: 1, perPage: 2, expectedFPrint: ["678", "567"] },
+        { page: 2, perPage: 2, expectedFPrint: ["456", "345"] },
         { page: 2, perPage: 10, expectedFPrint: [] },
       ];
 
@@ -296,9 +297,9 @@ describe("Seed required CRUD", () => {
           resolved: false,
         });
 
-        expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
-          expectedFPrint
-        );
+        expect(
+          issues.map(({ fingerprint }) => fingerprint).sort(fPrintSortFn)
+        ).toEqual(expectedFPrint.sort(fPrintSortFn));
       }
       await storage.close();
     });
@@ -327,7 +328,7 @@ describe("Seed required CRUD", () => {
             startDate: isoFromNow(10000),
             resolved: false,
           },
-          expectedFPrints: ["678", "456", "567", "234"],
+          expectedFPrints: ["456", "567", "678"],
         },
         {
           filters: {
@@ -335,7 +336,7 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(15000),
             resolved: false,
           },
-          expectedFPrints: ["345", "123"],
+          expectedFPrints: ["123", "234", "345"],
         },
         {
           filters: {
@@ -344,7 +345,7 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(10000),
             resolved: false,
           },
-          expectedFPrints: ["345", "123"],
+          expectedFPrints: ["123", "234", "345", "456"],
         },
         {
           filters: {
@@ -365,9 +366,9 @@ describe("Seed required CRUD", () => {
           perPage: 10,
         });
 
-        expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
-          expectedFPrints
-        );
+        expect(
+          issues.map(({ fingerprint }) => fingerprint).sort(fPrintSortFn)
+        ).toEqual(expectedFPrints.sort(fPrintSortFn));
       }
       await storage.close();
     });
