@@ -5,13 +5,18 @@ import {
   GetPaginatedOccurrencesFilters,
 } from "./requests";
 
+export interface UpdateLastOccurrenceOnIssueType
+  extends Pick<Occurrence, "issueId" | "timestamp" | "message"> {
+  stack: Issue["stack"];
+}
+
 export interface Storage {
   ready: boolean;
   init: () => Promise<void>;
   createIssue: (data: Omit<Issue, "id" | "resolved">) => Promise<Issue["id"]>;
   addOccurrence: (data: Occurrence) => Promise<void>;
   updateLastOccurrenceOnIssue: (
-    data: Pick<Occurrence, "issueId" | "timestamp" | "message">
+    data: UpdateLastOccurrenceOnIssueType
   ) => Promise<void>;
   findIssueIdByFingerprint: (
     fingerprint: Issue["fingerprint"]
