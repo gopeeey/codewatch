@@ -24,19 +24,24 @@ export function IssueCard({ issue, selected, onSelect }: Props) {
             </div>
 
             <div className="mt-0.5 text-[0.75rem] flex">
-              <span className="flex text-grey-800">
-                <img src={ClockIcon} alt="clock" width={11} className="mr-1" />
+              <span className="flex text-grey-800 items-start sm:items-center">
+                <img
+                  src={ClockIcon}
+                  alt="clock"
+                  width={11}
+                  className="mr-1 mt-[0.07rem] sm:mt-0"
+                />
                 {moment(issue.createdAt).fromNow(true)} old | last seen{" "}
                 {moment(issue.lastOccurrenceTimestamp).fromNow()}
               </span>
 
               {issue.unhandled ? (
-                <span className="flex ml-3 text-error-bright">
+                <span className="flex ml-2 sm:ml-3 text-error-bright items-start sm:items-center">
                   <img
                     src={ErrorRedIcon}
                     alt="error"
                     width={11}
-                    className="mr-1"
+                    className="mr-1 mt-[0.07rem] sm:mt-0"
                   />
                   Unhandled
                 </span>

@@ -82,6 +82,7 @@ export async function getIssues(filters: GetPaginatedIssuesFilters) {
 export async function getIssue(id: Issue["id"]) {
   if (isDev) {
     console.log("Fetching issue", id);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     return {
       fingerprint: "2345678",
       id: "2345678",
