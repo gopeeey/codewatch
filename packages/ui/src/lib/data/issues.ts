@@ -24,7 +24,7 @@ export async function getIssues(filters: GetPaginatedIssuesFilters) {
         lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
         lastOccurrenceMessage:
           "It went terribly wrong, I don't even know what happened.",
-        muted: false,
+        archived: false,
         name: "Something went wrong",
         stack:
           "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
@@ -38,7 +38,7 @@ export async function getIssues(filters: GetPaginatedIssuesFilters) {
         id: "2345678",
         lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
         lastOccurrenceMessage: "That's why this dashboard exists",
-        muted: false,
+        archived: false,
         name: "It has crashed oooo!!!",
         stack:
           "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
@@ -52,7 +52,7 @@ export async function getIssues(filters: GetPaginatedIssuesFilters) {
         id: "34567890",
         lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
         lastOccurrenceMessage: "You'll find what it is though",
-        muted: false,
+        archived: false,
         name: "Something went really wrong",
         stack:
           "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
@@ -90,7 +90,7 @@ export async function getIssue(id: Issue["id"]) {
       id: "2345678",
       lastOccurrenceTimestamp: "2024-05-10T13:59:33.021Z",
       lastOccurrenceMessage: "That's why this dashboard exists",
-      muted: false,
+      archived: false,
       name: "It has crashed oooo!!!",
       stack:
         "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)\n at main (c:\\Users\\Me\\Documents\\MyApp\\app.js:9:15)\n at Object. (c:\\Users\\Me\\Documents\\MyApp\\app.js:17:1)\n at Module._compile (module.js:460:26)\n at Object.Module._extensions..js (module.js:478:10)\n at Module.load (module.js:355:32)\n at Function.Module._load (module.js:310:12)\n at Function.Module.runMain (module.js:501:10)\n at startup (node.js:129:16)\n at node.js:814:3",
@@ -108,7 +108,7 @@ export async function getIssue(id: Issue["id"]) {
 
 export async function getIssuesTotal(filters: GetIssuesFilters) {
   if (isDev) {
-    if (filters.resolved) return 1230;
+    if (filters.tab === "resolved") return 1230;
     return 140 as number | null;
   }
 

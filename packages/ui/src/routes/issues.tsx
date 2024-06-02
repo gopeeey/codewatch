@@ -1,5 +1,5 @@
 import SearchIcon from "@assets/search.svg";
-import { GetIssuesFilters, Issue } from "@codewatch/types";
+import { GetIssuesFilters, Issue, IssueTab } from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
 import {
   deleteIssues,
@@ -26,8 +26,8 @@ export default function IssuesRoute() {
     initialEndDate: searchParams.get("endDate"),
     selectClassName: "mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto",
   });
-  const [resolved, setResolved] = useState<Issue["resolved"]>(
-    searchParams.get("resolved") == "true"
+  const [currentTab, setCurrentTab] = useState<IssueTab>(
+    (searchParams.get("tab") as IssueTab) || "unresolved"
   );
   const [searchString, setSearchString] = useState(
     searchParams.get("searchString") ?? ""
@@ -36,6 +36,7 @@ export default function IssuesRoute() {
   const [perPage] = useState(Number(searchParams.get("perPage") ?? 15));
   const [resolvedCount, setResolvedCount] = useState(0);
   const [unresolvedCount, setUnresolvedCount] = useState(0);
+  const [archivedCount, setArchivedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Issue["id"][]>([]);
   const [loading, setLoading] = useState(true);
   const prevFilterStr = useRef("");
@@ -45,7 +46,7 @@ export default function IssuesRoute() {
       (searchParams.get("searchString") !== searchString ||
         searchParams.get("startDate") !== startDate ||
         searchParams.get("endDate") !== endDate ||
-        searchParams.get("resolved") !== `${resolved}`) &&
+        searchParams.get("tab") !== currentTab) &&
       page !== 1
     ) {
       return setPage(1);
@@ -57,15 +58,23 @@ export default function IssuesRoute() {
       perPage: perPage.toString(),
       startDate,
       endDate,
-      resolved: `${resolved}`,
+      tab: currentTab,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchString, page, perPage, startDate, endDate, resolved, searchParams]);
+  }, [
+    searchString,
+    page,
+    perPage,
+    startDate,
+    endDate,
+    currentTab,
+    searchParams,
+  ]);
 
   useEffect(() => {
     submit();
     //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchString, page, perPage, startDate, endDate, resolved]);
+  }, [searchString, page, perPage, startDate, endDate, currentTab]);
 
   const debouncedSearchStringChange = useDebounce(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -84,20 +93,25 @@ export default function IssuesRoute() {
       searchString: searchParams.get("searchString") ?? "",
       startDate,
       endDate,
-      resolved,
+      tab: currentTab,
     };
 
     const currentFilterStr = JSON.stringify(filters);
     if (currentFilterStr !== prevFilterStr.current) {
       const newTotal = await getIssuesTotal(filters);
       if (newTotal != null) {
-        const setter = resolved ? setResolvedCount : setUnresolvedCount;
+        const setter =
+          currentTab === "resolved"
+            ? setResolvedCount
+            : currentTab === "unresolved"
+            ? setUnresolvedCount
+            : setArchivedCount;
         setter(newTotal);
       }
 
-      if (resolved) {
+      if (currentTab !== "unresolved") {
         // also fetch unresolved total
-        const uTotal = await getIssuesTotal({ ...filters, resolved: false });
+        const uTotal = await getIssuesTotal({ ...filters, tab: "unresolved" });
         if (uTotal != null) setUnresolvedCount(uTotal);
       }
       prevFilterStr.current = currentFilterStr;
@@ -128,23 +142,23 @@ export default function IssuesRoute() {
     if (!selectedIds.length) return;
 
     const successful = await resolveIssues(selectedIds);
-    if (successful && !resolved) {
+    if (successful && currentTab !== "resolved") {
       prevFilterStr.current = "";
       await fetchIssues();
     }
     setSelectedIds([]);
-  }, [selectedIds, resolved, fetchIssues]);
+  }, [selectedIds, currentTab, fetchIssues]);
 
   const unResIssues = useCallback(async () => {
     if (!selectedIds.length) return;
 
     const successful = await unresolveIssues(selectedIds);
-    if (successful && resolved) {
+    if (successful && currentTab !== "unresolved") {
       prevFilterStr.current = "";
       await fetchIssues();
     }
     setSelectedIds([]);
-  }, [selectedIds, resolved, fetchIssues]);
+  }, [selectedIds, currentTab, fetchIssues]);
 
   useEffect(() => {
     fetchIssues();
@@ -169,10 +183,11 @@ export default function IssuesRoute() {
         </div>
 
         <IssuesTabs
-          resolved={resolved}
-          onChange={setResolved}
+          currentTab={currentTab}
+          onChange={setCurrentTab}
           resolvedCount={0}
           unresolvedCount={unresolvedCount}
+          archivedCount={0}
           className="mt-6 -mb-[1.547rem] "
         />
       </div>
@@ -196,23 +211,41 @@ export default function IssuesRoute() {
             disabled={loading}
           />
 
-          {resolved ? (
-            <ActionButton onClick={unResIssues} disabled={loading}>
-              Unresolve
-            </ActionButton>
-          ) : (
+          {currentTab === "unresolved" || currentTab === "archived" ? (
             <ActionButton onClick={resIssues} disabled={loading}>
               Resolve
             </ActionButton>
-          )}
+          ) : null}
 
-          <ActionButton
-            onClick={() => console.log("Coming soon")}
-            className="ml-3"
-            disabled={loading}
-          >
-            Archive
-          </ActionButton>
+          {currentTab === "resolved" || currentTab === "archived" ? (
+            <ActionButton
+              onClick={unResIssues}
+              disabled={loading}
+              className={currentTab === "archived" ? "ml-3" : ""}
+            >
+              Unresolve
+            </ActionButton>
+          ) : null}
+
+          {currentTab !== "archived" ? (
+            <ActionButton
+              onClick={() => console.log("Coming soon")}
+              className="ml-3"
+              disabled={loading}
+            >
+              Archive
+            </ActionButton>
+          ) : null}
+
+          {currentTab === "archived" ? (
+            <ActionButton
+              onClick={() => console.log("Coming soon")}
+              className="ml-3"
+              disabled={loading}
+            >
+              Unarchive
+            </ActionButton>
+          ) : null}
 
           <ActionButton onClick={delIssues} className="ml-3" disabled={loading}>
             Delete
@@ -251,7 +284,13 @@ export default function IssuesRoute() {
         <Pagination
           page={page}
           perPage={perPage}
-          totalRows={resolved ? resolvedCount : unresolvedCount}
+          totalRows={
+            currentTab === "resolved"
+              ? resolvedCount
+              : currentTab === "unresolved"
+              ? unresolvedCount
+              : archivedCount
+          }
           onChange={setPage}
         />
       </div>
