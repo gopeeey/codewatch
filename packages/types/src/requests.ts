@@ -3,12 +3,15 @@ import { Issue } from "./base";
 export type DeleteIssues = { issueIds: Issue["id"][] };
 export type ResolveIssues = { issueIds: Issue["id"][] };
 export type UnresolveIssues = { issueIds: Issue["id"][] };
+export type ArchiveIssues = { issueIds: Issue["id"][] };
+
+export type IssueTab = "unresolved" | "resolved" | "archived";
 
 export type GetIssuesFilters = {
   searchString: string;
   startDate?: string;
   endDate?: string;
-  resolved: boolean;
+  tab: IssueTab;
 };
 
 export interface GetPaginatedIssuesFilters extends GetIssuesFilters {
