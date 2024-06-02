@@ -10,12 +10,11 @@ import { Link } from "react-router-dom";
 type Props = { issue: Issue; selected: boolean; onSelect: () => void };
 export function IssueCard({ issue, selected, onSelect }: Props) {
   return (
-    <Link to={`/issues/${issue.id}`}>
-      <div className="flex custom-rule items-center justify-between px-5 py-4 pr-8 transition-all duration-200 hover:bg-input-background-dark cursor-pointer">
-        {/* Details and checkbox */}
-        <div className="flex items-start">
-          <Checkbox className="mt-1" checked={selected} onChange={onSelect} />
-
+    <div className="flex custom-rule items-center justify-between px-5 py-4 pr-8 transition-all duration-200 hover:bg-input-background-dark cursor-pointer">
+      {/* Details and checkbox */}
+      <div className="flex items-start w-full">
+        <Checkbox className="mt-1" checked={selected} onChange={onSelect} />
+        <Link to={`/issues/${issue.id}`} className="flex-grow">
           <div>
             <div className="text-base font-medium">{issue.name}</div>
 
@@ -48,14 +47,14 @@ export function IssueCard({ issue, selected, onSelect }: Props) {
               ) : null}
             </div>
           </div>
-        </div>
-
-        {/* Occurence count */}
-        <span className="text-base text-grey-600">
-          {quantifyNumber(issue.totalOccurrences)}
-        </span>
+        </Link>
       </div>
-    </Link>
+
+      {/* Occurence count */}
+      <span className="text-base text-grey-600">
+        {quantifyNumber(issue.totalOccurrences)}
+      </span>
+    </div>
   );
 }
 

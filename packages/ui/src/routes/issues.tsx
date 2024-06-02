@@ -153,7 +153,7 @@ export default function IssuesRoute() {
   return (
     <AppPage title="Issues" cardClassName="px-0 py-0">
       {/* Filters and Tabs */}
-      <div className="px-5 py-6 sm:pr-8 custom-rule flex flex-col justify-start xl:flex-row xl:justify-between">
+      <div className="px-5 py-6 sm:pr-8 custom-rule flex flex-col justify-start ">
         <div className="flex flex-col sm:flex-row">
           <TextField
             inputProps={{
@@ -173,11 +173,11 @@ export default function IssuesRoute() {
           onChange={setResolved}
           resolvedCount={0}
           unresolvedCount={unresolvedCount}
-          className="mt-6 -mb-[1.547rem] xl:mt-0 xl:-mb-[3.54rem]"
+          className="mt-6 -mb-[1.547rem] "
         />
       </div>
 
-      <div className="px-5 py-5 xl:py-3 custom-rule flex justify-between pr-8">
+      <div className="px-5 py-5 custom-rule flex justify-between pr-8">
         {/* Actions */}
         <div className="flex items-center">
           <Checkbox
@@ -205,6 +205,14 @@ export default function IssuesRoute() {
               Resolve
             </ActionButton>
           )}
+
+          <ActionButton
+            onClick={() => console.log("Coming soon")}
+            className="ml-3"
+            disabled={loading}
+          >
+            Archive
+          </ActionButton>
 
           <ActionButton onClick={delIssues} className="ml-3" disabled={loading}>
             Delete

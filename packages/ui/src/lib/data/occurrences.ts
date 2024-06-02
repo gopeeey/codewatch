@@ -13,7 +13,7 @@ const isDev = import.meta.env.MODE === "development";
 export async function getOccurrences(filters: GetPaginatedOccurrencesFilters) {
   if (isDev) {
     console.log("Fetching occurrences");
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const exampleLogs: StdChannelLogWithId[] = [
       {
         id: "1",

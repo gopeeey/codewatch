@@ -274,13 +274,15 @@ export default function IssueDetails() {
 
       {loadingOccurrences ? (
         [1, 2, 3].map((num) => <OccurrenceCardLoader key={num} />)
-      ) : occurrences.length ? (
-        occurrences.map((occurrence) => (
-          <OccurrenceDetails key={occurrence.id} occurrence={occurrence} />
-        ))
-      ) : (
-        <EmptyState message="Couldn't find any occurrences for those filters" />
-      )}
+      ) : issue ? (
+        occurrences.length ? (
+          occurrences.map((occurrence) => (
+            <OccurrenceDetails key={occurrence.id} occurrence={occurrence} />
+          ))
+        ) : (
+          <EmptyState message="Couldn't find any occurrences for those filters" />
+        )
+      ) : null}
 
       <div className="py-7 px-5 flex justify-end">
         <Pagination
