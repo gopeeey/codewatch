@@ -31,4 +31,6 @@ export interface Storage {
   deleteIssues: (issueIds: Issue["id"][]) => Promise<void>;
   resolveIssues: (issueIds: Issue["id"][]) => Promise<void>;
   unresolveIssues: (issueIds: Issue["id"][]) => Promise<void>;
+  archiveIssues: (issueIds: Issue["id"][]) => Promise<void>;
+  unarchiveIssues: (issueIds: Issue["id"][]) => Promise<void>;
 }
