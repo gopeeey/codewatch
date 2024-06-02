@@ -1,5 +1,6 @@
 import { AppRoutes } from "@codewatch/types";
 import {
+  archiveIssues,
   deleteIssues,
   entryPoint,
   getIssueById,
@@ -7,6 +8,7 @@ import {
   getPaginatedIssues,
   getPaginatedOccurrences,
   resolveIssues,
+  unarchiveIssues,
   unresolveIssues,
 } from "./controllers";
 
@@ -46,6 +48,16 @@ export const appRoutes: AppRoutes = {
       route: "/api/issues/unresolve",
       method: "put",
       handler: unresolveIssues,
+    },
+    {
+      route: "/api/issues/archive",
+      method: "put",
+      handler: archiveIssues,
+    },
+    {
+      route: "/api/issues/unarchive",
+      method: "put",
+      handler: unarchiveIssues,
     },
 
     {

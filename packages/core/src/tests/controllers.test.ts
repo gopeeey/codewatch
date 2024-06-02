@@ -5,6 +5,7 @@ import {
 } from "@codewatch/types";
 import fs from "fs";
 import {
+  archiveIssues,
   deleteIssues,
   entryPoint,
   errorHandler,
@@ -13,6 +14,7 @@ import {
   getPaginatedIssues,
   getPaginatedOccurrences,
   resolveIssues,
+  unarchiveIssues,
   unresolveIssues,
 } from "../controllers";
 import { Core } from "../core";
@@ -35,7 +37,7 @@ afterEach(async () => {
 describe("getPaginatedIssues", () => {
   it("should return a 200 and an array of issues", async () => {
     const filters: GetPaginatedIssuesFilters = {
-      resolved: false,
+      tab: "unresolved",
       searchString: "something",
       page: 1,
       perPage: 10,
@@ -89,7 +91,7 @@ describe("getIssueById", () => {
 describe("getIssuesTotal", () => {
   it("should return a 200 and a number representing total number of issues for that filter", async () => {
     const filters: GetIssuesFilters = {
-      resolved: false,
+      tab: "unresolved",
       searchString: "something",
     };
     const storage = MockStorage.getInstance();
@@ -136,6 +138,30 @@ describe("unresolveIssues", () => {
       { storage }
     );
     expect(storage.issues[0].resolved).toBe(false);
+  });
+});
+
+describe("archiveIssues", () => {
+  it("should call storage.archiveIssues", async () => {
+    const storage = MockStorage.getInstance();
+    storage.issues[0].archived = false;
+    await archiveIssues(
+      { body: { issueIds: ["1"] }, query: {}, params: {} },
+      { storage }
+    );
+    expect(storage.issues[0].archived).toBe(true);
+  });
+});
+
+describe("unarchiveIssues", () => {
+  it("should call storage.unarchiveIssues", async () => {
+    const storage = MockStorage.getInstance();
+    storage.issues[0].archived = true;
+    await unarchiveIssues(
+      { body: { issueIds: ["1"] }, query: {}, params: {} },
+      { storage }
+    );
+    expect(storage.issues[0].archived).toBe(false);
   });
 });
 

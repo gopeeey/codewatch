@@ -60,7 +60,7 @@ describe("Core", () => {
             lastOccurrenceTimestamp: expect.any(String),
             lastOccurrenceMessage: expect.any(String),
             unhandled: false,
-            muted: false,
+            archived: false,
             name: testError.name,
             stack: testError.stack as string,
             totalOccurrences: expect.any(Number),

@@ -13,6 +13,15 @@ import {
   ViewController,
 } from "@codewatch/types";
 
+class NonInternalError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "NonInternalError";
+    this.status = status;
+  }
+}
+
 export const getPaginatedIssues: Controller<
   GetPaginatedIssuesResponse,
   GetPaginatedIssuesFilters
@@ -36,7 +45,7 @@ export const getIssueById: Controller<
   { id: string }
 > = async (req, deps) => {
   const issue = await deps.storage.findIssueById(req.params.id);
-  if (!issue) return { status: 404 };
+  if (!issue) throw new NonInternalError(`Issue not found`, 404);
   return { status: 200, body: { data: { issue } } };
 };
 
@@ -72,15 +81,38 @@ export const unresolveIssues: Controller<never, ResolveIssues> = async (
   return { status: 200 };
 };
 
+export const archiveIssues: Controller<never, ResolveIssues> = async (
+  req,
+  deps
+) => {
+  await deps.storage.archiveIssues(req.body.issueIds);
+  return { status: 200 };
+};
+
+export const unarchiveIssues: Controller<never, ResolveIssues> = async (
+  req,
+  deps
+) => {
+  await deps.storage.unarchiveIssues(req.body.issueIds);
+  return { status: 200 };
+};
+
 export const errorHandler: ErrorHandler = (error) => {
   let errorMessage = "",
+    userMessage = "Internal server error",
+    status = 500,
     stack = "";
   if (error instanceof Error) {
-    errorMessage = error.message;
-    if (error.stack) stack = error.stack;
+    if (error instanceof NonInternalError) {
+      userMessage = error.message;
+      status = error.status;
+    } else {
+      errorMessage = error.message;
+      if (error.stack) stack = error.stack;
+    }
   }
   return {
-    status: 500,
+    status,
     body: { message: "Internal server error", data: { errorMessage, stack } },
   };
 };

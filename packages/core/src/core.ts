@@ -96,7 +96,7 @@ export class Core {
         totalOccurrences: 0,
         lastOccurrenceTimestamp: currentTimestamp,
         lastOccurrenceMessage: err.message,
-        muted: false,
+        archived: false,
         unhandled: Boolean(unhandled),
         createdAt: currentTimestamp,
       });

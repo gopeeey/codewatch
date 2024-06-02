@@ -6,7 +6,7 @@ export const testIssue: Issue = {
   id: "12345",
   lastOccurrenceMessage: "Something happened",
   lastOccurrenceTimestamp: "2020-01-01T00:00:0",
-  muted: false,
+  archived: false,
   name: "Something",
   stack: "\n Somewhere (index.js:123)",
   totalOccurrences: 20,

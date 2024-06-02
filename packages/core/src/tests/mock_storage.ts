@@ -92,6 +92,18 @@ export class MockStorage implements Storage {
     });
   };
 
+  archiveIssues: Storage["archiveIssues"] = async (issueIds) => {
+    issueIds.forEach((issueId) => {
+      this._updateIssueById(issueId, { archived: true });
+    });
+  };
+
+  unarchiveIssues: Storage["unarchiveIssues"] = async (issueIds) => {
+    issueIds.forEach((issueId) => {
+      this._updateIssueById(issueId, { archived: false });
+    });
+  };
+
   findIssueById: Storage["findIssueById"] = async (id) => {
     return this.issues.find((issue) => issue.id === id) || null;
   };
