@@ -16,7 +16,7 @@ const isDev = import.meta.env.MODE === "development";
 
 export async function getIssues(filters: GetPaginatedIssuesFilters) {
   if (isDev) {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const issues: Issue[] = [
       {
         fingerprint: "123456789",
@@ -62,6 +62,8 @@ export async function getIssues(filters: GetPaginatedIssuesFilters) {
         resolved: false,
       },
     ];
+    const emptIssues: Issue[] = [];
+    if (filters.page > 1) return emptIssues;
     return issues;
   }
   const res = await client.post<

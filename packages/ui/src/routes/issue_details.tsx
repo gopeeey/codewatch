@@ -8,6 +8,7 @@ import { OccurrenceWithId, getIssue, getOccurrences } from "@lib/data";
 import { quantifyNumber } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton, Button, ButtonBase } from "@ui/buttons";
+import { EmptyState } from "@ui/empty_state";
 import { useDateRange } from "@ui/inputs";
 import {
   DetailsHeaderLoader,
@@ -271,11 +272,15 @@ export default function IssueDetails() {
         </div>
       </div>
 
-      {loadingOccurrences
-        ? [1, 2, 3].map((num) => <OccurrenceCardLoader key={num} />)
-        : occurrences.map((occurrence) => (
-            <OccurrenceDetails key={occurrence.id} occurrence={occurrence} />
-          ))}
+      {loadingOccurrences ? (
+        [1, 2, 3].map((num) => <OccurrenceCardLoader key={num} />)
+      ) : occurrences.length ? (
+        occurrences.map((occurrence) => (
+          <OccurrenceDetails key={occurrence.id} occurrence={occurrence} />
+        ))
+      ) : (
+        <EmptyState message="Couldn't find any occurrences for those filters" />
+      )}
 
       <div className="py-7 px-5 flex justify-end">
         <Pagination

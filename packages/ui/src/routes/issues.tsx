@@ -11,6 +11,7 @@ import {
 import { generateRange } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
+import { EmptyState } from "@ui/empty_state";
 import { Checkbox, TextField, useDateRange } from "@ui/inputs";
 import { IssueCard, IssueCardSkeleton, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
@@ -215,24 +216,28 @@ export default function IssuesRoute() {
       </div>
 
       {/* Issues */}
-      {loading
-        ? generateRange(1, 4).map((num) => <IssueCardSkeleton key={num} />)
-        : issues.map((issue) => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              selected={selectedIds.includes(issue.id)}
-              onSelect={() => {
-                setSelectedIds((prev) => {
-                  if (prev.includes(issue.id)) {
-                    return prev.filter((id) => id !== issue.id);
-                  } else {
-                    return [...prev, issue.id];
-                  }
-                });
-              }}
-            />
-          ))}
+      {loading ? (
+        generateRange(1, 4).map((num) => <IssueCardSkeleton key={num} />)
+      ) : issues.length ? (
+        issues.map((issue) => (
+          <IssueCard
+            key={issue.id}
+            issue={issue}
+            selected={selectedIds.includes(issue.id)}
+            onSelect={() => {
+              setSelectedIds((prev) => {
+                if (prev.includes(issue.id)) {
+                  return prev.filter((id) => id !== issue.id);
+                } else {
+                  return [...prev, issue.id];
+                }
+              });
+            }}
+          />
+        ))
+      ) : (
+        <EmptyState message="Couldn't find any issues for those filters" />
+      )}
 
       <div className="py-10 pr-8 flex justify-end">
         <Pagination

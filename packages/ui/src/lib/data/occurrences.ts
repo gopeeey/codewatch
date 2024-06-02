@@ -70,6 +70,8 @@ export async function getOccurrences(filters: GetPaginatedOccurrencesFilters) {
       },
     ];
 
+    const empty: OccurrenceWithId[] = [];
+    if (filters.page > 1) return empty;
     return occurrences;
   } else {
     const res = await client.post<
