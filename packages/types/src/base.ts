@@ -6,7 +6,6 @@ export interface Issue {
   totalOccurrences: number;
   lastOccurrenceTimestamp: string;
   lastOccurrenceMessage: string;
-  muted: boolean;
   archived: boolean;
   unhandled: boolean;
   createdAt: string;
