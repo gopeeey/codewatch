@@ -159,7 +159,7 @@ export class CodewatchPgStorage implements Storage {
       "totalOccurrences", 
       "lastOccurrenceTimestamp",
       "lastOccurrenceMessage",
-      "muted",
+      "archived",
       "unhandled",
       "createdAt"
       )
@@ -170,7 +170,7 @@ export class CodewatchPgStorage implements Storage {
         ${data.totalOccurrences},
         ${data.lastOccurrenceTimestamp},
         ${data.lastOccurrenceMessage},
-        ${data.muted},
+        ${data.archived},
         ${data.unhandled},
         ${data.createdAt}
       ) RETURNING id;`;
@@ -202,7 +202,21 @@ export class CodewatchPgStorage implements Storage {
   getPaginatedIssues: Storage["getPaginatedIssues"] = async (filters) => {
     const offset = (filters.page - 1) * filters.perPage;
     const query = SQL`
-    SELECT * FROM codewatch_pg_issues WHERE resolved = ${filters.resolved}`;
+    SELECT * FROM codewatch_pg_issues WHERE `;
+
+    switch (filters.tab) {
+      case "archived":
+        query.append(SQL` archived = true `);
+        break;
+      case "resolved":
+        query.append(SQL` archived = false AND resolved = true `);
+        break;
+      case "unresolved":
+        query.append(SQL` archived = false AND resolved = false `);
+        break;
+      default:
+        throw new Error("Invalid tab");
+    }
 
     if (filters.searchString.length) {
       query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
@@ -226,7 +240,21 @@ export class CodewatchPgStorage implements Storage {
 
   getIssuesTotal: Storage["getIssuesTotal"] = async (filters) => {
     const query = SQL`
-    SELECT COUNT(*) FROM codewatch_pg_issues WHERE resolved = ${filters.resolved}`;
+    SELECT COUNT(*) FROM codewatch_pg_issues WHERE `;
+
+    switch (filters.tab) {
+      case "archived":
+        query.append(SQL` archived = true `);
+        break;
+      case "resolved":
+        query.append(SQL` archived = false AND resolved = true `);
+        break;
+      case "unresolved":
+        query.append(SQL` archived = false AND resolved = false `);
+        break;
+      default:
+        throw new Error("Invalid tab");
+    }
 
     if (filters.searchString.length) {
       query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
@@ -287,5 +315,17 @@ export class CodewatchPgStorage implements Storage {
 
     const { rows } = await this._pool.query<Occurrence>(query);
     return rows;
+  };
+
+  archiveIssues: Storage["archiveIssues"] = async (issueIds) => {
+    await this._pool.query(SQL`
+      UPDATE codewatch_pg_issues SET archived = true WHERE id = ANY(${issueIds});
+    `);
+  };
+
+  unarchiveIssues: Storage["unarchiveIssues"] = async (issueIds) => {
+    await this._pool.query(SQL`
+      UPDATE codewatch_pg_issues SET archived = false WHERE id = ANY(${issueIds});
+    `);
   };
 }

@@ -8,7 +8,12 @@ import {
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage } from "../storage";
 import { DbIssue } from "../types";
-import { CreateIssueData, createCreateIssueData, dbSetup } from "./utils";
+import {
+  CreateIssueData,
+  createCreateIssueData,
+  dbSetup,
+  insertTestIssue,
+} from "./utils";
 
 const pool = dbSetup();
 
@@ -216,6 +221,14 @@ const issuesData: {
   overrides?: Partial<CreateIssueData>;
 }[] = [
   {
+    timestamp: isoFromNow(35000),
+    overrides: { name: "Error 1", fingerprint: "890", archived: true },
+  },
+  {
+    timestamp: isoFromNow(30000),
+    overrides: { name: "Error 2", fingerprint: "789", resolved: true },
+  },
+  {
     timestamp: isoFromNow(25000),
     overrides: { name: "Nothing like the rest", fingerprint: "123" },
   },
@@ -246,9 +259,7 @@ const seed = async () => {
   await Promise.all(
     issuesData.map(async ({ timestamp, overrides }) => {
       const issueData = createCreateIssueData(timestamp, overrides);
-      const storage = await getStorage();
-      await storage.createIssue(issueData);
-      await storage.close();
+      await insertTestIssue(pool, issueData);
     })
   );
 };
@@ -263,7 +274,7 @@ describe("Seed required CRUD", () => {
         searchString: "",
         page: 1,
         perPage: 10,
-        resolved: false,
+        tab: "unresolved",
       });
 
       let lastCreatedAt = new Date().toISOString();
@@ -271,7 +282,7 @@ describe("Seed required CRUD", () => {
         expect(issue.createdAt < lastCreatedAt).toBe(true);
         lastCreatedAt = issue.createdAt;
       }
-      expect.assertions(issuesData.length);
+      expect.assertions(issuesData.length - 2); // The total number of issues that should be in the unresolved tab
       await storage.close();
     });
 
@@ -294,7 +305,7 @@ describe("Seed required CRUD", () => {
           searchString: "",
           page,
           perPage,
-          resolved: false,
+          tab: "unresolved",
         });
 
         expect(
@@ -310,23 +321,30 @@ describe("Seed required CRUD", () => {
         expectedFPrints: Issue["fingerprint"][];
       }[] = [
         {
-          filters: { searchString: "error", resolved: false },
+          filters: { searchString: "error", tab: "unresolved" },
           expectedFPrints: ["678", "456", "567", "234", "345"],
         },
         {
-          filters: { searchString: "error 2", resolved: false },
+          filters: { searchString: "error 2", tab: "unresolved" },
           expectedFPrints: ["456"],
         },
         {
-          filters: { searchString: "", resolved: false },
+          filters: { searchString: "", tab: "unresolved" },
           expectedFPrints: ["678", "456", "567", "234", "345", "123"],
         },
-        { filters: { searchString: "", resolved: true }, expectedFPrints: [] },
+        {
+          filters: { searchString: "", tab: "resolved" },
+          expectedFPrints: ["789"],
+        },
+        {
+          filters: { searchString: "", tab: "archived" },
+          expectedFPrints: ["890"],
+        },
         {
           filters: {
             searchString: "",
             startDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedFPrints: ["456", "567", "678"],
         },
@@ -334,7 +352,7 @@ describe("Seed required CRUD", () => {
           filters: {
             searchString: "",
             endDate: isoFromNow(15000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedFPrints: ["123", "234", "345"],
         },
@@ -343,7 +361,7 @@ describe("Seed required CRUD", () => {
             searchString: "",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedFPrints: ["123", "234", "345", "456"],
         },
@@ -352,7 +370,7 @@ describe("Seed required CRUD", () => {
             searchString: "rest",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedFPrints: ["123"],
         },
@@ -381,23 +399,24 @@ describe("Seed required CRUD", () => {
         expectedTotal: number;
       }[] = [
         {
-          filters: { searchString: "error", resolved: false },
+          filters: { searchString: "error", tab: "unresolved" },
           expectedTotal: 5,
         },
         {
-          filters: { searchString: "error 2", resolved: false },
+          filters: { searchString: "error 2", tab: "unresolved" },
           expectedTotal: 1,
         },
         {
-          filters: { searchString: "", resolved: false },
+          filters: { searchString: "", tab: "unresolved" },
           expectedTotal: 6,
         },
-        { filters: { searchString: "", resolved: true }, expectedTotal: 0 },
+        { filters: { searchString: "", tab: "resolved" }, expectedTotal: 1 },
+        { filters: { searchString: "", tab: "archived" }, expectedTotal: 1 },
         {
           filters: {
             searchString: "",
             startDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedTotal: 4,
         },
@@ -405,7 +424,7 @@ describe("Seed required CRUD", () => {
           filters: {
             searchString: "",
             endDate: isoFromNow(15000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedTotal: 2,
         },
@@ -414,7 +433,7 @@ describe("Seed required CRUD", () => {
             searchString: "",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedTotal: 2,
         },
@@ -423,7 +442,7 @@ describe("Seed required CRUD", () => {
             searchString: "rest",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedTotal: 1,
         },
@@ -500,6 +519,49 @@ describe("Seed required CRUD", () => {
     });
   });
 
+  describe("archiveIssues", () => {
+    it("should update archived to true on the issues with the supplied ids", async () => {
+      const { rows: issues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE archived = false LIMIT 2;`
+      );
+      expect(issues.length).toBe(2);
+      const storage = await getStorage();
+      await storage.archiveIssues(issues.map(({ id }) => id.toString()));
+      const { rows: archivedIssues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
+          ({ id }) => id
+        )});`
+      );
+      for (const { archived } of archivedIssues) {
+        expect(archived).toBe(true);
+      }
+      expect.assertions(archivedIssues.length + 1); // Plus one for the initial assertion we did.
+      await storage.close();
+    });
+  });
+
+  describe("unarchiveIssues", () => {
+    it("should update archived to false on the issues with the supplied ids", async () => {
+      await pool.query(SQL`UPDATE codewatch_pg_issues SET archived = true;`);
+      const { rows: issues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE archived = true LIMIT 2;`
+      );
+      expect(issues.length).toBe(2);
+      const storage = await getStorage();
+      await storage.unarchiveIssues(issues.map(({ id }) => id.toString()));
+      const { rows: unarchivedIssues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
+          ({ id }) => id
+        )});`
+      );
+      for (const { archived } of unarchivedIssues) {
+        expect(archived).toBe(false);
+      }
+      expect.assertions(unarchivedIssues.length + 1); // Plus one for the initial assertion we did.
+      await storage.close();
+    });
+  });
+
   describe("findIssueById", () => {
     describe("given the issue exists", () => {
       it("should return the issue with the supplied id", async () => {
@@ -539,11 +601,12 @@ describe("Seed required CRUD", () => {
 
     const seedOccurrences = async () => {
       const { rows: issues } = await pool.query<DbIssue>(
-        SQL`SELECT * FROM codewatch_pg_issues;`
+        SQL`SELECT * FROM codewatch_pg_issues ORDER BY "id" ASC LIMIT 1;`
       );
 
       if (!issues.length)
         throw new Error("No issues found when seeding occurrences");
+
       const issueId = issues[0].id;
 
       const query = SQL`INSERT INTO codewatch_pg_occurrences ("issueId", message, "stderrLogs", "stdoutLogs", timestamp) VALUES `;

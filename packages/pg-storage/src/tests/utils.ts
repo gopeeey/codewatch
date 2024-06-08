@@ -1,4 +1,4 @@
-import { Storage } from "@codewatch/types";
+import { Issue } from "@codewatch/types";
 import { config } from "dotenv";
 import { Pool } from "pg";
 import SQL from "sql-template-strings";
@@ -41,17 +41,19 @@ export const dbSetup = () => {
   return pool;
 };
 
-export type CreateIssueData = Parameters<Storage["createIssue"]>[number];
+export interface CreateIssueData extends Omit<Issue, "id" | "resolved"> {
+  resolved?: Issue["resolved"];
+}
 export const createCreateIssueData = (
   timestamp: string,
-  overrides?: Partial<CreateIssueData>
+  overrides?: Partial<Omit<Issue, "id">>
 ) => {
   const issue: CreateIssueData = {
     fingerprint: "123456789012345678",
     lastOccurrenceTimestamp: timestamp,
     createdAt: timestamp,
     lastOccurrenceMessage: "",
-    muted: false,
+    archived: false,
     totalOccurrences: 0,
     unhandled: false,
     name: "Error 1",
@@ -59,4 +61,24 @@ export const createCreateIssueData = (
     ...overrides,
   };
   return issue;
+};
+
+export const insertTestIssue = async (pool: Pool, data: CreateIssueData) => {
+  const query = SQL`INSERT INTO codewatch_pg_issues ( "`;
+  const keys: string[] = [];
+  const values: string[] = [];
+  for (const entry of Object.entries(data)) {
+    keys.push(entry[0]);
+    values.push(entry[1]);
+  }
+  query.append(keys.join(`", "`)).append(`") VALUES (`);
+  values.forEach((value, index) => {
+    if (index === values.length - 1) {
+      query.append(SQL`${value});`);
+    } else {
+      query.append(SQL`${value}, `);
+    }
+  });
+
+  await pool.query(query);
 };
