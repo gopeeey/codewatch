@@ -277,12 +277,22 @@ export class Core {
 
   private _hookUncaughtException() {
     const listener = async (err: Error) => {
-      await Core.captureError(err, true);
+      try {
+        await Core.captureError(err, true);
+      } catch (err) {
+        console.error(err);
+      }
+
       if (process.listenerCount("uncaughtException") === 1) process.exit(1);
     };
 
     const rejectionListener = async (err: unknown) => {
-      await Core.captureError(err, true);
+      try {
+        await Core.captureError(err, true);
+      } catch (err) {
+        console.error(err);
+      }
+
       if (process.listenerCount("unhandledRejection") === 1) process.exit(1);
     };
     process.addListener("uncaughtException", listener);
