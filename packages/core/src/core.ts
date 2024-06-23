@@ -36,7 +36,11 @@ export class Core {
   private static _instance: Core | null = null;
 
   private constructor(private _storage: Storage, options?: CoreOptions) {
-    this._storage.init();
+    try {
+      this._storage.init();
+    } catch (err) {
+      console.error("Failed to initialize core:", err);
+    }
 
     if (options) {
       const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
@@ -276,31 +280,33 @@ export class Core {
   }
 
   private _hookUncaughtException() {
-    const listener = async (err: Error) => {
+    const handler = async (err: Error | unknown) => {
+      console.error(err);
       try {
         await Core.captureError(err, true);
       } catch (err) {
-        console.error(err);
+        console.error(
+          "An error occurred while trying to capture an unhandled exception",
+          err
+        );
       }
+    };
 
+    const uncaughtExceptionListener = async (err: Error) => {
+      await handler(err);
       if (process.listenerCount("uncaughtException") === 1) process.exit(1);
     };
 
-    const rejectionListener = async (err: unknown) => {
-      try {
-        await Core.captureError(err, true);
-      } catch (err) {
-        console.error(err);
-      }
-
+    const unhandledRejectionListener = async (err: unknown) => {
+      await handler(err);
       if (process.listenerCount("unhandledRejection") === 1) process.exit(1);
     };
-    process.addListener("uncaughtException", listener);
-    process.addListener("unhandledRejection", rejectionListener);
+    process.addListener("uncaughtException", uncaughtExceptionListener);
+    process.addListener("unhandledRejection", unhandledRejectionListener);
 
     this._unhookUncaughtException = () => {
-      process.removeListener("uncaughtException", listener);
-      process.removeListener("unhandledRejection", rejectionListener);
+      process.removeListener("uncaughtException", uncaughtExceptionListener);
+      process.removeListener("unhandledRejection", unhandledRejectionListener);
     };
   }
 
