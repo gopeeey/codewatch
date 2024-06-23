@@ -12,7 +12,6 @@
     "build-pd": "npm run build && yalc publish --push"
   },
   "devDependencies": {
-    "@codewatch/types": "file:.yalc/@codewatch/types",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
@@ -35,5 +34,8 @@
     "tailwindcss": "^3.4.3",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "@codewatch/types": "file:.yalc/@codewatch/types"
   }
 }
