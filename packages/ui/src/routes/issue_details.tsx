@@ -4,7 +4,16 @@ import ClockIcon from "@assets/clock.svg";
 import DeleteIcon from "@assets/delete-tiny.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
 import { GetPaginatedOccurrencesFilters, Issue } from "@codewatch/types";
-import { OccurrenceWithId, getIssue, getOccurrences } from "@lib/data";
+import {
+  OccurrenceWithId,
+  archiveIssues,
+  deleteIssues,
+  getIssue,
+  getOccurrences,
+  resolveIssues,
+  unarchiveIssues,
+  unresolveIssues,
+} from "@lib/data";
 import { quantifyNumber } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton, Button, ButtonBase } from "@ui/buttons";
@@ -52,6 +61,7 @@ export default function IssueDetails() {
   const [loadingOccurrences, setLoadingOccurrences] = useState(false);
   const occurrencesRef = useRef<string | null>(null);
   const urlParamsRef = useRef<string | null>(null);
+  const referrer = useRef<string>("");
 
   const fetchIssue = useCallback(async () => {
     if (!urlParams.issueId || urlParamsRef.current == urlParams.issueId) return;
@@ -136,9 +146,73 @@ export default function IssueDetails() {
   }, [searchParams, issue]);
 
   useEffect(() => {
+    referrer.current = document.referrer;
+    console.log(referrer.current);
+  }, []);
+
+  useEffect(() => {
     fetchIssue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlParams]);
+
+  const updateIssue = useCallback(
+    (update: Partial<Issue>) => {
+      if (!issue) return;
+      setIssue((prev) => {
+        if (!prev) return prev;
+        return { ...prev, ...update };
+      });
+    },
+    [issue]
+  );
+
+  const handleBackClick = useCallback(() => {
+    window.history.back();
+  }, []);
+
+  const handleDeleteClick = useCallback(async () => {
+    if (!issue) return;
+    setLoadingIssue(true);
+    const deleted = await deleteIssues([issue.id]);
+    if (deleted) handleBackClick();
+    setLoadingIssue(false);
+  }, [handleBackClick, issue]);
+
+  const handleArchiveClick = useCallback(async () => {
+    if (!issue) return;
+
+    setLoadingIssue(true);
+    const archived = await archiveIssues([issue.id]);
+    if (archived) updateIssue({ archived: true });
+    setLoadingIssue(false);
+  }, [issue, updateIssue]);
+
+  const handleUnarchiveClick = useCallback(async () => {
+    if (!issue) return;
+
+    setLoadingIssue(true);
+    const unarchived = await unarchiveIssues([issue.id]);
+    if (unarchived) updateIssue({ archived: false });
+    setLoadingIssue(false);
+  }, [issue, updateIssue]);
+
+  const handleResolveIssue = useCallback(async () => {
+    if (!issue) return;
+
+    setLoadingIssue(true);
+    const resolved = await resolveIssues([issue.id]);
+    if (resolved) updateIssue({ resolved: true });
+    setLoadingIssue(false);
+  }, [issue, updateIssue]);
+
+  const handleUnresolveIssue = useCallback(async () => {
+    if (!issue) return;
+
+    setLoadingIssue(true);
+    const unresolved = await unresolveIssues([issue.id]);
+    if (unresolved) updateIssue({ resolved: false });
+    setLoadingIssue(false);
+  }, [issue, updateIssue]);
 
   if (!loadingIssue && !issue) return null; // Change this to a 404
   return (
@@ -149,7 +223,7 @@ export default function IssueDetails() {
         <div className="px-5 sm:px-0">
           <ButtonBase
             className="text-primary-400 font-medium text-[0.9rem]"
-            onClick={() => window.history.back()}
+            onClick={handleBackClick}
           >
             &#60; Back to list
           </ButtonBase>
@@ -165,8 +239,18 @@ export default function IssueDetails() {
                   </h5>
                 </div>
 
-                <Button className="px-5 py-3 sm:px-9 sm:py-3 h-fit rounded-xl text-[0.9rem]">
-                  Resolve
+                <Button
+                  className={clsx(
+                    "px-5 py-3 sm:px-9 sm:py-3 h-fit rounded-xl text-[0.9rem]",
+                    {
+                      ["!bg-error hover:!bg-error-dark"]: issue.resolved,
+                    }
+                  )}
+                  onClick={
+                    issue.resolved ? handleUnresolveIssue : handleResolveIssue
+                  }
+                >
+                  {issue.resolved ? "Unresolve" : "Resolve"}
                 </Button>
               </div>
 
@@ -200,12 +284,14 @@ export default function IssueDetails() {
                   {
                     name: "Delete",
                     icon: DeleteIcon,
-                    action: () => console.log("delete"),
+                    action: handleDeleteClick,
                   },
                   {
-                    name: "Archive",
+                    name: issue.archived ? "Unarchive" : "Archive",
                     icon: ArchiveIcon,
-                    action: () => console.log("archive"),
+                    action: issue.archived
+                      ? handleUnarchiveClick
+                      : handleArchiveClick,
                   },
                 ].map((action) => (
                   <ActionButton

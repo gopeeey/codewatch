@@ -1,4 +1,5 @@
 import {
+  ArchiveIssues,
   DeleteIssues,
   GetIssueByIdResponse,
   GetIssuesFilters,
@@ -129,6 +130,7 @@ export async function getIssuesTotal(filters: GetIssuesFilters) {
 
 export async function deleteIssues(issueIds: DeleteIssues["issueIds"]) {
   if (isDev) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return true;
   }
   const { error } = await client.post<never, DeleteIssues>({
@@ -141,6 +143,7 @@ export async function deleteIssues(issueIds: DeleteIssues["issueIds"]) {
 
 export async function resolveIssues(issueIds: ResolveIssues["issueIds"]) {
   if (isDev) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return true;
   }
   const { error } = await client.put<never, ResolveIssues>({
@@ -153,10 +156,37 @@ export async function resolveIssues(issueIds: ResolveIssues["issueIds"]) {
 
 export async function unresolveIssues(issueIds: ResolveIssues["issueIds"]) {
   if (isDev) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return true;
   }
   const { error } = await client.put<never, UnresolveIssues>({
     url: "/unresolve",
+    body: { issueIds },
+  });
+
+  return !error;
+}
+
+export async function archiveIssues(issueIds: ArchiveIssues["issueIds"]) {
+  if (isDev) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return true;
+  }
+  const { error } = await client.put<never, ArchiveIssues>({
+    url: "/archive",
+    body: { issueIds },
+  });
+
+  return !error;
+}
+
+export async function unarchiveIssues(issueIds: ArchiveIssues["issueIds"]) {
+  if (isDev) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return true;
+  }
+  const { error } = await client.put<never, ArchiveIssues>({
+    url: "/unarchive",
     body: { issueIds },
   });
 

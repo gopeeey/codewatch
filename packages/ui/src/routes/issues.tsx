@@ -2,10 +2,12 @@ import SearchIcon from "@assets/search.svg";
 import { GetIssuesFilters, Issue, IssueTab } from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
 import {
+  archiveIssues,
   deleteIssues,
   getIssues,
   getIssuesTotal,
   resolveIssues,
+  unarchiveIssues,
   unresolveIssues,
 } from "@lib/data";
 import { generateRange } from "@lib/utils";
@@ -127,7 +129,7 @@ export default function IssuesRoute() {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const delIssues = useCallback(async () => {
+  const handleDeleteClick = useCallback(async () => {
     if (!selectedIds.length) return;
 
     const deleted = await deleteIssues(selectedIds);
@@ -138,22 +140,44 @@ export default function IssuesRoute() {
     setSelectedIds([]);
   }, [selectedIds, fetchIssues]);
 
-  const resIssues = useCallback(async () => {
+  const handleResolveClick = useCallback(async () => {
     if (!selectedIds.length) return;
 
     const successful = await resolveIssues(selectedIds);
-    if (successful && currentTab !== "resolved") {
+    if (successful && currentTab === "unresolved") {
       prevFilterStr.current = "";
       await fetchIssues();
     }
     setSelectedIds([]);
   }, [selectedIds, currentTab, fetchIssues]);
 
-  const unResIssues = useCallback(async () => {
+  const handleUnresolveClick = useCallback(async () => {
     if (!selectedIds.length) return;
 
     const successful = await unresolveIssues(selectedIds);
-    if (successful && currentTab !== "unresolved") {
+    if (successful && currentTab === "resolved") {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
+    setSelectedIds([]);
+  }, [selectedIds, currentTab, fetchIssues]);
+
+  const handleArchiveClick = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const archived = await archiveIssues(selectedIds);
+    if (archived && currentTab !== "archived") {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
+    setSelectedIds([]);
+  }, [selectedIds, currentTab, fetchIssues]);
+
+  const handleUnarchiveClick = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const unarchived = await unarchiveIssues(selectedIds);
+    if (unarchived && currentTab === "archived") {
       prevFilterStr.current = "";
       await fetchIssues();
     }
@@ -212,14 +236,14 @@ export default function IssuesRoute() {
           />
 
           {currentTab === "unresolved" || currentTab === "archived" ? (
-            <ActionButton onClick={resIssues} disabled={loading}>
+            <ActionButton onClick={handleResolveClick} disabled={loading}>
               Resolve
             </ActionButton>
           ) : null}
 
           {currentTab === "resolved" || currentTab === "archived" ? (
             <ActionButton
-              onClick={unResIssues}
+              onClick={handleUnresolveClick}
               disabled={loading}
               className={currentTab === "archived" ? "ml-3" : ""}
             >
@@ -229,7 +253,7 @@ export default function IssuesRoute() {
 
           {currentTab !== "archived" ? (
             <ActionButton
-              onClick={() => console.log("Coming soon")}
+              onClick={handleArchiveClick}
               className="ml-3"
               disabled={loading}
             >
@@ -239,7 +263,7 @@ export default function IssuesRoute() {
 
           {currentTab === "archived" ? (
             <ActionButton
-              onClick={() => console.log("Coming soon")}
+              onClick={handleUnarchiveClick}
               className="ml-3"
               disabled={loading}
             >
@@ -247,7 +271,11 @@ export default function IssuesRoute() {
             </ActionButton>
           ) : null}
 
-          <ActionButton onClick={delIssues} className="ml-3" disabled={loading}>
+          <ActionButton
+            onClick={handleDeleteClick}
+            className="ml-3"
+            disabled={loading}
+          >
             Delete
           </ActionButton>
         </div>

@@ -24,6 +24,7 @@ export default {
         "input-placeholder": "#BAC4D1",
         error: "#AD3D35",
         "error-bright": "#EC7168",
+        "error-dark": "#7C2C26",
         "grey-50": "#F6F8F9",
         "grey-100": "#E4E8ED",
         "grey-200": "#D7DDE5",
