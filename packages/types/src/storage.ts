@@ -15,7 +15,7 @@ export interface Transaction {
   rollback: () => Promise<void>;
   end: () => Promise<void>;
   commitAndEnd: () => Promise<void>;
-  rollBackAndEnd: () => Promise<void>;
+  rollbackAndEnd: () => Promise<void>;
 }
 
 export interface Storage {
