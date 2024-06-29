@@ -1,16 +1,25 @@
-import { GetIssuesFilters, GetPaginatedIssuesFilters } from "@codewatch/types";
+import {
+  GetIssuesFilters,
+  GetPaginatedIssuesFilters,
+  GetPaginatedOccurrencesFilters,
+} from "@codewatch/types";
 import fs from "fs";
 import {
+  archiveIssues,
   deleteIssues,
   entryPoint,
   errorHandler,
+  getIssueById,
   getIssuesTotal,
   getPaginatedIssues,
+  getPaginatedOccurrences,
   resolveIssues,
+  unarchiveIssues,
   unresolveIssues,
 } from "../controllers";
 import { Core } from "../core";
 import { MockStorage } from "./mock_storage";
+import { testIssueArray } from "./samples";
 
 const testError = new Error("Hello world");
 
@@ -28,7 +37,7 @@ afterEach(async () => {
 describe("getPaginatedIssues", () => {
   it("should return a 200 and an array of issues", async () => {
     const filters: GetPaginatedIssuesFilters = {
-      resolved: false,
+      tab: "unresolved",
       searchString: "something",
       page: 1,
       perPage: 10,
@@ -44,10 +53,45 @@ describe("getPaginatedIssues", () => {
   });
 });
 
+describe("getPaginatedOccurrences", () => {
+  it("should return a 200 and an array of occurrences", async () => {
+    const filters: GetPaginatedOccurrencesFilters = {
+      startDate: "2020-01-01",
+      endDate: "2020-01-01",
+      issueId: "1",
+      page: 1,
+      perPage: 10,
+    };
+
+    const storage = MockStorage.getInstance();
+    const response = await getPaginatedOccurrences(
+      { body: filters, query: {}, params: {} },
+      { storage }
+    );
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: { occurrences: storage.occurrences },
+    });
+  });
+});
+
+describe("getIssueById", () => {
+  it("should return a 200 and an issue object", async () => {
+    const storage = MockStorage.getInstance();
+    storage.issues = testIssueArray;
+    const response = await getIssueById(
+      { params: { id: testIssueArray[0].id }, body: {}, query: {} },
+      { storage }
+    );
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ data: { issue: testIssueArray[0] } });
+  });
+});
+
 describe("getIssuesTotal", () => {
   it("should return a 200 and a number representing total number of issues for that filter", async () => {
     const filters: GetIssuesFilters = {
-      resolved: false,
+      tab: "unresolved",
       searchString: "something",
     };
     const storage = MockStorage.getInstance();
@@ -94,6 +138,30 @@ describe("unresolveIssues", () => {
       { storage }
     );
     expect(storage.issues[0].resolved).toBe(false);
+  });
+});
+
+describe("archiveIssues", () => {
+  it("should call storage.archiveIssues", async () => {
+    const storage = MockStorage.getInstance();
+    storage.issues[0].archived = false;
+    await archiveIssues(
+      { body: { issueIds: ["1"] }, query: {}, params: {} },
+      { storage }
+    );
+    expect(storage.issues[0].archived).toBe(true);
+  });
+});
+
+describe("unarchiveIssues", () => {
+  it("should call storage.unarchiveIssues", async () => {
+    const storage = MockStorage.getInstance();
+    storage.issues[0].archived = true;
+    await unarchiveIssues(
+      { body: { issueIds: ["1"] }, query: {}, params: {} },
+      { storage }
+    );
+    expect(storage.issues[0].archived).toBe(false);
   });
 });
 

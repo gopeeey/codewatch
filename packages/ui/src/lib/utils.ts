@@ -53,3 +53,30 @@ export function generateRange(start: number, end: number) {
   }
   return range;
 }
+
+export function displayMemory(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+export function displayDuration(seconds: number) {
+  if (seconds < 60)
+    return `${Math.floor(seconds)} second${
+      Math.floor(seconds) === 1 ? "" : "s"
+    }`;
+
+  if (seconds < 60 * 60) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins} minute${mins === 1 ? "" : "s"} ${
+      secs ? `${secs} second${secs === 1 ? "" : "s"}` : ""
+    }`;
+  }
+
+  const hrs = Math.floor(seconds / 60 / 60);
+  const mins = Math.floor(seconds / 60) % 60;
+  return `${hrs} hour${hrs === 1 ? "" : "s"} ${
+    mins ? `${mins} minute${mins === 1 ? "" : "s"}` : ""
+  }`;
+}

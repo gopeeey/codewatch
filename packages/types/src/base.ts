@@ -6,13 +6,21 @@ export interface Issue {
   totalOccurrences: number;
   lastOccurrenceTimestamp: string;
   lastOccurrenceMessage: string;
-  muted: boolean;
+  archived: boolean;
   unhandled: boolean;
   createdAt: string;
   resolved: boolean;
 }
 
 export type StdChannelLog = { timestamp: number; message: string };
+
+export type SystemInfo = {
+  deviceMemory: number;
+  freeMemory: number;
+  appMemoryUsage: number;
+  deviceUptime: number;
+  appUptime: number;
+};
 
 export interface Occurrence {
   issueId: Issue["id"];
@@ -21,4 +29,5 @@ export interface Occurrence {
   stdoutLogs: StdChannelLog[];
   stderrLogs: StdChannelLog[];
   extraData?: Record<any, any>;
+  systemInfo?: SystemInfo;
 }

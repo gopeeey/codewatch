@@ -1,4 +1,4 @@
-import { Issue, Storage } from "@codewatch/types";
+import { Issue, Occurrence, Storage } from "@codewatch/types";
 import fs from "fs";
 import path from "path";
 import { Pool, PoolConfig, types as pgTypes } from "pg";
@@ -135,14 +135,18 @@ export class CodewatchPgStorage implements Storage {
         message, 
         timestamp,
         "stdoutLogs",
-        "stderrLogs"
+        "stderrLogs",
+        "extraData",
+        "systemInfo"
       )
       VALUES (
         ${data.issueId}, 
         ${data.message}, 
         ${data.timestamp},
         ${data.stdoutLogs},
-        ${data.stderrLogs}
+        ${data.stderrLogs},
+        ${data.extraData},
+        ${data.systemInfo}
       );
     `);
   };
@@ -155,7 +159,7 @@ export class CodewatchPgStorage implements Storage {
       "totalOccurrences", 
       "lastOccurrenceTimestamp",
       "lastOccurrenceMessage",
-      "muted",
+      "archived",
       "unhandled",
       "createdAt"
       )
@@ -166,7 +170,7 @@ export class CodewatchPgStorage implements Storage {
         ${data.totalOccurrences},
         ${data.lastOccurrenceTimestamp},
         ${data.lastOccurrenceMessage},
-        ${data.muted},
+        ${data.archived},
         ${data.unhandled},
         ${data.createdAt}
       ) RETURNING id;`;
@@ -189,7 +193,8 @@ export class CodewatchPgStorage implements Storage {
       UPDATE codewatch_pg_issues SET 
       "lastOccurrenceTimestamp" = ${data.timestamp},
       "lastOccurrenceMessage" = ${data.message},
-      "totalOccurrences" = "totalOccurrences" + 1
+      "totalOccurrences" = "totalOccurrences" + 1,
+      "stack" = ${data.stack}
       WHERE id = ${data.issueId};
     `);
   };
@@ -197,26 +202,36 @@ export class CodewatchPgStorage implements Storage {
   getPaginatedIssues: Storage["getPaginatedIssues"] = async (filters) => {
     const offset = (filters.page - 1) * filters.perPage;
     const query = SQL`
-    SELECT * FROM codewatch_pg_issues WHERE resolved = ${filters.resolved}`;
+    SELECT * FROM codewatch_pg_issues WHERE `;
+
+    switch (filters.tab) {
+      case "archived":
+        query.append(SQL` archived = true `);
+        break;
+      case "resolved":
+        query.append(SQL` archived = false AND resolved = true `);
+        break;
+      case "unresolved":
+        query.append(SQL` archived = false AND resolved = false `);
+        break;
+      default:
+        throw new Error("Invalid tab");
+    }
 
     if (filters.searchString.length) {
       query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
     }
 
     if (filters.startDate) {
-      query.append(
-        SQL` AND "lastOccurrenceTimestamp" >= ${new Date(filters.startDate)} `
-      );
+      query.append(SQL` AND "createdAt" >= ${new Date(filters.startDate)} `);
     }
 
     if (filters.endDate) {
-      query.append(
-        SQL` AND "lastOccurrenceTimestamp" <= ${new Date(filters.endDate)} `
-      );
+      query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
     }
 
     query.append(
-      SQL` ORDER BY "lastOccurrenceTimestamp" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
+      SQL` ORDER BY "createdAt" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
     );
 
     const { rows } = await this._pool.query<DbIssue>(query);
@@ -225,7 +240,21 @@ export class CodewatchPgStorage implements Storage {
 
   getIssuesTotal: Storage["getIssuesTotal"] = async (filters) => {
     const query = SQL`
-    SELECT COUNT(*) FROM codewatch_pg_issues WHERE resolved = ${filters.resolved}`;
+    SELECT COUNT(*) FROM codewatch_pg_issues WHERE `;
+
+    switch (filters.tab) {
+      case "archived":
+        query.append(SQL` archived = true `);
+        break;
+      case "resolved":
+        query.append(SQL` archived = false AND resolved = true `);
+        break;
+      case "unresolved":
+        query.append(SQL` archived = false AND resolved = false `);
+        break;
+      default:
+        throw new Error("Invalid tab");
+    }
 
     if (filters.searchString.length) {
       query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
@@ -261,6 +290,42 @@ export class CodewatchPgStorage implements Storage {
   unresolveIssues: Storage["resolveIssues"] = async (issueIds) => {
     await this._pool.query(SQL`
       UPDATE codewatch_pg_issues SET resolved = false WHERE id = ANY(${issueIds});
+    `);
+  };
+
+  findIssueById: Storage["findIssueById"] = async (id) => {
+    const { rows } = await this._pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${Number(id)};`
+    );
+    if (!rows.length) return null;
+    return this._standardizeIssues(rows)[0];
+  };
+
+  getPaginatedOccurrences: Storage["getPaginatedOccurrences"] = async (
+    filters
+  ) => {
+    const offset = (filters.page - 1) * filters.perPage;
+    const query = SQL`
+    SELECT * FROM codewatch_pg_occurrences 
+    WHERE "issueId" = ${Number(filters.issueId)}
+    AND timestamp >= ${new Date(filters.startDate)}
+    AND timestamp <= ${new Date(filters.endDate)}
+    ORDER BY timestamp DESC OFFSET ${offset} LIMIT ${filters.perPage};
+    `;
+
+    const { rows } = await this._pool.query<Occurrence>(query);
+    return rows;
+  };
+
+  archiveIssues: Storage["archiveIssues"] = async (issueIds) => {
+    await this._pool.query(SQL`
+      UPDATE codewatch_pg_issues SET archived = true WHERE id = ANY(${issueIds});
+    `);
+  };
+
+  unarchiveIssues: Storage["unarchiveIssues"] = async (issueIds) => {
+    await this._pool.query(SQL`
+      UPDATE codewatch_pg_issues SET archived = false WHERE id = ANY(${issueIds});
     `);
   };
 }

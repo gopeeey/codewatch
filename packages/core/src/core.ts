@@ -1,5 +1,12 @@
-import { Issue, Occurrence, StdChannelLog, Storage } from "@codewatch/types";
+import {
+  Issue,
+  Occurrence,
+  StdChannelLog,
+  Storage,
+  SystemInfo,
+} from "@codewatch/types";
 import { createHash } from "crypto";
+import os from "os";
 import { format } from "util";
 
 export type CoreOptions = {
@@ -29,7 +36,11 @@ export class Core {
   private static _instance: Core | null = null;
 
   private constructor(private _storage: Storage, options?: CoreOptions) {
-    this._storage.init();
+    try {
+      this._storage.init();
+    } catch (err) {
+      console.error("Failed to initialize core:", err);
+    }
 
     if (options) {
       const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
@@ -76,7 +87,7 @@ export class Core {
     }
 
     const now = new Date();
-    const fingerPrint = instance._generateFingerprint(err.stack);
+    const fingerPrint = instance._generateFingerprint(err.name, err.stack);
     const currentTimestamp = now.toISOString();
     let issueId: Issue["id"] | null = null;
     issueId = await instance._storage.findIssueIdByFingerprint(fingerPrint);
@@ -89,7 +100,7 @@ export class Core {
         totalOccurrences: 0,
         lastOccurrenceTimestamp: currentTimestamp,
         lastOccurrenceMessage: err.message,
-        muted: false,
+        archived: false,
         unhandled: Boolean(unhandled),
         createdAt: currentTimestamp,
       });
@@ -113,12 +124,14 @@ export class Core {
       stderrLogs,
       stdoutLogs,
       extraData,
+      systemInfo: instance._getSysInfo(),
     });
 
     await instance._storage.updateLastOccurrenceOnIssue({
       issueId,
       timestamp: currentTimestamp,
       message: err.message,
+      stack: err.stack,
     });
   }
 
@@ -134,7 +147,14 @@ export class Core {
         this.message = options.message || "";
       }
     };
-    await Core.captureError(new metaClass(), false, data);
+    const error = new metaClass();
+    // Remove current location from the stack
+    if (error.stack) {
+      const lines = error.stack.split("\n");
+      lines.splice(1, 2);
+      error.stack = lines.join("\n");
+    }
+    await Core.captureError(error, false, data);
   }
 
   static async close() {
@@ -147,9 +167,12 @@ export class Core {
     Core._instance = null;
   }
 
-  private _generateFingerprint(stack: string) {
+  private _generateFingerprint(name: string, stack: string) {
     // Normalize the error stack
-    const stackFrames = (stack as string).split("\n").slice(1);
+    const stackFrames = (stack as string)
+      .replace(/\d+:\d+/g, "") // removes line and column numbers
+      .split("\n")
+      .slice(1);
     let normalizedStack = "";
     const cwd = process.cwd();
     for (const frame of stackFrames) {
@@ -257,21 +280,45 @@ export class Core {
   }
 
   private _hookUncaughtException() {
-    const listener = async (err: Error) => {
-      await Core.captureError(err, true);
+    const handler = async (err: Error | unknown) => {
+      console.error(err);
+      try {
+        await Core.captureError(err, true);
+      } catch (err) {
+        console.error(
+          "An error occurred while trying to capture an unhandled exception",
+          err
+        );
+      }
+    };
+
+    const uncaughtExceptionListener = async (err: Error) => {
+      await handler(err);
       if (process.listenerCount("uncaughtException") === 1) process.exit(1);
     };
 
-    const rejectionListener = async (err: unknown) => {
-      await Core.captureError(err, true);
+    const unhandledRejectionListener = async (err: unknown) => {
+      await handler(err);
       if (process.listenerCount("unhandledRejection") === 1) process.exit(1);
     };
-    process.addListener("uncaughtException", listener);
-    process.addListener("unhandledRejection", rejectionListener);
+    process.addListener("uncaughtException", uncaughtExceptionListener);
+    process.addListener("unhandledRejection", unhandledRejectionListener);
 
     this._unhookUncaughtException = () => {
-      process.removeListener("uncaughtException", listener);
-      process.removeListener("unhandledRejection", rejectionListener);
+      process.removeListener("uncaughtException", uncaughtExceptionListener);
+      process.removeListener("unhandledRejection", unhandledRejectionListener);
     };
+  }
+
+  private _getSysInfo() {
+    const sysInfo: SystemInfo = {
+      deviceMemory: os.totalmem(),
+      freeMemory: os.freemem(),
+      appMemoryUsage: process.memoryUsage.rss(),
+      deviceUptime: os.uptime(),
+      appUptime: process.uptime(),
+    };
+
+    return sysInfo;
   }
 }

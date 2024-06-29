@@ -60,7 +60,7 @@ describe("Core", () => {
             lastOccurrenceTimestamp: expect.any(String),
             lastOccurrenceMessage: expect.any(String),
             unhandled: false,
-            muted: false,
+            archived: false,
             name: testError.name,
             stack: testError.stack as string,
             totalOccurrences: expect.any(Number),
@@ -113,6 +113,13 @@ describe("Core", () => {
             timestamp: expect.any(String),
             stdoutLogs: expect.any(Array),
             stderrLogs: expect.any(Array),
+            systemInfo: {
+              deviceMemory: expect.any(Number),
+              freeMemory: expect.any(Number),
+              appMemoryUsage: expect.any(Number),
+              deviceUptime: expect.any(Number),
+              appUptime: expect.any(Number),
+            },
           });
 
           expect(savedOccurrence.stdoutLogs).toHaveLength(2);

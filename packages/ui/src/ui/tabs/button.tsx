@@ -23,6 +23,7 @@ export function TabButton({
       type="button"
       className={clsx(
         "py-1.5",
+        { "text-grey-700": !active },
         {
           "text-primary-400 rounded-none border-b-[2px] border-b-primary-400 transition-all duration-150":
             active,

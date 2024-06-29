@@ -50,6 +50,7 @@ export class MockStorage implements Storage {
       lastOccurrenceTimestamp: data.timestamp,
       lastOccurrenceMessage: data.message,
       totalOccurrences: issue.totalOccurrences + 1,
+      stack: data.stack,
     });
   };
 
@@ -89,5 +90,27 @@ export class MockStorage implements Storage {
     issueIds.forEach((issueId) => {
       this._updateIssueById(issueId, { resolved: false });
     });
+  };
+
+  archiveIssues: Storage["archiveIssues"] = async (issueIds) => {
+    issueIds.forEach((issueId) => {
+      this._updateIssueById(issueId, { archived: true });
+    });
+  };
+
+  unarchiveIssues: Storage["unarchiveIssues"] = async (issueIds) => {
+    issueIds.forEach((issueId) => {
+      this._updateIssueById(issueId, { archived: false });
+    });
+  };
+
+  findIssueById: Storage["findIssueById"] = async (id) => {
+    return this.issues.find((issue) => issue.id === id) || null;
+  };
+
+  getPaginatedOccurrences: Storage["getPaginatedOccurrences"] = async (
+    filters
+  ) => {
+    return this.occurrences;
   };
 }

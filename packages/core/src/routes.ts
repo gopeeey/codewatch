@@ -1,16 +1,20 @@
 import { AppRoutes } from "@codewatch/types";
 import {
+  archiveIssues,
   deleteIssues,
   entryPoint,
+  getIssueById,
   getIssuesTotal,
   getPaginatedIssues,
+  getPaginatedOccurrences,
   resolveIssues,
+  unarchiveIssues,
   unresolveIssues,
 } from "./controllers";
 
 export const appRoutes: AppRoutes = {
   entry: {
-    route: ["/"],
+    route: ["/", "/issues", "/statistics", "/issues/:id"],
     method: "get",
     handler: entryPoint,
   },
@@ -19,6 +23,11 @@ export const appRoutes: AppRoutes = {
       route: "/api/issues",
       method: "post",
       handler: getPaginatedIssues,
+    },
+    {
+      route: "/api/issues/:id",
+      method: "get",
+      handler: getIssueById,
     },
     {
       route: "/api/issues/total",
@@ -39,6 +48,22 @@ export const appRoutes: AppRoutes = {
       route: "/api/issues/unresolve",
       method: "put",
       handler: unresolveIssues,
+    },
+    {
+      route: "/api/issues/archive",
+      method: "put",
+      handler: archiveIssues,
+    },
+    {
+      route: "/api/issues/unarchive",
+      method: "put",
+      handler: unarchiveIssues,
+    },
+
+    {
+      route: "/api/occurrences",
+      method: "post",
+      handler: getPaginatedOccurrences,
     },
   ],
 };

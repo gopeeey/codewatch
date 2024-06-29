@@ -34,7 +34,7 @@ export default function SideBar() {
 
       {/* Navigation */}
       <div className="mt-40">
-        <NavLink link="/" icon="error" iconAlt="error-icon">
+        <NavLink link="/issues" icon="error" iconAlt="error-icon">
           Issues
         </NavLink>
         <NavLink link="/statistics" icon="stats" iconAlt="stats-icon">

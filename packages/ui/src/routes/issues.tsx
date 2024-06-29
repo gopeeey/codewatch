@@ -1,34 +1,35 @@
-import CalendarIcon from "@assets/calendar.svg";
 import SearchIcon from "@assets/search.svg";
-import { GetIssuesFilters, Issue } from "@codewatch/types";
+import { GetIssuesFilters, Issue, IssueTab } from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
 import {
+  archiveIssues,
   deleteIssues,
   getIssues,
   getIssuesTotal,
   resolveIssues,
+  unarchiveIssues,
   unresolveIssues,
 } from "@lib/data";
 import { generateRange } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
-import { Checkbox, DateRangePicker, Select, TextField } from "@ui/inputs";
+import { EmptyState } from "@ui/empty_state";
+import { Checkbox, TextField, useDateRange } from "@ui/inputs";
 import { IssueCard, IssueCardSkeleton, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
-import moment from "moment";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-
-type DatePreset = "1" | "2" | "3" | "4";
 
 export default function IssuesRoute() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [searchParams, setSearchParams] = useSearchParams({});
-  const [datePreset, setDatePreset] = useState<DatePreset>(
-    dateToPreset(searchParams.get("startDate"), searchParams.get("endDate"))
-  );
-  const [resolved, setResolved] = useState<Issue["resolved"]>(
-    searchParams.get("resolved") == "true"
+  const { startDate, endDate, dateRangeElement } = useDateRange({
+    initialStartDate: searchParams.get("startDate"),
+    initialEndDate: searchParams.get("endDate"),
+    selectClassName: "mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto",
+  });
+  const [currentTab, setCurrentTab] = useState<IssueTab>(
+    (searchParams.get("tab") as IssueTab) || "unresolved"
   );
   const [searchString, setSearchString] = useState(
     searchParams.get("searchString") ?? ""
@@ -37,32 +38,17 @@ export default function IssuesRoute() {
   const [perPage] = useState(Number(searchParams.get("perPage") ?? 15));
   const [resolvedCount, setResolvedCount] = useState(0);
   const [unresolvedCount, setUnresolvedCount] = useState(0);
-  const [startDate, setStartDate] = useState(
-    searchParams.get("startDate") ??
-      (Date.now() - 3 * 24 * 60 * 60 * 1000).toString()
-  );
-  const [endDate, setEndDate] = useState(
-    searchParams.get("endDate") ?? Date.now().toString()
-  );
+  const [archivedCount, setArchivedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Issue["id"][]>([]);
-  const [openDateRangePicker, setOpenDateRangePicker] =
-    useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const prevFilterStr = useRef("");
-
-  useEffect(() => {
-    if (datePreset !== "4") {
-      setStartDate(presetToDate(datePreset));
-      setEndDate(Date.now().toString());
-    }
-  }, [datePreset]);
 
   const submit = useCallback(() => {
     if (
       (searchParams.get("searchString") !== searchString ||
         searchParams.get("startDate") !== startDate ||
         searchParams.get("endDate") !== endDate ||
-        searchParams.get("resolved") !== `${resolved}`) &&
+        searchParams.get("tab") !== currentTab) &&
       page !== 1
     ) {
       return setPage(1);
@@ -74,15 +60,23 @@ export default function IssuesRoute() {
       perPage: perPage.toString(),
       startDate,
       endDate,
-      resolved: `${resolved}`,
+      tab: currentTab,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchString, page, perPage, startDate, endDate, resolved, searchParams]);
+  }, [
+    searchString,
+    page,
+    perPage,
+    startDate,
+    endDate,
+    currentTab,
+    searchParams,
+  ]);
 
   useEffect(() => {
     submit();
     //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchString, page, perPage, startDate, endDate, resolved]);
+  }, [searchString, page, perPage, startDate, endDate, currentTab]);
 
   const debouncedSearchStringChange = useDebounce(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -101,20 +95,25 @@ export default function IssuesRoute() {
       searchString: searchParams.get("searchString") ?? "",
       startDate,
       endDate,
-      resolved,
+      tab: currentTab,
     };
 
     const currentFilterStr = JSON.stringify(filters);
     if (currentFilterStr !== prevFilterStr.current) {
       const newTotal = await getIssuesTotal(filters);
       if (newTotal != null) {
-        const setter = resolved ? setResolvedCount : setUnresolvedCount;
+        const setter =
+          currentTab === "resolved"
+            ? setResolvedCount
+            : currentTab === "unresolved"
+            ? setUnresolvedCount
+            : setArchivedCount;
         setter(newTotal);
       }
 
-      if (resolved) {
+      if (currentTab !== "unresolved") {
         // also fetch unresolved total
-        const uTotal = await getIssuesTotal({ ...filters, resolved: false });
+        const uTotal = await getIssuesTotal({ ...filters, tab: "unresolved" });
         if (uTotal != null) setUnresolvedCount(uTotal);
       }
       prevFilterStr.current = currentFilterStr;
@@ -130,7 +129,7 @@ export default function IssuesRoute() {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const delIssues = useCallback(async () => {
+  const handleDeleteClick = useCallback(async () => {
     if (!selectedIds.length) return;
 
     const deleted = await deleteIssues(selectedIds);
@@ -141,27 +140,49 @@ export default function IssuesRoute() {
     setSelectedIds([]);
   }, [selectedIds, fetchIssues]);
 
-  const resIssues = useCallback(async () => {
+  const handleResolveClick = useCallback(async () => {
     if (!selectedIds.length) return;
 
     const successful = await resolveIssues(selectedIds);
-    if (successful && !resolved) {
+    if (successful && currentTab === "unresolved") {
       prevFilterStr.current = "";
       await fetchIssues();
     }
     setSelectedIds([]);
-  }, [selectedIds, resolved, fetchIssues]);
+  }, [selectedIds, currentTab, fetchIssues]);
 
-  const unResIssues = useCallback(async () => {
+  const handleUnresolveClick = useCallback(async () => {
     if (!selectedIds.length) return;
 
     const successful = await unresolveIssues(selectedIds);
-    if (successful && resolved) {
+    if (successful && currentTab === "resolved") {
       prevFilterStr.current = "";
       await fetchIssues();
     }
     setSelectedIds([]);
-  }, [selectedIds, resolved, fetchIssues]);
+  }, [selectedIds, currentTab, fetchIssues]);
+
+  const handleArchiveClick = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const archived = await archiveIssues(selectedIds);
+    if (archived && currentTab !== "archived") {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
+    setSelectedIds([]);
+  }, [selectedIds, currentTab, fetchIssues]);
+
+  const handleUnarchiveClick = useCallback(async () => {
+    if (!selectedIds.length) return;
+
+    const unarchived = await unarchiveIssues(selectedIds);
+    if (unarchived && currentTab === "archived") {
+      prevFilterStr.current = "";
+      await fetchIssues();
+    }
+    setSelectedIds([]);
+  }, [selectedIds, currentTab, fetchIssues]);
 
   useEffect(() => {
     fetchIssues();
@@ -170,7 +191,7 @@ export default function IssuesRoute() {
   return (
     <AppPage title="Issues" cardClassName="px-0 py-0">
       {/* Filters and Tabs */}
-      <div className="px-5 py-6 sm:pr-8 custom-rule flex flex-col justify-start xl:flex-row xl:justify-between">
+      <div className="px-5 py-6 sm:pr-8 custom-rule flex flex-col justify-start ">
         <div className="flex flex-col sm:flex-row">
           <TextField
             inputProps={{
@@ -182,51 +203,20 @@ export default function IssuesRoute() {
             className="w-full sm:w-1/2 xl:w-auto"
           />
 
-          <Select
-            onChange={(val) => setDatePreset(val as DatePreset)}
-            options={[
-              { display: "Last 24 hours", value: "1" },
-              { display: "Last 3 days", value: "2" },
-              { display: "Last 7 days", value: "3" },
-              {
-                display: `${moment(Number(startDate)).format(
-                  "DD MMM, YYYY h:mm:ss A"
-                )} - ${moment(Number(endDate)).format(
-                  "DD MMM, YYYY h:mm:ss A"
-                )}`,
-                listDisplay: "Custom",
-                value: "4",
-                onSelect: () => setOpenDateRangePicker(true),
-              },
-            ]}
-            value={datePreset}
-            className="mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto"
-            startAdornment={<img src={CalendarIcon} alt="search" width={14} />}
-            id="date-range-picker"
-          />
-
-          <DateRangePicker
-            open={openDateRangePicker}
-            onClose={() => setOpenDateRangePicker(false)}
-            defaultStartDate={new Date(Number(startDate)).toISOString()}
-            defaultEndDate={new Date(Number(endDate)).toISOString()}
-            onChange={(start, end) => {
-              setStartDate(new Date(start).getTime().toString());
-              setEndDate(new Date(end).getTime().toString());
-            }}
-          />
+          {dateRangeElement}
         </div>
 
         <IssuesTabs
-          resolved={resolved}
-          onChange={setResolved}
+          currentTab={currentTab}
+          onChange={setCurrentTab}
           resolvedCount={0}
           unresolvedCount={unresolvedCount}
-          className="mt-6 -mb-[1.547rem] xl:mt-0 xl:-mb-[3.54rem]"
+          archivedCount={0}
+          className="mt-6 -mb-[1.547rem] "
         />
       </div>
 
-      <div className="px-5 py-5 xl:py-3 custom-rule flex justify-between pr-8">
+      <div className="px-5 py-5 custom-rule flex justify-between pr-8">
         {/* Actions */}
         <div className="flex items-center">
           <Checkbox
@@ -245,26 +235,49 @@ export default function IssuesRoute() {
             disabled={loading}
           />
 
-          {resolved ? (
+          {currentTab === "unresolved" || currentTab === "archived" ? (
+            <ActionButton onClick={handleResolveClick} disabled={loading}>
+              Resolve
+            </ActionButton>
+          ) : null}
+
+          {currentTab === "resolved" || currentTab === "archived" ? (
             <ActionButton
-              label="Unresolve"
-              onClick={unResIssues}
+              onClick={handleUnresolveClick}
               disabled={loading}
-            />
-          ) : (
+              className={currentTab === "archived" ? "ml-3" : ""}
+            >
+              Unresolve
+            </ActionButton>
+          ) : null}
+
+          {currentTab !== "archived" ? (
             <ActionButton
-              label="Resolve"
-              onClick={resIssues}
+              onClick={handleArchiveClick}
+              className="ml-3"
               disabled={loading}
-            />
-          )}
+            >
+              Archive
+            </ActionButton>
+          ) : null}
+
+          {currentTab === "archived" ? (
+            <ActionButton
+              onClick={handleUnarchiveClick}
+              className="ml-3"
+              disabled={loading}
+            >
+              Unarchive
+            </ActionButton>
+          ) : null}
 
           <ActionButton
-            label="Delete"
-            onClick={delIssues}
+            onClick={handleDeleteClick}
             className="ml-3"
             disabled={loading}
-          />
+          >
+            Delete
+          </ActionButton>
         </div>
 
         {/* Table Header */}
@@ -272,66 +285,43 @@ export default function IssuesRoute() {
       </div>
 
       {/* Issues */}
-      {loading
-        ? generateRange(1, 4).map((num) => <IssueCardSkeleton key={num} />)
-        : issues.map((issue) => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              selected={selectedIds.includes(issue.id)}
-              onSelect={() => {
-                setSelectedIds((prev) => {
-                  if (prev.includes(issue.id)) {
-                    return prev.filter((id) => id !== issue.id);
-                  } else {
-                    return [...prev, issue.id];
-                  }
-                });
-              }}
-            />
-          ))}
+      {loading ? (
+        generateRange(1, 4).map((num) => <IssueCardSkeleton key={num} />)
+      ) : issues.length ? (
+        issues.map((issue) => (
+          <IssueCard
+            key={issue.id}
+            issue={issue}
+            selected={selectedIds.includes(issue.id)}
+            onSelect={() => {
+              setSelectedIds((prev) => {
+                if (prev.includes(issue.id)) {
+                  return prev.filter((id) => id !== issue.id);
+                } else {
+                  return [...prev, issue.id];
+                }
+              });
+            }}
+          />
+        ))
+      ) : (
+        <EmptyState message="Couldn't find any issues for those filters" />
+      )}
 
       <div className="py-10 pr-8 flex justify-end">
         <Pagination
           page={page}
           perPage={perPage}
-          totalRows={resolved ? resolvedCount : unresolvedCount}
+          totalRows={
+            currentTab === "resolved"
+              ? resolvedCount
+              : currentTab === "unresolved"
+              ? unresolvedCount
+              : archivedCount
+          }
           onChange={setPage}
         />
       </div>
     </AppPage>
   );
-}
-
-function dateToPreset(startDate?: string | null, endDate?: string | null) {
-  if (!startDate) return "2";
-  const now = Date.now();
-  if (endDate && Number(endDate) !== now) return "4";
-  const diff = now - new Date(startDate).getTime();
-
-  switch (diff) {
-    case 24 * 60 * 60 * 1000:
-      return "1";
-    case 3 * 24 * 60 * 60 * 1000:
-      return "2";
-    case 7 * 24 * 60 * 60 * 1000:
-      return "3";
-    default:
-      return "4";
-  }
-}
-
-function presetToDate(preset: ReturnType<typeof dateToPreset>) {
-  const now = Date.now();
-
-  switch (preset) {
-    case "1":
-      return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
-    case "2":
-      return new Date(now - 3 * 24 * 60 * 60 * 1000).getTime().toString();
-    case "3":
-      return new Date(now - 7 * 24 * 60 * 60 * 1000).getTime().toString();
-    default:
-      return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
-  }
 }

@@ -1,7 +1,7 @@
-import { ServerAdapter, Storage } from "@codewatch/types";
+import { Occurrence, ServerAdapter, Storage } from "@codewatch/types";
 import path from "path";
 import { errorHandler } from "./controllers";
-import { Core, CoreOptions } from "./core";
+import { CaptureDataOpts, Core, CoreOptions } from "./core";
 import { appRoutes } from "./routes";
 
 export interface Config extends CoreOptions {
@@ -27,6 +27,10 @@ export function closeCodewatch() {
   Core.close();
 }
 
-export function captureError(err: unknown) {
-  Core.captureError(err, false);
+export function captureError(err: unknown, extraData: Occurrence["extraData"]) {
+  Core.captureError(err, false, extraData);
+}
+
+export function captureData(data: Record<any, any>, options?: CaptureDataOpts) {
+  Core.captureData(data, options);
 }

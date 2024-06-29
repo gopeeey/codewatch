@@ -1,8 +1,19 @@
-import { GetIssuesFilters, Issue, Occurrence } from "@codewatch/types";
+import {
+  GetIssuesFilters,
+  GetPaginatedOccurrencesFilters,
+  Issue,
+  Occurrence,
+  UpdateLastOccurrenceOnIssueType,
+} from "@codewatch/types";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage } from "../storage";
 import { DbIssue } from "../types";
-import { CreateIssueData, createCreateIssueData, dbSetup } from "./utils";
+import {
+  CreateIssueData,
+  createCreateIssueData,
+  dbSetup,
+  insertTestIssue,
+} from "./utils";
 
 const pool = dbSetup();
 
@@ -117,6 +128,14 @@ describe("addOccurrence", () => {
       stdoutLogs: [
         { timestamp: 534564567, message: "something was logged here too" },
       ],
+      extraData: { foo: "bar" },
+      systemInfo: {
+        appMemoryUsage: 1234,
+        appUptime: 1234,
+        deviceMemory: 1234,
+        deviceUptime: 1234,
+        freeMemory: 1234,
+      },
     };
     await storage.addOccurrence(data);
 
@@ -142,29 +161,27 @@ describe("updateLastOccurrenceOnError", () => {
     const storage = await getStorage();
     const issueId = await storage.createIssue(issueData);
 
-    const occurrence: Occurrence = {
+    const newStackString = "Something";
+
+    const data: UpdateLastOccurrenceOnIssueType = {
       issueId,
       message: "Error 1",
       timestamp: now,
-      stderrLogs: [
-        { timestamp: 1234567, message: "something was logged here" },
-      ],
-      stdoutLogs: [
-        { timestamp: 534564567, message: "something was logged here too" },
-      ],
+      stack: newStackString,
     };
 
-    await storage.updateLastOccurrenceOnIssue(occurrence);
-    await storage.updateLastOccurrenceOnIssue(occurrence);
+    await storage.updateLastOccurrenceOnIssue(data);
+    await storage.updateLastOccurrenceOnIssue(data);
 
     const { rows } = await pool.query<
-      Pick<Issue, "totalOccurrences" | "lastOccurrenceTimestamp">
+      Pick<Issue, "totalOccurrences" | "lastOccurrenceTimestamp" | "stack">
     >(
-      SQL`SELECT "totalOccurrences", "lastOccurrenceTimestamp" FROM codewatch_pg_issues;`
+      SQL`SELECT "totalOccurrences", "lastOccurrenceTimestamp", "stack" FROM codewatch_pg_issues;`
     );
 
     expect(rows[0].totalOccurrences).toBe(2);
     expect(rows[0].lastOccurrenceTimestamp).toBe(now);
+    expect(rows[0].stack).toBe(newStackString);
     await storage.close();
   });
 });
@@ -204,6 +221,14 @@ const issuesData: {
   overrides?: Partial<CreateIssueData>;
 }[] = [
   {
+    timestamp: isoFromNow(35000),
+    overrides: { name: "Error 1", fingerprint: "890", archived: true },
+  },
+  {
+    timestamp: isoFromNow(30000),
+    overrides: { name: "Error 2", fingerprint: "789", resolved: true },
+  },
+  {
     timestamp: isoFromNow(25000),
     overrides: { name: "Nothing like the rest", fingerprint: "123" },
   },
@@ -234,31 +259,30 @@ const seed = async () => {
   await Promise.all(
     issuesData.map(async ({ timestamp, overrides }) => {
       const issueData = createCreateIssueData(timestamp, overrides);
-      const storage = await getStorage();
-      await storage.createIssue(issueData);
-      await storage.close();
+      await insertTestIssue(pool, issueData);
     })
   );
 };
 
-describe("CRUD", () => {
+describe("Seed required CRUD", () => {
   beforeEach(seed, 5000);
+  const fPrintSortFn = (a: string, b: string) => Number(a) - Number(b);
   describe("getPaginatedIssues", () => {
-    it("should sort the issues by lastOccurrenceTimestamp in descending order", async () => {
+    it("should sort the issues by createdAt in descending order", async () => {
       const storage = await getStorage();
       const issues = await storage.getPaginatedIssues({
         searchString: "",
         page: 1,
         perPage: 10,
-        resolved: false,
+        tab: "unresolved",
       });
 
-      let lastTimestamp = new Date().toISOString();
+      let lastCreatedAt = new Date().toISOString();
       for (const issue of issues) {
-        expect(issue.lastOccurrenceTimestamp < lastTimestamp).toBe(true);
-        lastTimestamp = issue.lastOccurrenceTimestamp;
+        expect(issue.createdAt < lastCreatedAt).toBe(true);
+        lastCreatedAt = issue.createdAt;
       }
-      expect.assertions(issuesData.length);
+      expect.assertions(issuesData.length - 2); // The total number of issues that should be in the unresolved tab
       await storage.close();
     });
 
@@ -269,9 +293,9 @@ describe("CRUD", () => {
         expectedFPrint: string[];
       }[] = [
         { page: 1, perPage: 1, expectedFPrint: ["678"] },
-        { page: 2, perPage: 1, expectedFPrint: ["456"] },
-        { page: 1, perPage: 2, expectedFPrint: ["678", "456"] },
-        { page: 2, perPage: 2, expectedFPrint: ["567", "234"] },
+        { page: 2, perPage: 1, expectedFPrint: ["567"] },
+        { page: 1, perPage: 2, expectedFPrint: ["678", "567"] },
+        { page: 2, perPage: 2, expectedFPrint: ["456", "345"] },
         { page: 2, perPage: 10, expectedFPrint: [] },
       ];
 
@@ -281,12 +305,12 @@ describe("CRUD", () => {
           searchString: "",
           page,
           perPage,
-          resolved: false,
+          tab: "unresolved",
         });
 
-        expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
-          expectedFPrint
-        );
+        expect(
+          issues.map(({ fingerprint }) => fingerprint).sort(fPrintSortFn)
+        ).toEqual(expectedFPrint.sort(fPrintSortFn));
       }
       await storage.close();
     });
@@ -297,49 +321,56 @@ describe("CRUD", () => {
         expectedFPrints: Issue["fingerprint"][];
       }[] = [
         {
-          filters: { searchString: "error", resolved: false },
+          filters: { searchString: "error", tab: "unresolved" },
           expectedFPrints: ["678", "456", "567", "234", "345"],
         },
         {
-          filters: { searchString: "error 2", resolved: false },
+          filters: { searchString: "error 2", tab: "unresolved" },
           expectedFPrints: ["456"],
         },
         {
-          filters: { searchString: "", resolved: false },
+          filters: { searchString: "", tab: "unresolved" },
           expectedFPrints: ["678", "456", "567", "234", "345", "123"],
         },
-        { filters: { searchString: "", resolved: true }, expectedFPrints: [] },
+        {
+          filters: { searchString: "", tab: "resolved" },
+          expectedFPrints: ["789"],
+        },
+        {
+          filters: { searchString: "", tab: "archived" },
+          expectedFPrints: ["890"],
+        },
         {
           filters: {
             searchString: "",
             startDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
-          expectedFPrints: ["678", "456", "567", "234"],
+          expectedFPrints: ["456", "567", "678"],
         },
         {
           filters: {
             searchString: "",
             endDate: isoFromNow(15000),
-            resolved: false,
+            tab: "unresolved",
           },
-          expectedFPrints: ["345", "123"],
+          expectedFPrints: ["123", "234", "345"],
         },
         {
           filters: {
             searchString: "",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
-          expectedFPrints: ["345", "123"],
+          expectedFPrints: ["123", "234", "345", "456"],
         },
         {
           filters: {
             searchString: "rest",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedFPrints: ["123"],
         },
@@ -353,9 +384,9 @@ describe("CRUD", () => {
           perPage: 10,
         });
 
-        expect(issues.map(({ fingerprint }) => fingerprint)).toEqual(
-          expectedFPrints
-        );
+        expect(
+          issues.map(({ fingerprint }) => fingerprint).sort(fPrintSortFn)
+        ).toEqual(expectedFPrints.sort(fPrintSortFn));
       }
       await storage.close();
     });
@@ -368,23 +399,24 @@ describe("CRUD", () => {
         expectedTotal: number;
       }[] = [
         {
-          filters: { searchString: "error", resolved: false },
+          filters: { searchString: "error", tab: "unresolved" },
           expectedTotal: 5,
         },
         {
-          filters: { searchString: "error 2", resolved: false },
+          filters: { searchString: "error 2", tab: "unresolved" },
           expectedTotal: 1,
         },
         {
-          filters: { searchString: "", resolved: false },
+          filters: { searchString: "", tab: "unresolved" },
           expectedTotal: 6,
         },
-        { filters: { searchString: "", resolved: true }, expectedTotal: 0 },
+        { filters: { searchString: "", tab: "resolved" }, expectedTotal: 1 },
+        { filters: { searchString: "", tab: "archived" }, expectedTotal: 1 },
         {
           filters: {
             searchString: "",
             startDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedTotal: 4,
         },
@@ -392,7 +424,7 @@ describe("CRUD", () => {
           filters: {
             searchString: "",
             endDate: isoFromNow(15000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedTotal: 2,
         },
@@ -401,7 +433,7 @@ describe("CRUD", () => {
             searchString: "",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedTotal: 2,
         },
@@ -410,7 +442,7 @@ describe("CRUD", () => {
             searchString: "rest",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
-            resolved: false,
+            tab: "unresolved",
           },
           expectedTotal: 1,
         },
@@ -483,6 +515,216 @@ describe("CRUD", () => {
         expect(resolved).toBe(false);
       }
       expect.assertions(unresolvedIssues.length + 1); // Plus one for the initial assertion we did.
+      await storage.close();
+    });
+  });
+
+  describe("archiveIssues", () => {
+    it("should update archived to true on the issues with the supplied ids", async () => {
+      const { rows: issues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE archived = false LIMIT 2;`
+      );
+      expect(issues.length).toBe(2);
+      const storage = await getStorage();
+      await storage.archiveIssues(issues.map(({ id }) => id.toString()));
+      const { rows: archivedIssues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
+          ({ id }) => id
+        )});`
+      );
+      for (const { archived } of archivedIssues) {
+        expect(archived).toBe(true);
+      }
+      expect.assertions(archivedIssues.length + 1); // Plus one for the initial assertion we did.
+      await storage.close();
+    });
+  });
+
+  describe("unarchiveIssues", () => {
+    it("should update archived to false on the issues with the supplied ids", async () => {
+      await pool.query(SQL`UPDATE codewatch_pg_issues SET archived = true;`);
+      const { rows: issues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE archived = true LIMIT 2;`
+      );
+      expect(issues.length).toBe(2);
+      const storage = await getStorage();
+      await storage.unarchiveIssues(issues.map(({ id }) => id.toString()));
+      const { rows: unarchivedIssues } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issues.map(
+          ({ id }) => id
+        )});`
+      );
+      for (const { archived } of unarchivedIssues) {
+        expect(archived).toBe(false);
+      }
+      expect.assertions(unarchivedIssues.length + 1); // Plus one for the initial assertion we did.
+      await storage.close();
+    });
+  });
+
+  describe("findIssueById", () => {
+    describe("given the issue exists", () => {
+      it("should return the issue with the supplied id", async () => {
+        const { rows: issues } = await pool.query<DbIssue>(
+          SQL`SELECT * FROM codewatch_pg_issues LIMIT 1;`
+        );
+        expect(issues.length).toBe(1);
+        const storage = await getStorage();
+        const expected = issues[0];
+        const issue = await storage.findIssueById(expected.id.toString());
+        expect(issue).toEqual({ ...expected, id: expected.id.toString() });
+        await storage.close();
+      });
+    });
+
+    describe("given the issue doesn't exist", () => {
+      it("should return null", async () => {
+        const storage = await getStorage();
+        const issue = await storage.findIssueById("0");
+        expect(issue).toBeNull();
+        await storage.close();
+      });
+    });
+  });
+
+  describe("getPaginatedOccurrences", () => {
+    const occurrenceData: Omit<Occurrence, "issueId">[] = [];
+    const occurrenceIssueId = "1";
+    for (let i = 1; i < 11; i++) {
+      occurrenceData.push({
+        message: `Error ${i}`,
+        stderrLogs: [],
+        stdoutLogs: [],
+        timestamp: isoFromNow(i * 1000),
+      });
+    }
+
+    const seedOccurrences = async () => {
+      const { rows: issues } = await pool.query<DbIssue>(
+        SQL`SELECT * FROM codewatch_pg_issues ORDER BY "id" ASC LIMIT 1;`
+      );
+
+      if (!issues.length)
+        throw new Error("No issues found when seeding occurrences");
+
+      const issueId = issues[0].id;
+
+      const query = SQL`INSERT INTO codewatch_pg_occurrences ("issueId", message, "stderrLogs", "stdoutLogs", timestamp) VALUES `;
+      for (let i = 0; i < occurrenceData.length; i++) {
+        const occurrence = occurrenceData[i];
+        query.append(
+          SQL`(${issueId}, ${occurrence.message}, ${occurrence.stderrLogs}, ${occurrence.stdoutLogs}, ${occurrence.timestamp})`
+        );
+        if (i < occurrenceData.length - 1) query.append(", ");
+      }
+      query.append(SQL`;`);
+      await pool.query(query);
+    };
+
+    beforeEach(seedOccurrences, 5000);
+    it("should sort the occurrences by timestamp in descending order", async () => {
+      const storage = await getStorage();
+      const occurrences = await storage.getPaginatedOccurrences({
+        issueId: occurrenceIssueId,
+        page: 1,
+        perPage: 10,
+        startDate: isoFromNow(20000),
+        endDate: isoFromNow(0),
+      });
+
+      let lastTimestamp = isoFromNow(0);
+      for (const occurrence of occurrences) {
+        expect(occurrence.timestamp < lastTimestamp).toBe(true);
+        lastTimestamp = occurrence.timestamp;
+      }
+      expect.assertions(occurrenceData.length);
+      await storage.close();
+    });
+
+    it("should paginate the occurrences", async () => {
+      const testData: {
+        page: number;
+        perPage: number;
+        expectedMsgs: Occurrence["message"][];
+      }[] = [
+        { page: 1, perPage: 1, expectedMsgs: ["Error 1"] },
+        { page: 2, perPage: 1, expectedMsgs: ["Error 2"] },
+        { page: 1, perPage: 2, expectedMsgs: ["Error 1", "Error 2"] },
+        { page: 2, perPage: 2, expectedMsgs: ["Error 3", "Error 4"] },
+        { page: 2, perPage: 10, expectedMsgs: [] },
+      ];
+
+      const storage = await getStorage();
+      for (const { page, perPage, expectedMsgs } of testData) {
+        const occurrences = await storage.getPaginatedOccurrences({
+          issueId: occurrenceIssueId,
+          page,
+          perPage,
+          startDate: isoFromNow(20000),
+          endDate: isoFromNow(0),
+        });
+
+        expect(occurrences.map(({ message }) => message)).toEqual(expectedMsgs);
+      }
+      await storage.close();
+    });
+
+    it("should apply the supplied filters", async () => {
+      const testData: {
+        filters: Omit<GetPaginatedOccurrencesFilters, "page" | "perPage">;
+        expectedMsgs: Occurrence["message"][];
+      }[] = [
+        {
+          filters: {
+            issueId: occurrenceIssueId,
+            startDate: isoFromNow(5000),
+            endDate: isoFromNow(0),
+          },
+          expectedMsgs: ["Error 1", "Error 2", "Error 3", "Error 4", "Error 5"],
+        },
+        {
+          filters: {
+            issueId: occurrenceIssueId,
+            startDate: isoFromNow(10000),
+            endDate: isoFromNow(5000),
+          },
+          expectedMsgs: [
+            "Error 5",
+            "Error 6",
+            "Error 7",
+            "Error 8",
+            "Error 9",
+            "Error 10",
+          ],
+        },
+        {
+          filters: {
+            issueId: occurrenceIssueId,
+            startDate: isoFromNow(30000),
+            endDate: isoFromNow(20000),
+          },
+          expectedMsgs: [],
+        },
+        {
+          filters: {
+            issueId: "23456997",
+            startDate: isoFromNow(30000),
+            endDate: isoFromNow(0),
+          },
+          expectedMsgs: [],
+        },
+      ];
+
+      const storage = await getStorage();
+      for (const { filters, expectedMsgs } of testData) {
+        const occurrences = await storage.getPaginatedOccurrences({
+          ...filters,
+          page: 1,
+          perPage: 10,
+        });
+
+        expect(occurrences.map(({ message }) => message)).toEqual(expectedMsgs);
+      }
       await storage.close();
     });
   });

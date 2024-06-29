@@ -1,12 +1,18 @@
 import { SideBarContext } from "@lib/contexts";
 import SideBar from "@ui/side_bar";
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useMatch, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Layout() {
   const [showSideBar, setShowSideBar] = useState(true);
+  const onRoot = useMatch("/");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (onRoot) navigate("/issues");
+  }, [onRoot, navigate]);
   return (
     <div className="flex bg-background min-h-full text-grey-100">
       <ToastContainer

@@ -4,8 +4,8 @@ import { Card } from "@ui/card";
 import { Modal } from "@ui/modal";
 import moment, { Moment } from "moment";
 import { useCallback, useState } from "react";
-import { RangeCalendar } from "./range_calendar";
-import { TimePickerComponent } from "./time_picker_component";
+import { RangeCalendar } from "../range_calendar";
+import { TimePickerComponent } from "../time_picker_component";
 
 type Props = {
   open: boolean;
