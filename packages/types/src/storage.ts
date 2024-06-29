@@ -10,18 +10,33 @@ export interface UpdateLastOccurrenceOnIssueType
   stack: Issue["stack"];
 }
 
+export interface Transaction {
+  commit: () => Promise<void>;
+  rollback: () => Promise<void>;
+  end: () => Promise<void>;
+}
+
 export interface Storage {
   ready: boolean;
   init: () => Promise<void>;
-  createIssue: (data: Omit<Issue, "id" | "resolved">) => Promise<Issue["id"]>;
-  addOccurrence: (data: Occurrence) => Promise<void>;
+  createTransaction: () => Promise<Transaction>;
+  createIssue: (
+    data: Omit<Issue, "id" | "resolved">,
+    transaction: Transaction
+  ) => Promise<Issue["id"]>;
+  addOccurrence: (data: Occurrence, transaction: Transaction) => Promise<void>;
   updateLastOccurrenceOnIssue: (
-    data: UpdateLastOccurrenceOnIssueType
+    data: UpdateLastOccurrenceOnIssueType,
+    transaction: Transaction
   ) => Promise<void>;
   findIssueIdByFingerprint: (
-    fingerprint: Issue["fingerprint"]
+    fingerprint: Issue["fingerprint"],
+    transaction?: Transaction
   ) => Promise<Issue["id"] | null>;
-  findIssueById: (id: Issue["id"]) => Promise<Issue | null>;
+  findIssueById: (
+    id: Issue["id"],
+    transaction?: Transaction
+  ) => Promise<Issue | null>;
   close: () => Promise<void>;
   getPaginatedIssues: (filters: GetPaginatedIssuesFilters) => Promise<Issue[]>;
   getPaginatedOccurrences: (
