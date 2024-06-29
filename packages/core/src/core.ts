@@ -90,20 +90,27 @@ export class Core {
     const fingerPrint = instance._generateFingerprint(err.name, err.stack);
     const currentTimestamp = now.toISOString();
     let issueId: Issue["id"] | null = null;
-    issueId = await instance._storage.findIssueIdByFingerprint(fingerPrint);
+    const transaction = await instance._storage.createTransaction();
+    issueId = await instance._storage.findIssueIdByFingerprint(
+      fingerPrint,
+      transaction
+    );
 
     if (!issueId) {
-      issueId = await instance._storage.createIssue({
-        fingerprint: fingerPrint,
-        name: err.name,
-        stack: err.stack,
-        totalOccurrences: 0,
-        lastOccurrenceTimestamp: currentTimestamp,
-        lastOccurrenceMessage: err.message,
-        archived: false,
-        unhandled: Boolean(unhandled),
-        createdAt: currentTimestamp,
-      });
+      issueId = await instance._storage.createIssue(
+        {
+          fingerprint: fingerPrint,
+          name: err.name,
+          stack: err.stack,
+          totalOccurrences: 0,
+          lastOccurrenceTimestamp: currentTimestamp,
+          lastOccurrenceMessage: err.message,
+          archived: false,
+          unhandled: Boolean(unhandled),
+          createdAt: currentTimestamp,
+        },
+        transaction
+      );
     }
 
     instance._cleanUpLogs(
@@ -117,22 +124,28 @@ export class Core {
       now.getTime() - instance._stderrRecentLogs.retentionTime
     );
     const stderrLogs = instance._stderrRecentLogs.logs;
-    await instance._storage.addOccurrence({
-      issueId,
-      message: err.message,
-      timestamp: currentTimestamp,
-      stderrLogs,
-      stdoutLogs,
-      extraData,
-      systemInfo: instance._getSysInfo(),
-    });
+    await instance._storage.addOccurrence(
+      {
+        issueId,
+        message: err.message,
+        timestamp: currentTimestamp,
+        stderrLogs,
+        stdoutLogs,
+        extraData,
+        systemInfo: instance._getSysInfo(),
+      },
+      transaction
+    );
 
-    await instance._storage.updateLastOccurrenceOnIssue({
-      issueId,
-      timestamp: currentTimestamp,
-      message: err.message,
-      stack: err.stack,
-    });
+    await instance._storage.updateLastOccurrenceOnIssue(
+      {
+        issueId,
+        timestamp: currentTimestamp,
+        message: err.message,
+        stack: err.stack,
+      },
+      transaction
+    );
   }
 
   static async captureData(
