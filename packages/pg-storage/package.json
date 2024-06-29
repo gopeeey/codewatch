@@ -22,6 +22,7 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
+    "@codewatch/postgres": "file:.yalc/@codewatch/postgres",
     "@codewatch/types": "file:.yalc/@codewatch/types",
     "pg": "^8.11.3",
     "sql-template-strings": "^2.2.2"

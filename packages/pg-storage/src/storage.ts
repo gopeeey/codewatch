@@ -1,8 +1,8 @@
-import { Issue, Occurrence, Storage } from "@codewatch/types";
+import { Issue, Occurrence, Storage, Transaction } from "@codewatch/types";
 import fs from "fs";
 import path from "path";
-import { Pool, PoolConfig, types as pgTypes } from "pg";
-import SQL from "sql-template-strings";
+import { Pool, PoolClient, PoolConfig, types as pgTypes } from "pg";
+import SQL, { SQLStatement } from "sql-template-strings";
 import { DbIssue } from "./types";
 
 pgTypes.setTypeParser(pgTypes.builtins.TIMESTAMPTZ, (val) =>
@@ -28,7 +28,7 @@ export class CodewatchPgStorage implements Storage {
 
   init: Storage["init"] = async () => {
     // Create migrations table
-    await this._pool.query(SQL`
+    await this._query(SQL`
       CREATE TABLE IF NOT EXISTS codewatch_pg_migrations (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
@@ -45,6 +45,17 @@ export class CodewatchPgStorage implements Storage {
     this.ready = false;
   };
 
+  private _query = async <T extends object>(
+    query: SQLStatement | string,
+    transaction?: Transaction
+  ) => {
+    if (transaction) {
+      return await (transaction as PgTransaction)._client.query(query);
+    } else {
+      return await this._pool.query<T>(query);
+    }
+  };
+
   private _runMigrations = async (direction: "up" | "down") => {
     let filenames = await new Promise<string[]>((resolve, reject) => {
       fs.readdir(this.migrationsBasePath, (err, files) => {
@@ -57,7 +68,7 @@ export class CodewatchPgStorage implements Storage {
       .sort((a, b) => parseInt(a.split("-")[0]) - parseInt(b.split("-")[0]));
 
     // Get applied migrations
-    const { rows } = await this._pool.query<Migration>(`
+    const { rows } = await this._query<Migration>(`
       SELECT * FROM codewatch_pg_migrations ORDER BY applied_on DESC;
     `);
     const appliedMigrations = rows.map(({ name }) => name);
@@ -86,14 +97,14 @@ export class CodewatchPgStorage implements Storage {
   };
 
   private _addMigrationRecord = async (name: string) => {
-    await this._pool.query(SQL`
+    await this._query(SQL`
       INSERT INTO codewatch_pg_migrations (name) VALUES (${name})
       ON CONFLICT DO NOTHING;
     `);
   };
 
   private _removeMigrationRecord = async (name: string) => {
-    await this._pool.query(SQL`
+    await this._query(SQL`
       DELETE FROM codewatch_pg_migrations WHERE name = ${name};
     `);
   };
@@ -115,9 +126,9 @@ export class CodewatchPgStorage implements Storage {
     const contents = file.split("--down");
 
     if (direction === "up") {
-      await this._pool.query(contents[0]);
+      await this._query(contents[0]);
     } else {
-      await this._pool.query(contents[1]);
+      await this._query(contents[1]);
     }
   };
 
@@ -128,8 +139,26 @@ export class CodewatchPgStorage implements Storage {
     }));
   };
 
+  createTransaction: Storage["createTransaction"] = async () => {
+    return await PgTransaction.start(this._pool);
+  };
+
+  runInTransaction: Storage["runInTransaction"] = async (fn) => {
+    const transaction = await this.createTransaction();
+    try {
+      const val = await fn(transaction);
+      await transaction.commit();
+      return val;
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    } finally {
+      await transaction.end();
+    }
+  };
+
   addOccurrence: Storage["addOccurrence"] = async (data) => {
-    await this._pool.query(SQL`
+    await this._query(SQL`
       INSERT INTO codewatch_pg_occurrences (
         "issueId", 
         message, 
@@ -151,7 +180,7 @@ export class CodewatchPgStorage implements Storage {
     `);
   };
 
-  createIssue: Storage["createIssue"] = async (data) => {
+  createIssue: Storage["createIssue"] = async (data, transaction) => {
     const query = SQL`INSERT INTO codewatch_pg_issues (
       fingerprint, 
       name, 
@@ -174,29 +203,40 @@ export class CodewatchPgStorage implements Storage {
         ${data.unhandled},
         ${data.createdAt}
       ) RETURNING id;`;
-    const { rows } = await this._pool.query<{ id: DbIssue["id"] }>(query);
+    const { rows } = await this._query<{ id: DbIssue["id"] }>(
+      query,
+      transaction
+    );
     return rows[0].id.toString();
   };
 
   findIssueIdByFingerprint: Storage["findIssueIdByFingerprint"] = async (
-    fingerprint
+    fingerprint,
+    transaction
   ) => {
     const query = SQL`SELECT id FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
-    const { rows } = await this._pool.query<{ id: DbIssue["id"] }>(query);
+    const { rows } = await this._query<{ id: DbIssue["id"] }>(
+      query,
+      transaction
+    );
     return rows[0]?.id.toString() || null;
   };
 
   updateLastOccurrenceOnIssue: Storage["updateLastOccurrenceOnIssue"] = async (
-    data
+    data,
+    transaction
   ) => {
-    await this._pool.query(SQL`
+    await this._query(
+      SQL`
       UPDATE codewatch_pg_issues SET 
       "lastOccurrenceTimestamp" = ${data.timestamp},
       "lastOccurrenceMessage" = ${data.message},
       "totalOccurrences" = "totalOccurrences" + 1,
       "stack" = ${data.stack}
       WHERE id = ${data.issueId};
-    `);
+    `,
+      transaction
+    );
   };
 
   getPaginatedIssues: Storage["getPaginatedIssues"] = async (filters) => {
@@ -234,7 +274,7 @@ export class CodewatchPgStorage implements Storage {
       SQL` ORDER BY "createdAt" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
     );
 
-    const { rows } = await this._pool.query<DbIssue>(query);
+    const { rows } = await this._query<DbIssue>(query);
     return this._standardizeIssues(rows);
   };
 
@@ -271,31 +311,32 @@ export class CodewatchPgStorage implements Storage {
         SQL` AND "lastOccurrenceTimestamp" <= ${new Date(filters.endDate)} `
       );
     }
-    const { rows } = await this._pool.query<{ count: number }>(query);
+    const { rows } = await this._query<{ count: number }>(query);
     return rows[0].count;
   };
 
   deleteIssues: Storage["deleteIssues"] = async (issueIds) => {
-    await this._pool.query(SQL`
+    await this._query(SQL`
       DELETE FROM codewatch_pg_issues WHERE id = ANY(${issueIds});
     `);
   };
 
   resolveIssues: Storage["resolveIssues"] = async (issueIds) => {
-    await this._pool.query(SQL`
+    await this._query(SQL`
       UPDATE codewatch_pg_issues SET resolved = true WHERE id = ANY(${issueIds});
     `);
   };
 
   unresolveIssues: Storage["resolveIssues"] = async (issueIds) => {
-    await this._pool.query(SQL`
+    await this._query(SQL`
       UPDATE codewatch_pg_issues SET resolved = false WHERE id = ANY(${issueIds});
     `);
   };
 
-  findIssueById: Storage["findIssueById"] = async (id) => {
-    const { rows } = await this._pool.query<DbIssue>(
-      SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${Number(id)};`
+  findIssueById: Storage["findIssueById"] = async (id, transaction) => {
+    const { rows } = await this._query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${Number(id)};`,
+      transaction
     );
     if (!rows.length) return null;
     return this._standardizeIssues(rows)[0];
@@ -313,19 +354,55 @@ export class CodewatchPgStorage implements Storage {
     ORDER BY timestamp DESC OFFSET ${offset} LIMIT ${filters.perPage};
     `;
 
-    const { rows } = await this._pool.query<Occurrence>(query);
+    const { rows } = await this._query<Occurrence>(query);
     return rows;
   };
 
   archiveIssues: Storage["archiveIssues"] = async (issueIds) => {
-    await this._pool.query(SQL`
+    await this._query(SQL`
       UPDATE codewatch_pg_issues SET archived = true WHERE id = ANY(${issueIds});
     `);
   };
 
   unarchiveIssues: Storage["unarchiveIssues"] = async (issueIds) => {
-    await this._pool.query(SQL`
+    await this._query(SQL`
       UPDATE codewatch_pg_issues SET archived = false WHERE id = ANY(${issueIds});
     `);
   };
+}
+
+export class PgTransaction implements Transaction {
+  _client: PoolClient;
+
+  private constructor(client: PoolClient) {
+    this._client = client;
+  }
+
+  static async start(pool: Pool) {
+    const client = await pool.connect();
+    await client.query("BEGIN");
+    return new PgTransaction(client);
+  }
+
+  async commit() {
+    await this._client.query("COMMIT");
+  }
+
+  async rollback() {
+    await this._client.query("ROLLBACK");
+  }
+
+  async end() {
+    this._client.release();
+  }
+
+  async commitAndEnd() {
+    await this._client.query("COMMIT");
+    this._client.release();
+  }
+
+  async rollbackAndEnd() {
+    await this._client.query("ROLLBACK");
+    this._client.release();
+  }
 }

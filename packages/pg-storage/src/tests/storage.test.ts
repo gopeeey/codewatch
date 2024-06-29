@@ -6,7 +6,7 @@ import {
   UpdateLastOccurrenceOnIssueType,
 } from "@codewatch/types";
 import SQL from "sql-template-strings";
-import { CodewatchPgStorage } from "../storage";
+import { CodewatchPgStorage, PgTransaction } from "../storage";
 import { DbIssue } from "../types";
 import {
   CreateIssueData,
@@ -99,11 +99,14 @@ describe("createIssue", () => {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
     const storage = await getStorage();
-    const id = await storage.createIssue(issueData);
+    const transaction = await storage.createTransaction();
+    const id = await storage.createIssue(issueData, transaction);
 
-    const { rows } = await pool.query<Pick<DbIssue, "fingerprint" | "id">>(
-      SQL`SELECT fingerprint, id FROM codewatch_pg_issues;`
-    );
+    const { rows } = await (transaction as PgTransaction)._client.query<
+      Pick<DbIssue, "fingerprint" | "id">
+    >(SQL`SELECT fingerprint, id FROM codewatch_pg_issues;`);
+
+    await transaction.rollbackAndEnd(); // Or commit and end, doesn't matter.
 
     expect(rows[0].id.toString()).toBe(id);
     expect(rows[0].fingerprint).toBe(issueData.fingerprint);
@@ -116,7 +119,8 @@ describe("addOccurrence", () => {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
     const storage = await getStorage();
-    const issueId = await storage.createIssue(issueData);
+    const transaction = await storage.createTransaction();
+    const issueId = await storage.createIssue(issueData, transaction);
 
     const data: Occurrence = {
       issueId,
@@ -137,15 +141,19 @@ describe("addOccurrence", () => {
         freeMemory: 1234,
       },
     };
-    await storage.addOccurrence(data);
+    await storage.addOccurrence(data, transaction);
 
-    const { rows } = await pool.query<Occurrence>(
+    const { rows } = await (
+      transaction as PgTransaction
+    )._client.query<Occurrence>(
       SQL`
         SELECT * FROM codewatch_pg_occurrences
         WHERE "issueId" = ${issueId} 
         ORDER BY timestamp DESC;
       `
     );
+
+    await transaction.rollbackAndEnd();
 
     expect(rows).toHaveLength(1);
     rows[0].issueId = rows[0].issueId.toString();
@@ -154,12 +162,13 @@ describe("addOccurrence", () => {
   });
 });
 
-describe("updateLastOccurrenceOnError", () => {
+describe("updateLastOccurrenceOnIssue", () => {
   it("should update the last occurrence timestamp and increment total occurrences", async () => {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
     const storage = await getStorage();
-    const issueId = await storage.createIssue(issueData);
+    const transaction = await storage.createTransaction();
+    const issueId = await storage.createIssue(issueData, transaction);
 
     const newStackString = "Something";
 
@@ -170,14 +179,16 @@ describe("updateLastOccurrenceOnError", () => {
       stack: newStackString,
     };
 
-    await storage.updateLastOccurrenceOnIssue(data);
-    await storage.updateLastOccurrenceOnIssue(data);
+    await storage.updateLastOccurrenceOnIssue(data, transaction);
+    await storage.updateLastOccurrenceOnIssue(data, transaction);
 
-    const { rows } = await pool.query<
+    const { rows } = await (transaction as PgTransaction)._client.query<
       Pick<Issue, "totalOccurrences" | "lastOccurrenceTimestamp" | "stack">
     >(
       SQL`SELECT "totalOccurrences", "lastOccurrenceTimestamp", "stack" FROM codewatch_pg_issues;`
     );
+
+    await transaction.rollbackAndEnd();
 
     expect(rows[0].totalOccurrences).toBe(2);
     expect(rows[0].lastOccurrenceTimestamp).toBe(now);
@@ -192,9 +203,14 @@ describe("findIssueIdByFingerprint", () => {
       const now = new Date().toISOString();
       const issueData = createCreateIssueData(now);
       const storage = await getStorage();
-      const issueId = await storage.createIssue(issueData);
+      const transaction = await storage.createTransaction();
+      const issueId = await storage.createIssue(issueData, transaction);
 
-      const id = await storage.findIssueIdByFingerprint(issueData.fingerprint);
+      const id = await storage.findIssueIdByFingerprint(
+        issueData.fingerprint,
+        transaction
+      );
+      await transaction.commitAndEnd();
 
       expect(id).toBe(issueId);
       await storage.close();
@@ -565,14 +581,24 @@ describe("Seed required CRUD", () => {
   describe("findIssueById", () => {
     describe("given the issue exists", () => {
       it("should return the issue with the supplied id", async () => {
-        const { rows: issues } = await pool.query<DbIssue>(
-          SQL`SELECT * FROM codewatch_pg_issues LIMIT 1;`
+        const storage = await getStorage();
+        const issueData = createCreateIssueData(issuesData[0].timestamp, {
+          fingerprint: "somethingnew",
+        });
+        const transaction = await storage.createTransaction();
+        const issueId = await storage.createIssue(issueData, transaction);
+
+        const { rows: issues } = await (
+          transaction as PgTransaction
+        )._client.query<DbIssue>(
+          SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${issueId};`
         );
         expect(issues.length).toBe(1);
-        const storage = await getStorage();
+
         const expected = issues[0];
-        const issue = await storage.findIssueById(expected.id.toString());
-        expect(issue).toEqual({ ...expected, id: expected.id.toString() });
+        const issue = await storage.findIssueById(issueId, transaction);
+        await transaction.rollbackAndEnd();
+        expect(issue).toEqual({ ...expected, id: issueId });
         await storage.close();
       });
     });
