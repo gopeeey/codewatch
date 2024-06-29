@@ -230,6 +230,59 @@ describe("findIssueIdByFingerprint", () => {
   });
 });
 
+describe("runInTransaction", () => {
+  it("should call it's callback with a transaction", async () => {
+    const callback = jest.fn();
+    const storage = await getStorage();
+    await storage.runInTransaction(callback);
+    expect(callback).toHaveBeenCalledWith(expect.any(PgTransaction));
+    await storage.close();
+  });
+
+  describe("given the callback throws an error", () => {
+    it("should rollback the transaction and throw the error", async () => {
+      const err = new Error("Hello there");
+      const fingerprint = "somethingspecial";
+      const storage = await getStorage();
+
+      expect(async () => {
+        await storage.runInTransaction(async (transaction) => {
+          const issueData = createCreateIssueData(new Date().toISOString(), {
+            fingerprint,
+          });
+          await storage.createIssue(issueData, transaction);
+          throw err;
+        });
+      }).rejects.toThrow(err);
+
+      const { rows } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE "fingerprint" = ${fingerprint};`
+      );
+      expect(rows).toHaveLength(0);
+
+      await storage.close();
+    });
+  });
+
+  describe("given the callback doesn't throw an error", () => {
+    it("should commit the transaction and return the return value of the callback", async () => {
+      const storage = await getStorage();
+      const id = await storage.runInTransaction(async (transaction) => {
+        const issueData = createCreateIssueData(new Date().toISOString());
+        return await storage.createIssue(issueData, transaction);
+      });
+
+      expect(id).not.toBeUndefined();
+      expect(Number(id)).toBeGreaterThan(0);
+      const { rows } = await pool.query<Issue>(
+        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${id};`
+      );
+      expect(rows).toHaveLength(1);
+      await storage.close();
+    });
+  });
+});
+
 const crudNow = Date.now();
 const isoFromNow = (offset: number) => new Date(crudNow - offset).toISOString();
 const issuesData: {
