@@ -5,9 +5,9 @@ import {
   Storage,
   SystemInfo,
 } from "@codewatch/types";
-import { createHash } from "crypto";
 import os from "os";
 import { format } from "util";
+import { generateFingerprint, mapStackToSource } from "./utils";
 
 export type CoreOptions = {
   stdoutLogRetentionTime?: number;
@@ -87,7 +87,8 @@ export class Core {
     }
 
     const now = new Date();
-    const fingerPrint = instance._generateFingerprint(err.name, err.stack);
+    const stack = await mapStackToSource(err.stack);
+    const fingerPrint = generateFingerprint(err.name, stack);
     const currentTimestamp = now.toISOString();
     let issueId: Issue["id"] | null = null;
 
@@ -102,7 +103,7 @@ export class Core {
           {
             fingerprint: fingerPrint,
             name: err.name,
-            stack: err.stack as string,
+            stack,
             totalOccurrences: 0,
             lastOccurrenceTimestamp: currentTimestamp,
             lastOccurrenceMessage: err.message,
@@ -143,7 +144,7 @@ export class Core {
           issueId,
           timestamp: currentTimestamp,
           message: err.message,
-          stack: err.stack as string,
+          stack,
         },
         transaction
       );
@@ -180,23 +181,6 @@ export class Core {
     instance._stdoutRecentLogs.logs = [];
     await instance._storage.close();
     Core._instance = null;
-  }
-
-  private _generateFingerprint(name: string, stack: string) {
-    // Normalize the error stack
-    const stackFrames = (stack as string)
-      .replace(/\d+:\d+/g, "") // removes line and column numbers
-      .split("\n")
-      .slice(1);
-    let normalizedStack = "";
-    const cwd = process.cwd();
-    for (const frame of stackFrames) {
-      if (frame.includes(cwd)) {
-        normalizedStack += `${frame.trim()}\n`;
-      }
-    }
-    if (!normalizedStack.length) normalizedStack = stackFrames.join("\n");
-    return createHash("sha256").update(normalizedStack).digest("hex");
   }
 
   private _hookConsole() {
