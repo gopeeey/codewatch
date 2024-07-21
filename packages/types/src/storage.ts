@@ -14,12 +14,15 @@ export interface Transaction {
   commit: () => Promise<void>;
   rollback: () => Promise<void>;
   end: () => Promise<void>;
+  commitAndEnd: () => Promise<void>;
+  rollbackAndEnd: () => Promise<void>;
 }
 
 export interface Storage {
   ready: boolean;
   init: () => Promise<void>;
   createTransaction: () => Promise<Transaction>;
+  runInTransaction: <T>(fn: (trx: Transaction) => Promise<T>) => Promise<T>;
   createIssue: (
     data: Omit<Issue, "id" | "resolved">,
     transaction: Transaction

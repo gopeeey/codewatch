@@ -22,6 +22,28 @@ export class MockStorage implements Storage {
     this.ready = true;
   }
 
+  createTransaction: Storage["createTransaction"] = async () => ({
+    commit: async () => {},
+    rollback: async () => {},
+    end: async () => {},
+    commitAndEnd: async () => {},
+    rollbackAndEnd: async () => {},
+  });
+
+  runInTransaction: Storage["runInTransaction"] = async (fn) => {
+    const transaction = await this.createTransaction();
+    try {
+      const val = await fn(transaction);
+      await transaction.commit();
+      return val;
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    } finally {
+      await transaction.end();
+    }
+  };
+
   createIssue: Storage["createIssue"] = async (data) => {
     this.issues.push({
       ...data,

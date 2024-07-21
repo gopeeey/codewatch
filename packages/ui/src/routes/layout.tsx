@@ -1,4 +1,6 @@
-import { SideBarContext } from "@lib/contexts";
+import { ConfirmationDialogContext, SideBarContext } from "@lib/contexts";
+import { ConfirmationInterface } from "@lib/types";
+import { ConfirmationDialog } from "@ui/confirmation_dialog";
 import SideBar from "@ui/side_bar";
 import { useEffect, useState } from "react";
 import { Outlet, useMatch, useNavigate } from "react-router-dom";
@@ -7,6 +9,8 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function Layout() {
   const [showSideBar, setShowSideBar] = useState(true);
+  const [confirmation, setConfirmation] =
+    useState<ConfirmationInterface | null>(null);
   const onRoot = useMatch("/");
   const navigate = useNavigate();
 
@@ -23,12 +27,17 @@ export default function Layout() {
         theme="colored"
       />
 
-      <SideBarContext.Provider
-        value={{ show: showSideBar, setShow: setShowSideBar }}
+      <ConfirmationDialogContext.Provider
+        value={{ confirmation, dispatchConfirmation: setConfirmation }}
       >
-        <SideBar />
-        <Outlet />
-      </SideBarContext.Provider>
+        <SideBarContext.Provider
+          value={{ show: showSideBar, setShow: setShowSideBar }}
+        >
+          <ConfirmationDialog />
+          <SideBar />
+          <Outlet />
+        </SideBarContext.Provider>
+      </ConfirmationDialogContext.Provider>
     </div>
   );
 }

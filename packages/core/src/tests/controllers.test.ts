@@ -23,11 +23,11 @@ import { testIssueArray } from "./samples";
 
 const testError = new Error("Hello world");
 
-beforeEach(() => {
+beforeEach(async () => {
   MockStorage.createInstance();
   const storage = MockStorage.getInstance();
   Core.init(storage, { disableConsoleLogs: false });
-  Core.captureError(testError);
+  await Core.captureError(testError);
 });
 
 afterEach(async () => {

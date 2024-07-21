@@ -31,6 +31,22 @@ body {
 
   font-family: "Poppins", sans-serif;
 }
+@keyframes typing {
+  from {
+    width: 0;
+    margin-left: -1.8rem;
+  }
+  to {
+    width: 1.55rem;
+    margin-left: 0em;
+  }
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing ease-out 0.6s infinite;
+}
 
 @layer utilities {
   .text-balance {
