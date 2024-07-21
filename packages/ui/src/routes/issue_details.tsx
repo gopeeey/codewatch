@@ -4,6 +4,7 @@ import ClockIcon from "@assets/clock.svg";
 import DeleteIcon from "@assets/delete-tiny.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
 import { GetPaginatedOccurrencesFilters, Issue } from "@codewatch/types";
+import { ConfirmationDialogContext } from "@lib/contexts";
 import {
   OccurrenceWithId,
   archiveIssues,
@@ -28,7 +29,7 @@ import {
 import { Pagination } from "@ui/pagination";
 import clsx from "clsx";
 import moment from "moment";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
 const DEFAULT_PAGE = 1;
@@ -36,6 +37,7 @@ const DEFAULT_PAGE_SIZE = 15;
 
 export default function IssueDetails() {
   const [searchParams, setSearchParams] = useSearchParams({});
+  const { dispatchConfirmation } = useContext(ConfirmationDialogContext);
   const urlParams = useParams<{ issueId: string }>();
   const {
     startDate,
@@ -58,6 +60,7 @@ export default function IssueDetails() {
   const [issue, setIssue] = useState<Issue | null>(null);
   const [occurrences, setOccurrences] = useState<OccurrenceWithId[]>([]);
   const [loadingIssue, setLoadingIssue] = useState(false);
+  const [resolveLoading, setResolveLoading] = useState(false);
   const [loadingOccurrences, setLoadingOccurrences] = useState(false);
   const occurrencesRef = useRef<string | null>(null);
   const urlParamsRef = useRef<string | null>(null);
@@ -170,48 +173,62 @@ export default function IssueDetails() {
     window.history.back();
   }, []);
 
-  const handleDeleteClick = useCallback(async () => {
+  const handleDeleteClick = useCallback(() => {
     if (!issue) return;
-    setLoadingIssue(true);
-    const deleted = await deleteIssues([issue.id]);
-    if (deleted) handleBackClick();
-    setLoadingIssue(false);
-  }, [handleBackClick, issue]);
+    dispatchConfirmation({
+      title: "Delete Issue",
+      message: `Are you sure you want to delete this issue?`,
+      confirmButtonText: "Delete",
+      onConfirm: async () => {
+        const deleted = await deleteIssues([issue.id]);
+        if (deleted) handleBackClick();
+      },
+      confirmButtonColor: "red",
+    });
+  }, [dispatchConfirmation, handleBackClick, issue]);
 
   const handleArchiveClick = useCallback(async () => {
     if (!issue) return;
-
-    setLoadingIssue(true);
-    const archived = await archiveIssues([issue.id]);
-    if (archived) updateIssue({ archived: true });
-    setLoadingIssue(false);
-  }, [issue, updateIssue]);
+    dispatchConfirmation({
+      title: "Archive Issue",
+      message: `This will stop occurrence logging for this issue. Are you sure you want to archive this issue?`,
+      confirmButtonText: "Archive",
+      onConfirm: async () => {
+        const archived = await archiveIssues([issue.id]);
+        if (archived) updateIssue({ archived: true });
+      },
+    });
+  }, [issue, updateIssue, dispatchConfirmation]);
 
   const handleUnarchiveClick = useCallback(async () => {
     if (!issue) return;
-
-    setLoadingIssue(true);
-    const unarchived = await unarchiveIssues([issue.id]);
-    if (unarchived) updateIssue({ archived: false });
-    setLoadingIssue(false);
-  }, [issue, updateIssue]);
+    dispatchConfirmation({
+      title: "Unarchive Issue",
+      message: `This will resume occurrence logging for this issue. Are you sure you want to unarchive this issue?`,
+      confirmButtonText: "Unarchive",
+      onConfirm: async () => {
+        const unarchived = await unarchiveIssues([issue.id]);
+        if (unarchived) updateIssue({ archived: false });
+      },
+    });
+  }, [issue, updateIssue, dispatchConfirmation]);
 
   const handleResolveIssue = useCallback(async () => {
     if (!issue) return;
 
-    setLoadingIssue(true);
+    setResolveLoading(true);
     const resolved = await resolveIssues([issue.id]);
     if (resolved) updateIssue({ resolved: true });
-    setLoadingIssue(false);
+    setResolveLoading(false);
   }, [issue, updateIssue]);
 
   const handleUnresolveIssue = useCallback(async () => {
     if (!issue) return;
 
-    setLoadingIssue(true);
+    setResolveLoading(true);
     const unresolved = await unresolveIssues([issue.id]);
     if (unresolved) updateIssue({ resolved: false });
-    setLoadingIssue(false);
+    setResolveLoading(false);
   }, [issue, updateIssue]);
 
   if (!loadingIssue && !issue) return null; // Change this to a 404
@@ -249,6 +266,7 @@ export default function IssueDetails() {
                   onClick={
                     issue.resolved ? handleUnresolveIssue : handleResolveIssue
                   }
+                  loading={resolveLoading}
                 >
                   {issue.resolved ? "Unresolve" : "Resolve"}
                 </Button>

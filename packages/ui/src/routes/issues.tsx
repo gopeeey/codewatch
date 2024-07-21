@@ -1,6 +1,7 @@
 import SearchIcon from "@assets/search.svg";
 import { GetIssuesFilters, Issue, IssueTab } from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
+import { ConfirmationDialogContext } from "@lib/contexts";
 import {
   archiveIssues,
   deleteIssues,
@@ -17,7 +18,14 @@ import { EmptyState } from "@ui/empty_state";
 import { Checkbox, TextField, useDateRange } from "@ui/inputs";
 import { IssueCard, IssueCardSkeleton, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 
 export default function IssuesRoute() {
@@ -42,6 +50,7 @@ export default function IssuesRoute() {
   const [selectedIds, setSelectedIds] = useState<Issue["id"][]>([]);
   const [loading, setLoading] = useState(true);
   const prevFilterStr = useRef("");
+  const { dispatchConfirmation } = useContext(ConfirmationDialogContext);
 
   const submit = useCallback(() => {
     if (
@@ -129,60 +138,93 @@ export default function IssuesRoute() {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const handleDeleteClick = useCallback(async () => {
+  const handleDeleteClick = useCallback(() => {
     if (!selectedIds.length) return;
-
-    const deleted = await deleteIssues(selectedIds);
-    if (deleted) {
-      prevFilterStr.current = "";
-      await fetchIssues();
-    }
-    setSelectedIds([]);
-  }, [selectedIds, fetchIssues]);
+    dispatchConfirmation({
+      title: "Delete Issues",
+      message: "Are you sure you want to delete the selected issues?",
+      onConfirm: async () => {
+        const deleted = await deleteIssues(selectedIds);
+        if (deleted) {
+          prevFilterStr.current = "";
+          await fetchIssues();
+        }
+        setSelectedIds([]);
+      },
+      confirmButtonText: "Delete",
+      confirmButtonColor: "red",
+    });
+  }, [selectedIds, fetchIssues, dispatchConfirmation]);
 
   const handleResolveClick = useCallback(async () => {
     if (!selectedIds.length) return;
-
-    const successful = await resolveIssues(selectedIds);
-    if (successful && currentTab === "unresolved") {
-      prevFilterStr.current = "";
-      await fetchIssues();
-    }
-    setSelectedIds([]);
-  }, [selectedIds, currentTab, fetchIssues]);
+    dispatchConfirmation({
+      title: "Resolve Issues",
+      message: "Are you sure you want to resolve the selected issues?",
+      onConfirm: async () => {
+        const successful = await resolveIssues(selectedIds);
+        if (successful && currentTab === "unresolved") {
+          prevFilterStr.current = "";
+          await fetchIssues();
+        }
+        setSelectedIds([]);
+      },
+      confirmButtonText: "Resolve",
+    });
+  }, [selectedIds, currentTab, fetchIssues, dispatchConfirmation]);
 
   const handleUnresolveClick = useCallback(async () => {
     if (!selectedIds.length) return;
-
-    const successful = await unresolveIssues(selectedIds);
-    if (successful && currentTab === "resolved") {
-      prevFilterStr.current = "";
-      await fetchIssues();
-    }
-    setSelectedIds([]);
-  }, [selectedIds, currentTab, fetchIssues]);
+    dispatchConfirmation({
+      title: "Unresolve Issues",
+      message: "Are you sure you want to unresolve the selected issues?",
+      onConfirm: async () => {
+        const successful = await unresolveIssues(selectedIds);
+        if (successful && currentTab === "resolved") {
+          prevFilterStr.current = "";
+          await fetchIssues();
+        }
+        setSelectedIds([]);
+      },
+      confirmButtonText: "Unresolve",
+    });
+  }, [selectedIds, currentTab, fetchIssues, dispatchConfirmation]);
 
   const handleArchiveClick = useCallback(async () => {
     if (!selectedIds.length) return;
-
-    const archived = await archiveIssues(selectedIds);
-    if (archived && currentTab !== "archived") {
-      prevFilterStr.current = "";
-      await fetchIssues();
-    }
-    setSelectedIds([]);
-  }, [selectedIds, currentTab, fetchIssues]);
+    dispatchConfirmation({
+      title: "Archive Issues",
+      message:
+        "This will stop occurrence logging for the selected issues. Are you sure you want to archive these issues?",
+      confirmButtonText: "Archive",
+      onConfirm: async () => {
+        const archived = await archiveIssues(selectedIds);
+        if (archived && currentTab !== "archived") {
+          prevFilterStr.current = "";
+          await fetchIssues();
+        }
+        setSelectedIds([]);
+      },
+    });
+  }, [selectedIds, currentTab, fetchIssues, dispatchConfirmation]);
 
   const handleUnarchiveClick = useCallback(async () => {
     if (!selectedIds.length) return;
-
-    const unarchived = await unarchiveIssues(selectedIds);
-    if (unarchived && currentTab === "archived") {
-      prevFilterStr.current = "";
-      await fetchIssues();
-    }
-    setSelectedIds([]);
-  }, [selectedIds, currentTab, fetchIssues]);
+    dispatchConfirmation({
+      title: "Unarchive Issues",
+      message:
+        "This will resume occurrence logging for the selected issues. Are you sure you want to unarchive these issues?",
+      confirmButtonText: "Unarchive",
+      onConfirm: async () => {
+        const unarchived = await unarchiveIssues(selectedIds);
+        if (unarchived && currentTab === "archived") {
+          prevFilterStr.current = "";
+          await fetchIssues();
+        }
+        setSelectedIds([]);
+      },
+    });
+  }, [selectedIds, currentTab, fetchIssues, dispatchConfirmation]);
 
   useEffect(() => {
     fetchIssues();

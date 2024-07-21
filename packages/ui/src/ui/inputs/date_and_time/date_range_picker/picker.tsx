@@ -1,7 +1,6 @@
 import { Button } from "@ui/buttons";
 import { ButtonBase } from "@ui/buttons/base";
-import { Card } from "@ui/card";
-import { Modal } from "@ui/modal";
+import { Modal, ModalCard } from "@ui/modal";
 import moment, { Moment } from "moment";
 import { useCallback, useState } from "react";
 import { RangeCalendar } from "../range_calendar";
@@ -105,7 +104,7 @@ export function DateRangePicker({
 
   return (
     <Modal open={open} onClose={handleClose}>
-      <Card className="!bg-background absolute origin-center transition-everything w-[26rem] py-7 shadow-transparent">
+      <ModalCard className="w-[26rem] py-7">
         {selectionMode === "date" ? (
           <RangeCalendar
             defaultStart={defaultStartDate ? moment(defaultStartDate) : null}
@@ -143,7 +142,7 @@ export function DateRangePicker({
         <div className="flex justify-end px-3.5 mt-7">
           <Button onClick={handleSubmit}>Ok</Button>
         </div>
-      </Card>
+      </ModalCard>
     </Modal>
   );
 }

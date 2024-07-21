@@ -18,9 +18,10 @@ export function ActionButton({
     <ButtonBase
       onClick={onClick}
       className={clsx(
-        "bg-input-background text-grey-200 rounded-[0.45rem] text-[0.66rem] px-3.5 py-[0.175rem] hover:bg-input-background-dark flex items-center",
+        "bg-input-background text-grey-200 rounded-[0.45rem] text-[0.66rem] px-3.5 py-[0.175rem] hover:bg-input-background-dark",
         className
       )}
+      contentClassName="flex items-center"
       disabled={disabled}
     >
       {children}

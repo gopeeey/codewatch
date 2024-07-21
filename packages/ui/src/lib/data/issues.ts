@@ -130,7 +130,7 @@ export async function getIssuesTotal(filters: GetIssuesFilters) {
 
 export async function deleteIssues(issueIds: DeleteIssues["issueIds"]) {
   if (isDev) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     return true;
   }
   const { error } = await client.post<never, DeleteIssues>({
