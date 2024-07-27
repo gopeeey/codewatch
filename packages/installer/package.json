@@ -1,0 +1,27 @@
+{
+  "name": "@codewatch/installer",
+  "version": "0.0.1",
+  "description": "Installer for codewatch packages",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsup && node dist/index.js",
+    "build": "tsup"
+  },
+  "bin": {
+    "installer": "./index.js"
+  },
+  "type": "module",
+  "author": "Samuel Gopeh",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.14.12",
+    "tsup": "^8.2.3",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^5.3.2",
+    "ora": "^8.0.1"
+  }
+}
