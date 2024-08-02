@@ -6,7 +6,6 @@ import {
   SystemInfo,
 } from "@codewatch/types";
 import os from "os";
-import { format } from "util";
 import { generateFingerprint, mapStackToSource } from "./utils";
 
 export type CoreOptions = {
@@ -31,7 +30,7 @@ export class Core {
   private _options: CoreOptions = {
     disableConsoleLogs: false,
   };
-  private _unhookConsole: (() => void) | null = null;
+  private unhookStdouterr: (() => void) | null = null;
   private _unhookUncaughtException: (() => void) | null = null;
   private static _instance: Core | null = null;
 
@@ -53,7 +52,7 @@ export class Core {
       this._options = { ...this._options, ...theRest };
     }
 
-    if (!this._options.disableConsoleLogs) this._hookConsole();
+    if (!this._options.disableConsoleLogs) this._hookStdouterr();
 
     this._hookUncaughtException();
   }
@@ -175,7 +174,7 @@ export class Core {
 
   static async close() {
     const instance = Core.getCore();
-    if (instance._unhookConsole) instance._unhookConsole();
+    if (instance.unhookStdouterr) instance.unhookStdouterr();
     if (instance._unhookUncaughtException) instance._unhookUncaughtException();
     instance._stderrRecentLogs.logs = [];
     instance._stdoutRecentLogs.logs = [];
@@ -183,37 +182,30 @@ export class Core {
     Core._instance = null;
   }
 
-  private _hookConsole() {
-    const oldConsoleLog = console.log;
-    const oldConsoleErr = console.error;
-    const oldConsoleInfo = console.info;
-    const oldConsoleWarn = console.warn;
+  private _hookStdouterr() {
+    const oldStdoutWrite = process.stdout.write;
+    const oldStderrWrite = process.stderr.write;
 
-    console.log = (...args: Parameters<Console["log"]>) => {
-      oldConsoleLog(...args);
-      this._writeLog(this._stdoutRecentLogs, format(...args));
+    const moddedStdoutWrite = (
+      ...args: Parameters<NodeJS.Process["stdout"]["write"]>
+    ) => {
+      oldStdoutWrite.apply(process.stdout, args);
+      this._writeLog(this._stdoutRecentLogs, args[0].toString());
     };
 
-    console.info = (...args: Parameters<Console["info"]>) => {
-      oldConsoleInfo(...args);
-      this._writeLog(this._stdoutRecentLogs, format(...args));
+    const moddedStderrWrite = (
+      ...args: Parameters<NodeJS.Process["stderr"]["write"]>
+    ) => {
+      oldStderrWrite.apply(process.stderr, args);
+      this._writeLog(this._stderrRecentLogs, args[0].toString());
     };
 
-    console.error = (...args: Parameters<Console["error"]>) => {
-      oldConsoleErr(...args);
-      this._writeLog(this._stderrRecentLogs, format(...args));
-    };
+    process.stdout.write = moddedStdoutWrite as typeof process.stdout.write;
+    process.stderr.write = moddedStderrWrite as typeof process.stderr.write;
 
-    console.warn = (...args: Parameters<Console["warn"]>) => {
-      oldConsoleWarn(...args);
-      this._writeLog(this._stderrRecentLogs, format(...args));
-    };
-
-    this._unhookConsole = () => {
-      console.log = oldConsoleLog;
-      console.error = oldConsoleErr;
-      console.info = oldConsoleInfo;
-      console.warn = oldConsoleWarn;
+    this.unhookStdouterr = () => {
+      process.stdout.write = oldStdoutWrite;
+      process.stderr.write = oldStderrWrite;
     };
   }
 
