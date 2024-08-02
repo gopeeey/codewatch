@@ -351,7 +351,7 @@ export default function IssueDetails() {
                 >
                   {issue.stack.split("\n").map((line, index) => (
                     <div key={index} className="mb-1">
-                      {line}
+                      {line.replace(/\s/g, "\u00A0")}
                     </div>
                   ))}
                 </div>

@@ -8,6 +8,7 @@ import moment from "moment";
 import { useState } from "react";
 import JsonView from "react18-json-view";
 import "react18-json-view/src/style.css";
+import stripAnsi from "strip-ansi";
 import { InfoCard } from "./info_card";
 
 type Props = {
@@ -130,12 +131,12 @@ function LogBlock({ log }: { log: Occurrence["stderrLogs"][number] }) {
           [{moment(log.timestamp).format("ddd MMM DD, YYYY. hh:mm:ss:SSS A")}]
         </span>
 
-        <span className="pl-2 text-grey-600">{lines[0]}</span>
+        <span className="pl-2 text-grey-600">{stripAnsi(lines[0])}</span>
       </div>
 
       {lines.slice(1).map((line, index) => (
-        <div key={index} className="pl-4 mt-2 text-grey-600">
-          {line}
+        <div key={index} className="mt-2 text-grey-600">
+          {stripAnsi(line.replace(/\s/g, "\u00A0\u00A0"))}
         </div>
       ))}
     </>
