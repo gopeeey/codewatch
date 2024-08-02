@@ -157,8 +157,9 @@ export class CodewatchPgStorage implements Storage {
     }
   };
 
-  addOccurrence: Storage["addOccurrence"] = async (data) => {
-    await this._query(SQL`
+  addOccurrence: Storage["addOccurrence"] = async (data, transaction) => {
+    await this._query(
+      SQL`
       INSERT INTO codewatch_pg_occurrences (
         "issueId", 
         message, 
@@ -177,7 +178,9 @@ export class CodewatchPgStorage implements Storage {
         ${data.extraData},
         ${data.systemInfo}
       );
-    `);
+    `,
+      transaction
+    );
   };
 
   createIssue: Storage["createIssue"] = async (data, transaction) => {
