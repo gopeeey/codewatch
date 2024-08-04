@@ -30,7 +30,7 @@ export class Core {
   private _options: CoreOptions = {
     disableConsoleLogs: false,
   };
-  private unhookStdouterr: (() => void) | null = null;
+  private _unhookStdouterr: (() => void) | null = null;
   private _unhookUncaughtException: (() => void) | null = null;
   private static _instance: Core | null = null;
 
@@ -174,7 +174,7 @@ export class Core {
 
   static async close() {
     const instance = Core.getCore();
-    if (instance.unhookStdouterr) instance.unhookStdouterr();
+    if (instance._unhookStdouterr) instance._unhookStdouterr();
     if (instance._unhookUncaughtException) instance._unhookUncaughtException();
     instance._stderrRecentLogs.logs = [];
     instance._stdoutRecentLogs.logs = [];
@@ -203,7 +203,7 @@ export class Core {
     process.stdout.write = moddedStdoutWrite as typeof process.stdout.write;
     process.stderr.write = moddedStderrWrite as typeof process.stderr.write;
 
-    this.unhookStdouterr = () => {
+    this._unhookStdouterr = () => {
       process.stdout.write = oldStdoutWrite;
       process.stderr.write = oldStderrWrite;
     };
