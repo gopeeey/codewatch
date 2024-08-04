@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { select } from "@inquirer/prompts";
 import { exec as unPromisifiedExec } from "child_process";
 import ora from "ora";

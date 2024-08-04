@@ -6,10 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsup && node dist/index.js",
-    "build": "tsup"
+    "build": "tsup",
+    "publish-local": "npm link"
   },
   "bin": {
-    "installer": "./index.js"
+    "codewatch-install": "dist/index.js"
   },
   "type": "module",
   "author": "Samuel Gopeh",
