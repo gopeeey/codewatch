@@ -92,12 +92,13 @@ export class Core {
     let issueId: Issue["id"] | null = null;
 
     await instance._storage.runInTransaction(async (transaction) => {
-      issueId = await instance._storage.findIssueIdByFingerprint(
-        fingerPrint,
-        transaction
-      );
+      const oldIssue =
+        await instance._storage.findIssueIdxArchiveStatusByFingerprint(
+          fingerPrint,
+          transaction
+        );
 
-      if (!issueId) {
+      if (!oldIssue) {
         issueId = await instance._storage.createIssue(
           {
             fingerprint: fingerPrint,
@@ -112,6 +113,9 @@ export class Core {
           },
           transaction
         );
+      } else {
+        if (oldIssue.archived) return;
+        issueId = oldIssue.id;
       }
 
       instance._cleanUpLogs(

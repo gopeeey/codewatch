@@ -87,6 +87,23 @@ describe("Core", () => {
             totalOccurrences: expect.any(Number),
           });
         });
+
+        describe("given the issue is archived", () => {
+          it("should not add a new occurrence or update the issue", async () => {
+            await Core.captureError(testError);
+            const storage = MockStorage.getInstance();
+            expect(storage.issues).toHaveLength(1);
+            const prevOccurrencesLength = storage.occurrences.length;
+
+            await storage.archiveIssues([storage.issues[0].id]);
+            const prevIssue = storage.issues[0];
+
+            await Core.captureError(testError);
+            console.log(storage.issues);
+            expect(storage.occurrences).toHaveLength(prevOccurrencesLength);
+            expect(storage.issues[0]).toEqual(prevIssue);
+          });
+        });
       });
 
       const issueId = "1";
