@@ -197,7 +197,7 @@ describe("updateLastOccurrenceOnIssue", () => {
   });
 });
 
-describe("findIssueIdByFingerprint", () => {
+describe("findIssueIdxArchiveStatusByFingerprint", () => {
   describe("given an existing error record", () => {
     it("should return the id of the record", async () => {
       const now = new Date().toISOString();
@@ -206,13 +206,15 @@ describe("findIssueIdByFingerprint", () => {
       const transaction = await storage.createTransaction();
       const issueId = await storage.createIssue(issueData, transaction);
 
-      const id = await storage.findIssueIdByFingerprint(
+      const foundIssue = await storage.findIssueIdxArchiveStatusByFingerprint(
         issueData.fingerprint,
         transaction
       );
       await transaction.commitAndEnd();
 
-      expect(id).toBe(issueId);
+      if (!foundIssue) throw new Error("Issue not found");
+      expect(foundIssue.id).toBe(issueId);
+      expect(foundIssue.archived).toBe(false);
       await storage.close();
     });
   });
@@ -222,9 +224,11 @@ describe("findIssueIdByFingerprint", () => {
       const fingerprint = "123456789012345678";
 
       const storage = await getStorage();
-      const id = await storage.findIssueIdByFingerprint(fingerprint);
+      const foundIssue = await storage.findIssueIdxArchiveStatusByFingerprint(
+        fingerprint
+      );
 
-      expect(id).toBeNull();
+      expect(foundIssue).toBeNull();
       await storage.close();
     });
   });

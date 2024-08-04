@@ -213,17 +213,18 @@ export class CodewatchPgStorage implements Storage {
     return rows[0].id.toString();
   };
 
-  findIssueIdByFingerprint: Storage["findIssueIdByFingerprint"] = async (
-    fingerprint,
-    transaction
-  ) => {
-    const query = SQL`SELECT id FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
-    const { rows } = await this._query<{ id: DbIssue["id"] }>(
-      query,
-      transaction
-    );
-    return rows[0]?.id.toString() || null;
-  };
+  findIssueIdxArchiveStatusByFingerprint: Storage["findIssueIdxArchiveStatusByFingerprint"] =
+    async (fingerprint, transaction) => {
+      const query = SQL`SELECT id, archived FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
+      const { rows } = await this._query<{
+        id: Pick<DbIssue, "id" | "archived">;
+      }>(query, transaction);
+      if (!rows.length) return null;
+      return {
+        id: rows[0].id.toString(),
+        archived: rows[0].archived,
+      };
+    };
 
   updateLastOccurrenceOnIssue: Storage["updateLastOccurrenceOnIssue"] = async (
     data,
