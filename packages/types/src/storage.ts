@@ -32,10 +32,10 @@ export interface Storage {
     data: UpdateLastOccurrenceOnIssueType,
     transaction: Transaction
   ) => Promise<void>;
-  findIssueIdByFingerprint: (
+  findIssueIdxArchiveStatusByFingerprint: (
     fingerprint: Issue["fingerprint"],
     transaction?: Transaction
-  ) => Promise<Issue["id"] | null>;
+  ) => Promise<Pick<Issue, "id" | "archived"> | null>;
   findIssueById: (
     id: Issue["id"],
     transaction?: Transaction
