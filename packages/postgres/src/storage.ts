@@ -305,15 +305,11 @@ export class CodewatchPgStorage implements Storage {
     }
 
     if (filters.startDate) {
-      query.append(
-        SQL` AND "lastOccurrenceTimestamp" >= ${new Date(filters.startDate)} `
-      );
+      query.append(SQL` AND "createdAt" >= ${new Date(filters.startDate)} `);
     }
 
     if (filters.endDate) {
-      query.append(
-        SQL` AND "lastOccurrenceTimestamp" <= ${new Date(filters.endDate)} `
-      );
+      query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
     }
     const { rows } = await this._query<{ count: number }>(query);
     return rows[0].count;

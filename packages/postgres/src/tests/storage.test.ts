@@ -491,7 +491,13 @@ describe("Seed required CRUD", () => {
             startDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          expectedTotal: 4,
+          // expectedTotal: 4,
+          expectedTotal: issuesData.filter(
+            (data) =>
+              data.timestamp >= isoFromNow(10000) &&
+              !data.overrides?.resolved &&
+              !data.overrides?.archived
+          ).length,
         },
         {
           filters: {
@@ -499,7 +505,13 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(15000),
             tab: "unresolved",
           },
-          expectedTotal: 2,
+          // expectedTotal: 2,
+          expectedTotal: issuesData.filter(
+            (data) =>
+              data.timestamp <= isoFromNow(15000) &&
+              !data.overrides?.resolved &&
+              !data.overrides?.archived
+          ).length,
         },
         {
           filters: {
@@ -508,7 +520,14 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          expectedTotal: 2,
+          // expectedTotal: 2,
+          expectedTotal: issuesData.filter(
+            (data) =>
+              data.timestamp >= isoFromNow(25000) &&
+              data.timestamp <= isoFromNow(10000) &&
+              !data.overrides?.resolved &&
+              !data.overrides?.archived
+          ).length,
         },
         {
           filters: {
@@ -517,7 +536,15 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          expectedTotal: 1,
+          // expectedTotal: 1,
+          expectedTotal: issuesData.filter(
+            (data) =>
+              data.timestamp >= isoFromNow(25000) &&
+              data.timestamp <= isoFromNow(10000) &&
+              data.overrides?.name?.includes("rest") &&
+              !data.overrides?.resolved &&
+              !data.overrides?.archived
+          ).length,
         },
       ];
 
