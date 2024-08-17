@@ -284,7 +284,7 @@ export class CodewatchPgStorage implements Storage {
 
   getIssuesTotal: Storage["getIssuesTotal"] = async (filters) => {
     const query = SQL`
-    SELECT COUNT(*) FROM codewatch_pg_issues WHERE `;
+    SELECT COUNT(id) FROM codewatch_pg_issues WHERE `;
 
     switch (filters.tab) {
       case "archived":
