@@ -148,6 +148,7 @@ export class Core {
           timestamp: currentTimestamp,
           message: err.message,
           stack,
+          resolved: false,
         },
         transaction
       );
