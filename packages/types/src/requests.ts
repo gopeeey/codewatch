@@ -17,6 +17,8 @@ export type GetIssuesFilters = {
 export interface GetPaginatedIssuesFilters extends GetIssuesFilters {
   page: number;
   perPage: number;
+  sort: "last-seen" | "created-at" | "total-occurrences" | "relevance";
+  order: "asc" | "desc";
 }
 
 export interface GetPaginatedOccurrencesFilters {
