@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS codewatch_pg_issues (
     "resolved" BOOLEAN DEFAULT FALSE NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS codewatch_pg_issues_name_idx ON codewatch_pg_issues USING gin ("name" gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS codewatch_pg_issues_name_idx ON codewatch_pg_issues USING gist ("name" gist_trgm_ops(siglen=256));
 CREATE INDEX IF NOT EXISTS codewatch_pg_issues_created_at_idx ON codewatch_pg_issues ("createdAt");
 
 CREATE TABLE IF NOT EXISTS codewatch_pg_occurrences (

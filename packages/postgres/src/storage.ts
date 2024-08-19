@@ -236,7 +236,8 @@ export class CodewatchPgStorage implements Storage {
       "lastOccurrenceTimestamp" = ${data.timestamp},
       "lastOccurrenceMessage" = ${data.message},
       "totalOccurrences" = "totalOccurrences" + 1,
-      "stack" = ${data.stack}
+      "stack" = ${data.stack},
+      "resolved" = ${data.resolved}
       WHERE id = ${data.issueId};
     `,
       transaction
@@ -263,7 +264,7 @@ export class CodewatchPgStorage implements Storage {
     }
 
     if (filters.searchString.length) {
-      query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
+      query.append(SQL` AND ${filters.searchString} % name `);
     }
 
     if (filters.startDate) {
@@ -274,9 +275,57 @@ export class CodewatchPgStorage implements Storage {
       query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
     }
 
-    query.append(
-      SQL` ORDER BY "createdAt" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
-    );
+    // Sorting
+    let sortColumns: string[] = [];
+
+    if (filters.sort !== "relevance") {
+      switch (filters.sort) {
+        case "created-at":
+          sortColumns = [
+            "createdAt",
+            "lastOccurrenceTimestamp",
+            "totalOccurrences",
+          ];
+          break;
+        case "last-seen":
+          sortColumns = [
+            "lastOccurrenceTimestamp",
+            "createdAt",
+            "totalOccurrences",
+          ];
+          break;
+        case "total-occurrences":
+          sortColumns = [
+            "totalOccurrences",
+            "createdAt",
+            "lastOccurrenceTimestamp",
+          ];
+          break;
+        default:
+          throw new Error("Invalid sort parameter");
+      }
+    }
+
+    query.append(SQL` ORDER BY`);
+
+    let mainSortColumn = SQL``;
+    if (filters.sort === "relevance") {
+      mainSortColumn = SQL` similarity(${filters.searchString}, "name")`;
+    } else {
+      const col = sortColumns.shift() as string;
+      mainSortColumn = SQL` `.append(`"${col}"`);
+    }
+    mainSortColumn.append(filters.order === "asc" ? SQL` ASC` : SQL` DESC`);
+    query.append(mainSortColumn);
+    const otherSortColumns = SQL``;
+    sortColumns.forEach((col) => {
+      otherSortColumns
+        .append(SQL`, `)
+        .append(`"${col}" ${filters.order === "asc" ? "ASC" : "DESC"}`);
+    });
+
+    // Pagination
+    query.append(SQL` OFFSET ${offset} LIMIT ${filters.perPage};`);
 
     const { rows } = await this._query<DbIssue>(query);
     return this._standardizeIssues(rows);
