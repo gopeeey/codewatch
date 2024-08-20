@@ -14,6 +14,7 @@ type Props = {
     onSelect?: () => unknown;
   }[];
   className?: string;
+  valueContainerClassName?: string;
   startAdornment?: React.ReactNode;
   containerRef?: React.MutableRefObject<HTMLDivElement | null>;
   id?: string;
@@ -21,6 +22,7 @@ type Props = {
 
 export function Select({
   className,
+  valueContainerClassName,
   startAdornment,
   value,
   onChange,
@@ -70,18 +72,18 @@ export function Select({
         tabIndex={0}
         onClick={handleClick}
       >
-        <div className="flex items-center">
+        <div className="flex items-center max-w-[95%]">
           {startAdornment ? (
-            <span className="mr-3 -mt-0.5">{startAdornment}</span>
+            <div className="block mr-3 -mt-0.5">{startAdornment}</div>
           ) : null}
-          {displayValue}
+          <div className={valueContainerClassName}>{displayValue}</div>
         </div>
 
         <img
           src={ChevronDownIcon}
           alt="chevron-down"
           width={11}
-          className={clsx("ml-6 transition-all duration-150", {
+          className={clsx("block ml-2 transition-all duration-150", {
             "origin-center rotate-180": isOpen,
           })}
         />

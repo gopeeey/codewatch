@@ -1,5 +1,11 @@
 import SearchIcon from "@assets/search.svg";
-import { GetIssuesFilters, Issue, IssueTab } from "@codewatch/types";
+import SortIcon from "@assets/sort.svg";
+import {
+  GetIssuesFilters,
+  GetPaginatedIssuesFilters,
+  Issue,
+  IssueTab,
+} from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
 import { ConfirmationDialogContext } from "@lib/contexts";
 import {
@@ -15,7 +21,7 @@ import { generateRange } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
 import { ActionButton } from "@ui/buttons";
 import { EmptyState } from "@ui/empty_state";
-import { Checkbox, TextField, useDateRange } from "@ui/inputs";
+import { Checkbox, Select, TextField, useDateRange } from "@ui/inputs";
 import { IssueCard, IssueCardSkeleton, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
 import {
@@ -34,13 +40,21 @@ export default function IssuesRoute() {
   const { startDate, endDate, dateRangeElement } = useDateRange({
     initialStartDate: searchParams.get("startDate"),
     initialEndDate: searchParams.get("endDate"),
-    selectClassName: "mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto",
+    selectClassName: "sm:col-span-7 xl:col-auto",
+    valueContainerClassName: "truncate",
   });
   const [currentTab, setCurrentTab] = useState<IssueTab>(
     (searchParams.get("tab") as IssueTab) || "unresolved"
   );
   const [searchString, setSearchString] = useState(
     searchParams.get("searchString") ?? ""
+  );
+  const [sort, setSort] = useState<GetPaginatedIssuesFilters["sort"]>(
+    (searchParams.get("sort") as GetPaginatedIssuesFilters["sort"]) ??
+      "created-at"
+  );
+  const [order, setOrder] = useState<GetPaginatedIssuesFilters["order"]>(
+    (searchParams.get("order") as GetPaginatedIssuesFilters["order"]) ?? "desc"
   );
   const [page, setPage] = useState(Number(searchParams.get("page") ?? 1));
   const [perPage] = useState(Number(searchParams.get("perPage") ?? 15));
@@ -57,6 +71,8 @@ export default function IssuesRoute() {
       (searchParams.get("searchString") !== searchString ||
         searchParams.get("startDate") !== startDate ||
         searchParams.get("endDate") !== endDate ||
+        searchParams.get("sort") !== sort ||
+        searchParams.get("order") !== order ||
         searchParams.get("tab") !== currentTab) &&
       page !== 1
     ) {
@@ -69,6 +85,8 @@ export default function IssuesRoute() {
       perPage: perPage.toString(),
       startDate,
       endDate,
+      sort,
+      order,
       tab: currentTab,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,19 +98,23 @@ export default function IssuesRoute() {
     endDate,
     currentTab,
     searchParams,
+    sort,
+    order,
   ]);
 
   useEffect(() => {
     submit();
     //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchString, page, perPage, startDate, endDate, currentTab]);
-
-  const debouncedSearchStringChange = useDebounce(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setSearchString(e.target.value);
-    },
-    1000
-  );
+  }, [
+    searchString,
+    page,
+    perPage,
+    startDate,
+    endDate,
+    currentTab,
+    sort,
+    order,
+  ]);
 
   const fetchIssues = useCallback(async () => {
     const startDate = searchParams.get("startDate") ?? "";
@@ -132,11 +154,28 @@ export default function IssuesRoute() {
       ...filters,
       page: Number(searchParams.get("page")) ?? 1,
       perPage: Number(searchParams.get("perPage")) ?? 15,
+      sort:
+        (searchParams.get("sort") as GetPaginatedIssuesFilters["sort"]) ??
+        "created-at",
+      order:
+        (searchParams.get("order") as GetPaginatedIssuesFilters["order"]) ??
+        "desc",
     });
     if (newIssues != null) setIssues(newIssues);
     setLoading(false);
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  useEffect(() => {
+    fetchIssues();
+  }, [fetchIssues]);
+
+  const debouncedSearchStringChange = useDebounce(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchString(e.target.value);
+    },
+    1000
+  );
 
   const handleDeleteClick = useCallback(() => {
     if (!selectedIds.length) return;
@@ -226,15 +265,17 @@ export default function IssuesRoute() {
     });
   }, [selectedIds, currentTab, fetchIssues, dispatchConfirmation]);
 
-  useEffect(() => {
-    fetchIssues();
-  }, [fetchIssues]);
+  const handleSortSelect = (val: string) => {
+    const valArr = val.split(" ");
+    setSort(valArr[0] as GetPaginatedIssuesFilters["sort"]);
+    setOrder(valArr[1] as GetPaginatedIssuesFilters["order"]);
+  };
 
   return (
     <AppPage title="Issues" cardClassName="px-0 py-0">
       {/* Filters and Tabs */}
       <div className="px-5 py-6 sm:pr-8 custom-rule flex flex-col justify-start ">
-        <div className="flex flex-col sm:flex-row">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-12 xl:flex">
           <TextField
             inputProps={{
               placeholder: "Search issues",
@@ -242,10 +283,43 @@ export default function IssuesRoute() {
               defaultValue: searchString,
             }}
             startAdornment={<img src={SearchIcon} alt="search" width={14} />}
-            className="w-full sm:w-1/2 xl:w-auto"
+            // className="w-full sm:w-1/2 xl:w-auto"
+            className="sm:col-span-12 xl:col-auto"
           />
 
           {dateRangeElement}
+
+          <Select
+            onChange={(val) => handleSortSelect(val)}
+            options={[
+              { display: "Oldest", value: "created-at asc" },
+              { display: "Latest", value: "created-at desc" },
+              {
+                display: "Most recent occurrence",
+                value: "last-seen desc",
+              },
+              { display: "Least recent occurrence", value: "last-seen asc" },
+              { display: "Most recurring", value: "total-occurrences desc" },
+              { display: "Least recurring", value: "total-occurrences asc" },
+              ...(searchString.length > 0
+                ? [
+                    {
+                      display: "Most relevant (search)",
+                      value: "relevance desc",
+                    },
+                    {
+                      display: "Least relevant (search)",
+                      value: "relevance asc",
+                    },
+                  ]
+                : []),
+            ]}
+            value={`${sort} ${order}`}
+            className="sm:col-span-5 xl:col-auto"
+            valueContainerClassName="truncate"
+            // className="mt-4 sm:mt-0 sm:ml-5 sm:w-1/2 xl:w-auto"
+            startAdornment={<img src={SortIcon} alt="search" width={14} />}
+          />
         </div>
 
         <IssuesTabs
