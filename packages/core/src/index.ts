@@ -27,7 +27,10 @@ export function closeCodewatch() {
   Core.close();
 }
 
-export function captureError(err: unknown, extraData: Occurrence["extraData"]) {
+export function captureError(
+  err: unknown,
+  extraData?: Occurrence["extraData"]
+) {
   Core.captureError(err, false, extraData);
 }
 

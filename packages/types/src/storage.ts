@@ -8,6 +8,7 @@ import {
 export interface UpdateLastOccurrenceOnIssueType
   extends Pick<Occurrence, "issueId" | "timestamp" | "message"> {
   stack: Issue["stack"];
+  resolved: boolean;
 }
 
 export interface Transaction {
@@ -32,10 +33,10 @@ export interface Storage {
     data: UpdateLastOccurrenceOnIssueType,
     transaction: Transaction
   ) => Promise<void>;
-  findIssueIdByFingerprint: (
+  findIssueIdxArchiveStatusByFingerprint: (
     fingerprint: Issue["fingerprint"],
     transaction?: Transaction
-  ) => Promise<Issue["id"] | null>;
+  ) => Promise<Pick<Issue, "id" | "archived"> | null>;
   findIssueById: (
     id: Issue["id"],
     transaction?: Transaction

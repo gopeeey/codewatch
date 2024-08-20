@@ -76,15 +76,14 @@ export class MockStorage implements Storage {
     });
   };
 
-  findIssueIdByFingerprint: Storage["findIssueIdByFingerprint"] = async (
-    fingerprint
-  ) => {
-    const issue = this.issues.find(
-      (issue) => issue.fingerprint === fingerprint
-    );
-    if (!issue) return null;
-    return issue.id;
-  };
+  findIssueIdxArchiveStatusByFingerprint: Storage["findIssueIdxArchiveStatusByFingerprint"] =
+    async (fingerprint) => {
+      const issue = this.issues.find(
+        (issue) => issue.fingerprint === fingerprint
+      );
+      if (!issue) return null;
+      return issue;
+    };
 
   close: Storage["close"] = async () => {
     MockStorage._instance = null;

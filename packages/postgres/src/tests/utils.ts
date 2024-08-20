@@ -1,5 +1,6 @@
 import { Issue } from "@codewatch/types";
 import { config } from "dotenv";
+import Levenshtein from "levenshtein";
 import { Pool } from "pg";
 import SQL from "sql-template-strings";
 
@@ -81,4 +82,9 @@ export const insertTestIssue = async (pool: Pool, data: CreateIssueData) => {
   });
 
   await pool.query(query);
+};
+
+export const getStringDistance = (a: string, b: string) => {
+  const lv = new Levenshtein(a, b);
+  return lv.distance;
 };

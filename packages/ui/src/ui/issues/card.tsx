@@ -22,7 +22,7 @@ export function IssueCard({ issue, selected, onSelect }: Props) {
               {issue.lastOccurrenceMessage}
             </div>
 
-            <div className="mt-0.5 text-[0.75rem] flex">
+            <div className="mt-0.5 text-[0.75rem] sm:flex">
               <span className="flex text-grey-800 items-start sm:items-center">
                 <img
                   src={ClockIcon}
@@ -35,7 +35,7 @@ export function IssueCard({ issue, selected, onSelect }: Props) {
               </span>
 
               {issue.unhandled ? (
-                <span className="flex ml-2 sm:ml-3 text-error-bright items-start sm:items-center">
+                <span className="flex mt-1 sm:mt-0 sm:ml-3 text-error-bright items-start sm:items-center">
                   <img
                     src={ErrorRedIcon}
                     alt="error"

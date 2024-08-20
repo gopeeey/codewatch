@@ -157,8 +157,9 @@ export class CodewatchPgStorage implements Storage {
     }
   };
 
-  addOccurrence: Storage["addOccurrence"] = async (data) => {
-    await this._query(SQL`
+  addOccurrence: Storage["addOccurrence"] = async (data, transaction) => {
+    await this._query(
+      SQL`
       INSERT INTO codewatch_pg_occurrences (
         "issueId", 
         message, 
@@ -177,7 +178,9 @@ export class CodewatchPgStorage implements Storage {
         ${data.extraData},
         ${data.systemInfo}
       );
-    `);
+    `,
+      transaction
+    );
   };
 
   createIssue: Storage["createIssue"] = async (data, transaction) => {
@@ -210,17 +213,18 @@ export class CodewatchPgStorage implements Storage {
     return rows[0].id.toString();
   };
 
-  findIssueIdByFingerprint: Storage["findIssueIdByFingerprint"] = async (
-    fingerprint,
-    transaction
-  ) => {
-    const query = SQL`SELECT id FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
-    const { rows } = await this._query<{ id: DbIssue["id"] }>(
-      query,
-      transaction
-    );
-    return rows[0]?.id.toString() || null;
-  };
+  findIssueIdxArchiveStatusByFingerprint: Storage["findIssueIdxArchiveStatusByFingerprint"] =
+    async (fingerprint, transaction) => {
+      const query = SQL`SELECT id, archived FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
+      const { rows } = await this._query<{
+        id: Pick<DbIssue, "id" | "archived">;
+      }>(query, transaction);
+      if (!rows.length) return null;
+      return {
+        id: rows[0].id.toString(),
+        archived: rows[0].archived,
+      };
+    };
 
   updateLastOccurrenceOnIssue: Storage["updateLastOccurrenceOnIssue"] = async (
     data,
@@ -232,7 +236,8 @@ export class CodewatchPgStorage implements Storage {
       "lastOccurrenceTimestamp" = ${data.timestamp},
       "lastOccurrenceMessage" = ${data.message},
       "totalOccurrences" = "totalOccurrences" + 1,
-      "stack" = ${data.stack}
+      "stack" = ${data.stack},
+      "resolved" = ${data.resolved}
       WHERE id = ${data.issueId};
     `,
       transaction
@@ -259,7 +264,7 @@ export class CodewatchPgStorage implements Storage {
     }
 
     if (filters.searchString.length) {
-      query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
+      query.append(SQL` AND ${filters.searchString} % name `);
     }
 
     if (filters.startDate) {
@@ -270,9 +275,57 @@ export class CodewatchPgStorage implements Storage {
       query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
     }
 
-    query.append(
-      SQL` ORDER BY "createdAt" DESC OFFSET ${offset} LIMIT ${filters.perPage};`
-    );
+    // Sorting
+    let sortColumns: string[] = [];
+
+    if (filters.sort !== "relevance") {
+      switch (filters.sort) {
+        case "created-at":
+          sortColumns = [
+            "createdAt",
+            "lastOccurrenceTimestamp",
+            "totalOccurrences",
+          ];
+          break;
+        case "last-seen":
+          sortColumns = [
+            "lastOccurrenceTimestamp",
+            "createdAt",
+            "totalOccurrences",
+          ];
+          break;
+        case "total-occurrences":
+          sortColumns = [
+            "totalOccurrences",
+            "createdAt",
+            "lastOccurrenceTimestamp",
+          ];
+          break;
+        default:
+          throw new Error("Invalid sort parameter");
+      }
+    }
+
+    query.append(SQL` ORDER BY`);
+
+    let mainSortColumn = SQL``;
+    if (filters.sort === "relevance") {
+      mainSortColumn = SQL` similarity(${filters.searchString}, "name")`;
+    } else {
+      const col = sortColumns.shift() as string;
+      mainSortColumn = SQL` `.append(`"${col}"`);
+    }
+    mainSortColumn.append(filters.order === "asc" ? SQL` ASC` : SQL` DESC`);
+    query.append(mainSortColumn);
+    const otherSortColumns = SQL``;
+    sortColumns.forEach((col) => {
+      otherSortColumns
+        .append(SQL`, `)
+        .append(`"${col}" ${filters.order === "asc" ? "ASC" : "DESC"}`);
+    });
+
+    // Pagination
+    query.append(SQL` OFFSET ${offset} LIMIT ${filters.perPage};`);
 
     const { rows } = await this._query<DbIssue>(query);
     return this._standardizeIssues(rows);
@@ -280,7 +333,7 @@ export class CodewatchPgStorage implements Storage {
 
   getIssuesTotal: Storage["getIssuesTotal"] = async (filters) => {
     const query = SQL`
-    SELECT COUNT(*) FROM codewatch_pg_issues WHERE `;
+    SELECT COUNT(id) FROM codewatch_pg_issues WHERE `;
 
     switch (filters.tab) {
       case "archived":
@@ -301,15 +354,11 @@ export class CodewatchPgStorage implements Storage {
     }
 
     if (filters.startDate) {
-      query.append(
-        SQL` AND "lastOccurrenceTimestamp" >= ${new Date(filters.startDate)} `
-      );
+      query.append(SQL` AND "createdAt" >= ${new Date(filters.startDate)} `);
     }
 
     if (filters.endDate) {
-      query.append(
-        SQL` AND "lastOccurrenceTimestamp" <= ${new Date(filters.endDate)} `
-      );
+      query.append(SQL` AND "createdAt" <= ${new Date(filters.endDate)} `);
     }
     const { rows } = await this._query<{ count: number }>(query);
     return rows[0].count;
