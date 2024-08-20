@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import { select } from "@inquirer/prompts";
-import { exec as unPromisifiedExec } from "child_process";
+import { exec } from "child_process";
 import ora from "ora";
 import { promisify } from "util";
 
-const exec = promisify(unPromisifiedExec);
+const execAsync = promisify(exec);
 
 const supportedServerFrameworks = [
   "express",
@@ -35,6 +35,8 @@ const storageChoices: { name: string; value: Storage }[] = [
 const spinner = ora();
 
 async function main() {
+  const isLocal = process.argv[2] === "--local";
+
   const serverFramework = await select({
     message: "Choose a server framework:",
     choices: serverFrameworkChoices,
@@ -46,16 +48,20 @@ async function main() {
   });
 
   try {
-    await spin("Installing core", installCore);
+    await spin("Installing core", async () => {
+      await installCore(isLocal);
+    });
 
-    await spin("Installing UI", installUi);
+    await spin("Installing UI", async () => {
+      await installUi(isLocal);
+    });
 
     await spin(`Installing ${serverFramework} adapter`, async () => {
-      await installServerFramework(serverFramework);
+      await installServerFramework(serverFramework, isLocal);
     });
 
     await spin(`Installing ${storage} adapter`, async () => {
-      await installStorage(storage);
+      await installStorage(storage, isLocal);
     });
   } catch (err) {
     console.error(err);
@@ -64,32 +70,47 @@ async function main() {
   }
 }
 
-async function installCore() {
-  await exec("yalc add @codewatch/core");
-  // await exec("npm install @codewatch/core");
+async function installCore(isLocal: boolean) {
+  if (isLocal) {
+    await execAsync("yalc add @codewatch/core");
+  } else {
+    // await execAsync("npm install @codewatch/core");
+  }
 }
 
-async function installUi() {
-  await exec("yalc add @codewatch/ui");
-  // await exec("npm install @codewatch/ui");
+async function installUi(isLocal: boolean) {
+  if (isLocal) {
+    await execAsync("yalc add @codewatch/ui");
+  } else {
+    // await execAsync("npm install @codewatch/ui");
+  }
 }
 
-async function installServerFramework(framework: ServerFramework) {
+async function installServerFramework(
+  framework: ServerFramework,
+  isLocal: boolean
+) {
   switch (framework) {
     case "express":
-      await exec("yalc add @codewatch/express");
-      // await exec("npm install @codewatch/express");
+      if (isLocal) {
+        await execAsync("yalc add @codewatch/express");
+      } else {
+        // await execAsync("npm install @codewatch/express");
+      }
       break;
     default:
       console.log("Not implemented yet: " + framework);
   }
 }
 
-async function installStorage(storage: Storage) {
+async function installStorage(storage: Storage, isLocal: boolean) {
   switch (storage) {
     case "postgresql":
-      await exec("yalc add @codewatch/postgres");
-      // await exec("npm install @codewatch/postgres");
+      if (isLocal) {
+        await execAsync("yalc add @codewatch/postgres");
+      } else {
+        // await execAsync("npm install @codewatch/postgres");
+      }
       break;
     default:
       console.log("Not implemented yet: " + storage);
