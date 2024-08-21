@@ -9,3 +9,17 @@ export type GetPaginatedOccurrencesResponse = {
 };
 
 export type GetIssueByIdResponse = { data: { issue: Issue } };
+
+type DailyIssueCount = { date: string; count: number };
+
+export type StatsData = {
+  data: {
+    stats: {
+      totalIssues: number;
+      dailyIssueCounts: DailyIssueCount[];
+      manuallyCapturedIssuesRate: number;
+      unhandledIssuesRate: number;
+      mostRecurringIssues: Issue[];
+    };
+  };
+};
