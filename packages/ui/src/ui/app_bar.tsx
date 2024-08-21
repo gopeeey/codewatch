@@ -12,7 +12,7 @@ export function AppBar({ title, className, dim }: Props) {
   return (
     <nav
       className={clsx(
-        "px-6 sm:px-0 py-7 flex text-grey-100 text-xl font-medium w-full",
+        "px-6 sm:px-0 py-7 flex text-grey-100 text-xl font-medium w-full items-center",
         { ["opacity-30"]: dim },
         className
       )}
@@ -21,7 +21,7 @@ export function AppBar({ title, className, dim }: Props) {
         <img src={MenuIcon} width={20} alt="menu-icon" />
       </ButtonBase>
 
-      <span className="ml-6">{title}</span>
+      <span className="ml-6 -mt-1">{title}</span>
     </nav>
   );
 }

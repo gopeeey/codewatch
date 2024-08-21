@@ -8,7 +8,6 @@ type Props = {
   initialStartDate?: string | null;
   initialEndDate?: string | null;
   selectClassName?: string;
-  valueContainerClassName?: string;
 };
 
 type DatePreset = "1" | "2" | "3" | "4";
@@ -17,7 +16,6 @@ export function useDateRange({
   initialStartDate,
   initialEndDate,
   selectClassName,
-  valueContainerClassName,
 }: Props) {
   const [startDate, setStartDate] = useState(
     initialStartDate
@@ -59,7 +57,7 @@ export function useDateRange({
         ]}
         value={datePreset}
         className={selectClassName}
-        valueContainerClassName={valueContainerClassName}
+        valueContainerClassName="truncate"
         startAdornment={<img src={CalendarIcon} alt="search" width={14} />}
         id="date-range-picker"
       />
