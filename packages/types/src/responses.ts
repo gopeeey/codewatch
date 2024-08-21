@@ -12,7 +12,7 @@ export type GetIssueByIdResponse = { data: { issue: Issue } };
 
 type DailyIssueCount = { date: string; count: number };
 
-export type StatsData = {
+export type GetStatsResponse = {
   data: {
     stats: {
       totalIssues: number;
