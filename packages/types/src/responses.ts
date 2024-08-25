@@ -10,15 +10,17 @@ export type GetPaginatedOccurrencesResponse = {
 
 export type GetIssueByIdResponse = { data: { issue: Issue } };
 
-type DailyIssueCount = { date: string; count: number };
+type DailyOccurrenceCount = { date: string; count: number };
 
 export type GetStatsResponse = {
   data: {
     stats: {
       totalIssues: number;
-      dailyIssueCounts: DailyIssueCount[];
-      manuallyCapturedIssuesRate: number;
-      unhandledIssuesRate: number;
+      totalOccurrences: number;
+      dailyOccurrenceCount: DailyOccurrenceCount[];
+      dailyUnhandledOccurrenceCount: DailyOccurrenceCount[];
+      totalUnhandledOccurrences: number;
+      totalManuallyCapturedOccurrences: number;
       mostRecurringIssues: Issue[];
     };
   };
