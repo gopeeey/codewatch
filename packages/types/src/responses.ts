@@ -21,6 +21,7 @@ export type GetStatsResponse = {
       dailyUnhandledOccurrenceCount: DailyOccurrenceCount[];
       totalUnhandledOccurrences: number;
       totalManuallyCapturedOccurrences: number;
+      totalLoggedData: number;
       mostRecurringIssues: Issue[];
     };
   };
