@@ -4,18 +4,48 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { DateRangePicker } from "./picker";
 
+type DatePresetCode = "1" | "2" | "3" | "4";
+
+export type DatePreset = {
+  code: Exclude<DatePresetCode, "4">;
+  display: string;
+  value: number;
+  default: boolean;
+};
+
 type Props = {
   initialStartDate?: string | null;
   initialEndDate?: string | null;
   selectClassName?: string;
+  datePresets?: DatePreset[];
 };
 
-type DatePreset = "1" | "2" | "3" | "4";
+const defaultPresets: DatePreset[] = [
+  {
+    code: "1",
+    display: "Last 24 hours",
+    value: 24 * 60 * 60 * 1000,
+    default: false,
+  },
+  {
+    code: "2",
+    display: "Last 3 days",
+    value: 3 * 24 * 60 * 60 * 1000,
+    default: true,
+  },
+  {
+    code: "3",
+    display: "Last 7 days",
+    value: 7 * 24 * 60 * 60 * 1000,
+    default: false,
+  },
+];
 
 export function useDateRange({
   initialStartDate,
   initialEndDate,
   selectClassName,
+  datePresets,
 }: Props) {
   const [startDate, setStartDate] = useState(
     initialStartDate
@@ -25,27 +55,29 @@ export function useDateRange({
   const [endDate, setEndDate] = useState(
     initialEndDate ? initialEndDate : Date.now().toString()
   );
-  const [datePreset, setDatePreset] = useState<DatePreset>(
-    dateToPreset(initialStartDate, initialEndDate)
+  const presets = datePresets || defaultPresets;
+  const [datePresetCode, setDatePresetCode] = useState<DatePresetCode>(
+    dateToPresetCode(presets, initialStartDate, initialEndDate)
   );
 
   const [openDateRangePicker, setOpenDateRangePicker] = useState(false);
 
   useEffect(() => {
-    if (datePreset !== "4") {
-      setStartDate(presetToDate(datePreset));
+    if (datePresetCode !== "4") {
+      setStartDate(presetCodeToDate(presets, datePresetCode));
       setEndDate(Date.now().toString());
     }
-  }, [datePreset]);
+  }, [datePresetCode, presets]);
 
   const dateRangeElement = (
     <>
       <Select
-        onChange={(val) => setDatePreset(val as DatePreset)}
+        onChange={(val) => setDatePresetCode(val as DatePresetCode)}
         options={[
-          { display: "Last 24 hours", value: "1" },
-          { display: "Last 3 days", value: "2" },
-          { display: "Last 7 days", value: "3" },
+          ...presets.map((p) => ({
+            display: p.display,
+            value: p.code,
+          })),
           {
             display: `${moment(Number(startDate)).format(
               "DD MMM, YYYY h:mm:ss A"
@@ -55,7 +87,7 @@ export function useDateRange({
             onSelect: () => setOpenDateRangePicker(true),
           },
         ]}
-        value={datePreset}
+        value={datePresetCode}
         className={selectClassName}
         valueContainerClassName="truncate"
         startAdornment={<img src={CalendarIcon} alt="search" width={14} />}
@@ -76,8 +108,8 @@ export function useDateRange({
   );
 
   return {
-    datePreset,
-    setDatePreset,
+    datePresetCode,
+    setDatePresetCode,
     startDate,
     setStartDate,
     endDate,
@@ -86,35 +118,29 @@ export function useDateRange({
   };
 }
 
-function dateToPreset(startDate?: string | null, endDate?: string | null) {
-  if (!startDate) return "2";
+function dateToPresetCode(
+  presets: DatePreset[],
+  startDate?: string | null,
+  endDate?: string | null
+) {
+  if (!startDate) {
+    const defaultPreset = presets.find((p) => p.default);
+    if (defaultPreset) return defaultPreset.code;
+    return "1";
+  }
   const now = Date.now();
   if (endDate && Number(endDate) !== now) return "4";
   const diff = now - new Date(startDate).getTime();
 
-  switch (diff) {
-    case 24 * 60 * 60 * 1000:
-      return "1";
-    case 3 * 24 * 60 * 60 * 1000:
-      return "2";
-    case 7 * 24 * 60 * 60 * 1000:
-      return "3";
-    default:
-      return "4";
-  }
+  const selectedPreset = presets.find((p) => p.value === diff);
+  if (selectedPreset) return selectedPreset.code;
+  return "4";
 }
 
-function presetToDate(preset: DatePreset) {
+function presetCodeToDate(presets: DatePreset[], code: DatePresetCode) {
   const now = Date.now();
 
-  switch (preset) {
-    case "1":
-      return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
-    case "2":
-      return new Date(now - 3 * 24 * 60 * 60 * 1000).getTime().toString();
-    case "3":
-      return new Date(now - 7 * 24 * 60 * 60 * 1000).getTime().toString();
-    default:
-      return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
-  }
+  const preset = presets.find((p) => p.code === code);
+  if (preset) return new Date(now - preset.value).getTime().toString();
+  return new Date(now - 24 * 60 * 60 * 1000).getTime().toString();
 }

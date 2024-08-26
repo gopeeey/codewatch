@@ -6,6 +6,8 @@ import {
   GetIssuesTotalResponse,
   GetPaginatedIssuesFilters,
   GetPaginatedIssuesResponse,
+  GetStats,
+  GetStatsResponse,
   Issue,
   ResolveIssues,
   UnresolveIssues,
@@ -15,57 +17,57 @@ import { HttpClient } from "@lib/http_client";
 const client = new HttpClient({ baseUrl: "/issues" });
 const isDev = import.meta.env.MODE === "development";
 
+const testIssues: Issue[] = [
+  {
+    fingerprint: "123456789",
+    id: "123456789",
+    lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
+    lastOccurrenceMessage:
+      "It went terribly wrong, I don't even know what happened.",
+    archived: false,
+    name: "Something went wrong",
+    stack:
+      "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
+    totalOccurrences: 3245,
+    unhandled: false,
+    createdAt: "2024-04-10T13:59:33.021Z",
+    resolved: false,
+  },
+  {
+    fingerprint: "2345678",
+    id: "2345678",
+    lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
+    lastOccurrenceMessage: "That's why this dashboard exists",
+    archived: false,
+    name: "It has crashed oooo!!!",
+    stack:
+      "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
+    totalOccurrences: 230,
+    unhandled: true,
+    createdAt: "2024-04-10T13:59:33.021Z",
+    resolved: false,
+  },
+  {
+    fingerprint: "34567890",
+    id: "34567890",
+    lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
+    lastOccurrenceMessage: "You'll find what it is though",
+    archived: false,
+    name: "Something went really wrong",
+    stack:
+      "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
+    totalOccurrences: 234,
+    unhandled: false,
+    createdAt: "2024-04-10T13:59:33.021Z",
+    resolved: false,
+  },
+];
+
 export async function getIssues(filters: GetPaginatedIssuesFilters) {
   if (isDev) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    const issues: Issue[] = [
-      {
-        fingerprint: "123456789",
-        id: "123456789",
-        lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
-        lastOccurrenceMessage:
-          "It went terribly wrong, I don't even know what happened.",
-        archived: false,
-        name: "Something went wrong",
-        stack:
-          "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
-        totalOccurrences: 3245,
-        unhandled: false,
-        createdAt: "2024-04-10T13:59:33.021Z",
-        resolved: false,
-      },
-      {
-        fingerprint: "2345678",
-        id: "2345678",
-        lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
-        lastOccurrenceMessage: "That's why this dashboard exists",
-        archived: false,
-        name: "It has crashed oooo!!!",
-        stack:
-          "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
-        totalOccurrences: 230,
-        unhandled: true,
-        createdAt: "2024-04-10T13:59:33.021Z",
-        resolved: false,
-      },
-      {
-        fingerprint: "34567890",
-        id: "34567890",
-        lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
-        lastOccurrenceMessage: "You'll find what it is though",
-        archived: false,
-        name: "Something went really wrong",
-        stack:
-          "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
-        totalOccurrences: 234,
-        unhandled: false,
-        createdAt: "2024-04-10T13:59:33.021Z",
-        resolved: false,
-      },
-    ];
-    const emptIssues: Issue[] = [];
-    if (filters.page > 1) return emptIssues;
-    return issues;
+    if (filters.page > 1) return [] as Issue[];
+    return testIssues;
   }
   const res = await client.post<
     GetPaginatedIssuesResponse["data"],
@@ -191,4 +193,46 @@ export async function unarchiveIssues(issueIds: ArchiveIssues["issueIds"]) {
   });
 
   return !error;
+}
+
+export async function getStats(filter: GetStats) {
+  if (isDev) {
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const defaultData: GetStatsResponse["data"]["stats"] = {
+      totalIssues: 2300,
+      totalOccurrences: 1450050,
+      dailyOccurrenceCount: [
+        { date: new Date("2024-04-10").toISOString(), count: 10 },
+        { date: new Date("2024-04-11").toISOString(), count: 40 },
+        { date: new Date("2024-04-12").toISOString(), count: 98 },
+        { date: new Date("2024-04-13").toISOString(), count: 200 },
+        { date: new Date("2024-04-14").toISOString(), count: 50 },
+        { date: new Date("2024-04-15").toISOString(), count: 1300 },
+        { date: new Date("2024-04-16").toISOString(), count: 16 },
+        { date: new Date("2024-04-17").toISOString(), count: 78 },
+      ],
+      dailyUnhandledOccurrenceCount: [
+        { date: new Date("2024-04-10").toISOString(), count: 7 },
+        { date: new Date("2024-04-11").toISOString(), count: 30 },
+        { date: new Date("2024-04-12").toISOString(), count: 56 },
+        { date: new Date("2024-04-13").toISOString(), count: 123 },
+        { date: new Date("2024-04-14").toISOString(), count: 45 },
+        { date: new Date("2024-04-15").toISOString(), count: 454 },
+        { date: new Date("2024-04-16").toISOString(), count: 12 },
+        { date: new Date("2024-04-17").toISOString(), count: 22 },
+      ],
+      totalManuallyCapturedOccurrences: 76,
+      totalUnhandledOccurrences: 24,
+      mostRecurringIssues: testIssues,
+    };
+    return defaultData;
+  }
+
+  const res = await client.post<GetStatsResponse["data"], GetStats>({
+    url: "/stats",
+    body: filter,
+  });
+  if (res.error) return null;
+  return res.data.stats;
 }
