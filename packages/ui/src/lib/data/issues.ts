@@ -224,6 +224,7 @@ export async function getStats(filter: GetStats) {
       ],
       totalManuallyCapturedOccurrences: 76,
       totalUnhandledOccurrences: 24,
+      totalLoggedData: 34,
       mostRecurringIssues: testIssues,
     };
     return defaultData;

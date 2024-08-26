@@ -12,7 +12,7 @@ export function AppBar({ title, className, dim }: Props) {
   return (
     <nav
       className={clsx(
-        "px-6 sm:px-0 py-7 flex text-grey-100 text-xl font-medium w-full items-center",
+        "px-6 sm:px-0 py-7 flex text-grey-100 text-xl font-medium w-full items-center h-min",
         { ["opacity-30"]: dim },
         className
       )}
