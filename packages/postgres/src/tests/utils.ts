@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import Levenshtein from "levenshtein";
 import { Pool } from "pg";
 import SQL from "sql-template-strings";
+import { CodewatchPgStorage } from "../storage";
 
 config();
 
@@ -87,4 +88,16 @@ export const insertTestIssue = async (pool: Pool, data: CreateIssueData) => {
 export const getStringDistance = (a: string, b: string) => {
   const lv = new Levenshtein(a, b);
   return lv.distance;
+};
+
+export const getStorage = async (init = true) => {
+  const storage = new CodewatchPgStorage({
+    user: process.env.POSTGRES_DB_USERNAME,
+    host: process.env.POSTGRES_DB_HOST,
+    database: process.env.POSTGRES_DB_NAME,
+    password: process.env.POSTGRES_DB_PASSWORD,
+    port: Number(process.env.POSTGRES_DB_PORT),
+  });
+  if (init) await storage.init();
+  return storage;
 };

@@ -1,4 +1,10 @@
-import { Issue, Occurrence, Storage, Transaction } from "@codewatch/types";
+import {
+  Issue,
+  Occurrence,
+  StatsData,
+  Storage,
+  Transaction,
+} from "@codewatch/types";
 import fs from "fs";
 import path from "path";
 import { Pool, PoolClient, PoolConfig, types as pgTypes } from "pg";
@@ -417,6 +423,21 @@ export class CodewatchPgStorage implements Storage {
     await this._query(SQL`
       UPDATE codewatch_pg_issues SET archived = false WHERE id = ANY(${issueIds});
     `);
+  };
+
+  getStatsData: Storage["getStatsData"] = async (filters) => {
+    const data: StatsData = {
+      dailyOccurrenceCount: [],
+      dailyUnhandledOccurrenceCount: [],
+      mostRecurringIssues: [],
+      totalIssues: 0,
+      totalLoggedData: 0,
+      totalManuallyCapturedOccurrences: 0,
+      totalOccurrences: 0,
+      totalUnhandledOccurrences: 0,
+    };
+
+    return data;
   };
 }
 
