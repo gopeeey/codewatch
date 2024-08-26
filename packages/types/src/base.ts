@@ -10,6 +10,7 @@ export interface Issue {
   unhandled: boolean;
   createdAt: string;
   resolved: boolean;
+  isLog: boolean;
 }
 
 export type StdChannelLog = { timestamp: number; message: string };
