@@ -31,3 +31,15 @@ export interface Occurrence {
   extraData?: Record<any, any>;
   systemInfo?: SystemInfo;
 }
+type DailyOccurrenceCount = { date: string; count: number };
+
+export interface StatsData {
+  totalIssues: number;
+  totalOccurrences: number;
+  dailyOccurrenceCount: DailyOccurrenceCount[];
+  dailyUnhandledOccurrenceCount: DailyOccurrenceCount[];
+  totalUnhandledOccurrences: number;
+  totalManuallyCapturedOccurrences: number;
+  totalLoggedData: number;
+  mostRecurringIssues: Issue[];
+}
