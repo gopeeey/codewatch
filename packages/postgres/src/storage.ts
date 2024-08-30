@@ -56,7 +56,7 @@ export class CodewatchPgStorage implements Storage {
     transaction?: Transaction
   ) => {
     if (transaction) {
-      return await (transaction as PgTransaction)._client.query(query);
+      return await (transaction as PgTransaction)._client.query<T>(query);
     } else {
       return await this._pool.query<T>(query);
     }
@@ -199,7 +199,8 @@ export class CodewatchPgStorage implements Storage {
       "lastOccurrenceMessage",
       "archived",
       "unhandled",
-      "createdAt"
+      "createdAt",
+      "isLog"
       )
       VALUES (
         ${data.fingerprint}, 
@@ -210,7 +211,8 @@ export class CodewatchPgStorage implements Storage {
         ${data.lastOccurrenceMessage},
         ${data.archived},
         ${data.unhandled},
-        ${data.createdAt}
+        ${data.createdAt},
+        ${data.isLog}
       ) RETURNING id;`;
     const { rows } = await this._query<{ id: DbIssue["id"] }>(
       query,
@@ -222,9 +224,10 @@ export class CodewatchPgStorage implements Storage {
   findIssueIdxArchiveStatusByFingerprint: Storage["findIssueIdxArchiveStatusByFingerprint"] =
     async (fingerprint, transaction) => {
       const query = SQL`SELECT id, archived FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
-      const { rows } = await this._query<{
-        id: Pick<DbIssue, "id" | "archived">;
-      }>(query, transaction);
+      const { rows } = await this._query<Pick<DbIssue, "id" | "archived">>(
+        query,
+        transaction
+      );
       if (!rows.length) return null;
       return {
         id: rows[0].id.toString(),
@@ -426,18 +429,119 @@ export class CodewatchPgStorage implements Storage {
   };
 
   getStatsData: Storage["getStatsData"] = async (filters) => {
-    const data: StatsData = {
-      dailyOccurrenceCount: [],
-      dailyUnhandledOccurrenceCount: [],
-      mostRecurringIssues: [],
-      totalIssues: 0,
-      totalLoggedData: 0,
-      totalManuallyCapturedOccurrences: 0,
-      totalOccurrences: 0,
-      totalUnhandledOccurrences: 0,
-    };
+    const query = SQL`--sql
+    WITH tab AS (
+      SELECT
+        o.id,
+        o."issueId",
+        o."timestamp" AS "occurrenceTimestamp",
+        i."unhandled",
+		i."isLog"
+      FROM codewatch_pg_occurrences AS o
+      INNER JOIN codewatch_pg_issues AS i ON o."issueId" = i."id"
+      WHERE o."timestamp" >= ${new Date(filters.startDate)}
+      AND o."timestamp" <= ${new Date(filters.endDate)}
+    )
 
-    return data;
+    SELECT 
+      COALESCE(
+        (
+          SELECT
+          jsonb_agg(
+            jsonb_build_object(
+            'count', tb.c,
+            'date', tb.date
+            )
+          )
+          FROM (
+            SELECT
+              COUNT(*) AS c,
+              date(tab."occurrenceTimestamp") AS "date"
+            FROM tab
+            GROUP BY date(tab."occurrenceTimestamp")
+          ) tb
+        ), 
+        '[]'
+      ) AS "dailyOccurrenceCount",
+
+      (
+        SELECT
+              COALESCE(jsonb_agg(
+                jsonb_build_object(
+                  'count', tb.c,
+                  'date', tb.date
+                )
+              ), '[]')
+            FROM (
+              SELECT
+                COUNT(*) AS c,
+                date(tab."occurrenceTimestamp") AS "date"
+              FROM tab
+          WHERE tab."unhandled" = true
+              GROUP BY date(tab."occurrenceTimestamp")
+            ) tb
+        ) AS "dailyUnhandledOccurrenceCount",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM (
+          SELECT tab."issueId"
+          FROM tab
+          GROUP BY tab."issueId"
+        )
+      ) AS "totalIssues",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM tab
+        WHERE tab."isLog" = true
+      ) AS "totalLoggedData",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM tab
+        WHERE tab."unhandled" = true
+      ) AS "totalUnhandledOccurrences",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM tab
+        WHERE tab."unhandled" = false
+        AND tab."isLog" = false
+      ) AS "totalManuallyCapturedOccurrences",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM tab
+      ) AS "totalOccurrences",
+
+      COALESCE(
+        (
+          SELECT 
+            jsonb_agg(c ORDER BY tbb.occurrences DESC)
+          FROM (
+            SELECT
+              COUNT(*) AS occurrences,
+              tab."issueId"
+            FROM tab
+            GROUP BY tab."issueId"
+            ORDER BY occurrences DESC LIMIT 5
+          ) tbb
+          INNER JOIN codewatch_pg_issues c ON tbb."issueId" = c."id"
+        ), 
+        '[]'
+      ) AS "mostRecurringIssues"
+    ;
+    `;
+
+    const { rows } = await this._query<StatsData>(query);
+
+    return rows[0];
   };
 }
 

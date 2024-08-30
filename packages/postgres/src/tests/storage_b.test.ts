@@ -17,6 +17,7 @@ import {
   getStorage,
   getStringDistance,
   insertTestIssue,
+  withinDateRange,
 } from "./utils";
 
 const pool = dbSetup();
@@ -29,9 +30,16 @@ type TestIssueData = {
 };
 const issuesData: TestIssueData[] = [
   {
+    timestamp: isoFromNow(24 * 60 * 60 * 1000),
+    overrides: {
+      name: "Past one",
+      fingerprint: "098",
+    },
+  },
+  {
     timestamp: isoFromNow(35000),
     overrides: {
-      name: "Error 1",
+      name: "Error 123",
       fingerprint: "890",
       archived: true,
       unhandled: true,
@@ -57,8 +65,9 @@ const issuesData: TestIssueData[] = [
   {
     timestamp: isoFromNow(20000),
     overrides: {
+      name: "Special error",
       fingerprint: "234",
-      lastOccurrenceTimestamp: isoFromNow(5001),
+      lastOccurrenceTimestamp: isoFromNow(6001),
       unhandled: true,
       totalOccurrences: 2,
     },
@@ -70,6 +79,7 @@ const issuesData: TestIssueData[] = [
       name: "Error 2",
       fingerprint: "456",
       lastOccurrenceTimestamp: isoFromNow(2000),
+      totalOccurrences: 2,
       unhandled: true,
     },
   },
@@ -92,6 +102,59 @@ const seed = async () => {
     })
   );
   await storage.close();
+};
+
+const timeFilter = (
+  data: TestIssueData,
+  startTime?: number,
+  endTime?: number
+) => {
+  if (!startTime && !endTime) return true;
+  if (!startTime && endTime) return data.timestamp <= isoFromNow(endTime);
+  if (startTime && !endTime) return data.timestamp >= isoFromNow(startTime);
+
+  return withinDateRange(
+    data.timestamp,
+    isoFromNow(startTime as number),
+    isoFromNow(endTime as number)
+  );
+};
+
+const unresolvedFilter = (data: TestIssueData) => {
+  return (
+    (data.overrides && !data.overrides.resolved && !data.overrides.archived) ||
+    !data.overrides
+  );
+};
+
+const resolvedFilter = (data: TestIssueData) => {
+  return data.overrides && data.overrides.resolved && !data.overrides.archived;
+};
+
+const archivedFilter = (data: TestIssueData) => {
+  return data.overrides && data.overrides.archived;
+};
+
+const nameFilter = (
+  data: TestIssueData,
+  searchString: string,
+  defaultName?: boolean
+) => {
+  if (defaultName) {
+    return (
+      (data.overrides &&
+        data.overrides.name &&
+        data.overrides.name
+          .toLowerCase()
+          .includes(searchString.toLowerCase())) ||
+      !data.overrides?.name
+    );
+  }
+  return (
+    data.overrides &&
+    data.overrides.name &&
+    data.overrides.name.toLowerCase().includes(searchString.toLowerCase())
+  );
 };
 
 describe("Seed required CRUD", () => {
@@ -257,23 +320,39 @@ describe("Seed required CRUD", () => {
       }[] = [
         {
           filters: { searchString: "error", tab: "unresolved" },
-          expectedFPrints: ["678", "456", "567", "234", "345"],
+          expectedFPrints: issuesData
+            .filter(
+              (data) =>
+                nameFilter(data, "error", true) && unresolvedFilter(data)
+            )
+            .map((data) => data.overrides?.fingerprint as string),
         },
         {
           filters: { searchString: "error 2", tab: "unresolved" }, // Not exact similarity, would also match stuff like "Error 1", "Error..."
-          expectedFPrints: ["678", "456", "567", "234", "345"],
+          expectedFPrints: issuesData
+            .filter(
+              (data) =>
+                nameFilter(data, "error", true) && unresolvedFilter(data)
+            )
+            .map((data) => data.overrides?.fingerprint as string),
         },
         {
           filters: { searchString: "", tab: "unresolved" },
-          expectedFPrints: ["678", "456", "567", "234", "345", "123"],
+          expectedFPrints: issuesData
+            .filter(unresolvedFilter)
+            .map((data) => data.overrides?.fingerprint as string),
         },
         {
           filters: { searchString: "", tab: "resolved" },
-          expectedFPrints: ["789"],
+          expectedFPrints: issuesData
+            .filter(resolvedFilter)
+            .map((data) => data.overrides?.fingerprint as string),
         },
         {
           filters: { searchString: "", tab: "archived" },
-          expectedFPrints: ["890"],
+          expectedFPrints: issuesData
+            .filter(archivedFilter)
+            .map((data) => data.overrides?.fingerprint as string),
         },
         {
           filters: {
@@ -281,7 +360,9 @@ describe("Seed required CRUD", () => {
             startDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          expectedFPrints: ["456", "567", "678"],
+          expectedFPrints: issuesData
+            .filter((data) => timeFilter(data, 10000) && unresolvedFilter(data))
+            .map((data) => data.overrides?.fingerprint as string),
         },
         {
           filters: {
@@ -289,7 +370,12 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(15000),
             tab: "unresolved",
           },
-          expectedFPrints: ["123", "234", "345"],
+          expectedFPrints: issuesData
+            .filter(
+              (data) =>
+                timeFilter(data, undefined, 15000) && unresolvedFilter(data)
+            )
+            .map((data) => data.overrides?.fingerprint as string),
         },
         {
           filters: {
@@ -298,7 +384,11 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          expectedFPrints: ["123", "234", "345", "456"],
+          expectedFPrints: issuesData
+            .filter(
+              (data) => timeFilter(data, 25000, 10000) && unresolvedFilter(data)
+            )
+            .map((data) => data.overrides?.fingerprint as string),
         },
         {
           filters: {
@@ -307,7 +397,14 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          expectedFPrints: ["123"],
+          expectedFPrints: issuesData
+            .filter(
+              (data) =>
+                timeFilter(data, 25000, 10000) &&
+                unresolvedFilter(data) &&
+                nameFilter(data, "nothing")
+            )
+            .map((data) => data.overrides?.fingerprint as string),
         },
       ];
 
@@ -345,22 +442,24 @@ describe("Seed required CRUD", () => {
         },
         {
           filters: { searchString: "", tab: "unresolved" },
-          expectedTotal: 6,
+          expectedTotal: issuesData.filter(unresolvedFilter).length,
         },
-        { filters: { searchString: "", tab: "resolved" }, expectedTotal: 1 },
-        { filters: { searchString: "", tab: "archived" }, expectedTotal: 1 },
+        {
+          filters: { searchString: "", tab: "resolved" },
+          expectedTotal: issuesData.filter(resolvedFilter).length,
+        },
+        {
+          filters: { searchString: "", tab: "archived" },
+          expectedTotal: issuesData.filter(archivedFilter).length,
+        },
         {
           filters: {
             searchString: "",
             startDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          // expectedTotal: 4,
           expectedTotal: issuesData.filter(
-            (data) =>
-              data.timestamp >= isoFromNow(10000) &&
-              !data.overrides?.resolved &&
-              !data.overrides?.archived
+            (data) => timeFilter(data, 10000) && unresolvedFilter(data)
           ).length,
         },
         {
@@ -369,12 +468,9 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(15000),
             tab: "unresolved",
           },
-          // expectedTotal: 2,
           expectedTotal: issuesData.filter(
             (data) =>
-              data.timestamp <= isoFromNow(15000) &&
-              !data.overrides?.resolved &&
-              !data.overrides?.archived
+              timeFilter(data, undefined, 15000) && unresolvedFilter(data)
           ).length,
         },
         {
@@ -384,13 +480,8 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          // expectedTotal: 2,
           expectedTotal: issuesData.filter(
-            (data) =>
-              data.timestamp >= isoFromNow(25000) &&
-              data.timestamp <= isoFromNow(10000) &&
-              !data.overrides?.resolved &&
-              !data.overrides?.archived
+            (data) => timeFilter(data, 25000, 10000) && unresolvedFilter(data)
           ).length,
         },
         {
@@ -400,14 +491,11 @@ describe("Seed required CRUD", () => {
             endDate: isoFromNow(10000),
             tab: "unresolved",
           },
-          // expectedTotal: 1,
           expectedTotal: issuesData.filter(
             (data) =>
-              data.timestamp >= isoFromNow(25000) &&
-              data.timestamp <= isoFromNow(10000) &&
+              timeFilter(data, 25000, 10000) &&
               data.overrides?.name?.includes("rest") &&
-              !data.overrides?.resolved &&
-              !data.overrides?.archived
+              unresolvedFilter(data)
           ).length,
         },
       ];
@@ -712,31 +800,81 @@ describe("Seed required CRUD", () => {
 
       const createTestCase = (startTime: number, endTime: number): TestCase => {
         const dateFilterFn = (data: TestIssueData) => {
-          return (
-            (data.overrides?.lastOccurrenceTimestamp ?? data.timestamp) >=
-              isoFromNow(startTime) &&
-            (data.overrides?.lastOccurrenceTimestamp ?? data.timestamp) <=
+          const start = isoFromNow(startTime);
+          const end = isoFromNow(endTime);
+          if (data.overrides?.lastOccurrenceTimestamp) {
+            if (
+              withinDateRange(
+                data.overrides.lastOccurrenceTimestamp,
+                start,
+                end
+              )
+            )
+              return true;
+          }
+          return withinDateRange(data.timestamp, start, end);
+        };
+
+        console.log(
+          "\n\n\nCRAZE",
+          issuesData.filter(
+            (data) =>
+              dateFilterFn(data) && data.overrides && data.overrides.unhandled
+          )
+        );
+
+        const getIncrement = (issueData: TestIssueData) => {
+          if (
+            issueData.overrides?.lastOccurrenceTimestamp &&
+            issueData.overrides.totalOccurrences
+          ) {
+            // If last occurrence timestamp exists in overrides then total occurrences should as well.
+            const lastWithin = withinDateRange(
+              issueData.overrides.lastOccurrenceTimestamp,
+              isoFromNow(startTime),
               isoFromNow(endTime)
-          );
+            );
+            const timestampWithin = withinDateRange(
+              issueData.timestamp,
+              isoFromNow(startTime),
+              isoFromNow(endTime)
+            );
+            const both = lastWithin && timestampWithin;
+
+            if (both) {
+              return issueData.overrides.totalOccurrences;
+            } else {
+              if (lastWithin) return 1;
+              if (timestampWithin)
+                return issueData.overrides.totalOccurrences - 1;
+
+              return 0;
+            }
+          } else {
+            return issueData.overrides?.totalOccurrences ?? 1;
+          }
         };
 
         const dailyOccurrenceCountReduceFn = (
           agg: StatsData["dailyOccurrenceCount"],
           data: TestIssueData
         ) => {
-          const dateStr =
-            data.overrides?.lastOccurrenceTimestamp || data.timestamp;
+          const dateStr = (
+            data.overrides?.lastOccurrenceTimestamp || data.timestamp
+          ).split("T")[0];
           const existingIndex = agg.findIndex((item) => item.date === dateStr);
+
           if (existingIndex > -1) {
-            agg[existingIndex].count++;
+            agg[existingIndex].count += getIncrement(data);
+
             return agg;
           } else {
-            return [...agg, { date: dateStr, count: 1 }];
+            return [...agg, { date: dateStr, count: getIncrement(data) }];
           }
         };
 
         const totalReduceFn = (agg: number, data: TestIssueData) => {
-          return agg + (data.overrides?.totalOccurrences ?? 1);
+          return agg + getIncrement(data);
         };
 
         return {
@@ -768,11 +906,9 @@ describe("Seed required CRUD", () => {
             mostRecurringIssuesFprints: issuesData
               .filter(dateFilterFn)
               .sort((a, b) => {
-                const aTime =
-                  a.overrides?.lastOccurrenceTimestamp ?? a.timestamp;
-                const bTime =
-                  b.overrides?.lastOccurrenceTimestamp ?? b.timestamp;
-                return new Date(bTime).getTime() - new Date(aTime).getTime();
+                const aCount = getIncrement(a);
+                const bCount = getIncrement(b);
+                return bCount - aCount;
               })
               .slice(0, 5)
               .map(
@@ -818,7 +954,28 @@ describe("Seed required CRUD", () => {
         // createTestCase(35000, 20000),
       ];
       const storage = await getStorage();
+      console.log(
+        await storage.getIssuesTotal({ searchString: "", tab: "unresolved" })
+      );
       for (const testCase of dataSet) {
+        console.log(
+          "\n\n\nCRAZE 2",
+          (
+            await pool.query(
+              SQL`SELECT
+                o.id,
+                o."issueId",
+                o."timestamp" AS "occurrenceTimestamp",
+                i."unhandled",
+                i."isLog",
+                i."name"
+              FROM codewatch_pg_occurrences AS o
+              INNER JOIN codewatch_pg_issues AS i ON o."issueId" = i."id"
+              WHERE o."timestamp" >= ${new Date(testCase.filter.startDate)}
+              AND o."timestamp" <= ${new Date(testCase.filter.endDate)}`
+            )
+          ).rows.map((row) => row.name)
+        );
         const result = await storage.getStatsData(testCase.filter);
         const moddedResult: ModdedStatsData = {
           ...result,
@@ -826,6 +983,7 @@ describe("Seed required CRUD", () => {
             (issue) => issue.fingerprint
           ),
         };
+        console.log(moddedResult);
         expect(moddedResult).toMatchObject(testCase.expectedStats);
       }
       await storage.close();

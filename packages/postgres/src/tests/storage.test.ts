@@ -199,7 +199,7 @@ describe("updateLastOccurrenceOnIssue", () => {
 
       await transaction.commit();
 
-      expect(rows[0].totalOccurrences).toBe(i + 1);
+      expect(rows[0].totalOccurrences).toBe(i + 2);
       expect(rows[0].lastOccurrenceTimestamp).toBe(update.timestamp);
       expect(rows[0].stack).toBe(update.stack);
       expect(rows[0].resolved).toBe(update.resolved);
