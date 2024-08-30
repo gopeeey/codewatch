@@ -67,6 +67,7 @@ describe("Core", () => {
             stack: testError.stack as string,
             totalOccurrences: expect.any(Number),
             createdAt: expect.any(String),
+            isLog: false,
           };
           expect(storage.issues).toHaveLength(1);
           expect(storage.issues[0]).toMatchObject(expected);

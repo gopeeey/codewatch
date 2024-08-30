@@ -41,6 +41,8 @@ describe("getPaginatedIssues", () => {
       searchString: "something",
       page: 1,
       perPage: 10,
+      sort: "created-at",
+      order: "desc",
     };
 
     const storage = MockStorage.getInstance();

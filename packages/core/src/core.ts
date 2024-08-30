@@ -110,6 +110,7 @@ export class Core {
             archived: false,
             unhandled: Boolean(unhandled),
             createdAt: currentTimestamp,
+            isLog: !unhandled && Boolean(extraData),
           },
           transaction
         );
