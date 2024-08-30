@@ -32,6 +32,7 @@ const testIssues: Issue[] = [
     unhandled: false,
     createdAt: "2024-04-10T13:59:33.021Z",
     resolved: false,
+    isLog: false,
   },
   {
     fingerprint: "2345678",
@@ -46,6 +47,7 @@ const testIssues: Issue[] = [
     unhandled: true,
     createdAt: "2024-04-10T13:59:33.021Z",
     resolved: false,
+    isLog: false,
   },
   {
     fingerprint: "34567890",
@@ -60,6 +62,7 @@ const testIssues: Issue[] = [
     unhandled: false,
     createdAt: "2024-04-10T13:59:33.021Z",
     resolved: false,
+    isLog: false,
   },
 ];
 
