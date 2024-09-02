@@ -523,14 +523,15 @@ export class CodewatchPgStorage implements Storage {
       COALESCE(
         (
           SELECT 
-            jsonb_agg(c ORDER BY tbb.occurrences DESC)
+            jsonb_agg(c ORDER BY tbb.occurrences DESC, tbb."lastOccurrenceTimestamp" DESC)
           FROM (
             SELECT
               COUNT(*) AS occurrences,
-              tab."issueId"
+              tab."issueId",
+              MAX(EXTRACT(epoch from tab."occurrenceTimestamp")) AS "lastOccurrenceTimestamp"
             FROM tab
             GROUP BY tab."issueId"
-            ORDER BY occurrences DESC LIMIT 5
+            ORDER BY occurrences DESC, "lastOccurrenceTimestamp" DESC LIMIT 5
           ) tbb
           INNER JOIN codewatch_pg_issues c ON tbb."issueId" = c."id"
         ), 

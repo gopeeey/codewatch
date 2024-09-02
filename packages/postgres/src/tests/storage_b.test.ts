@@ -94,7 +94,7 @@ const issuesData: TestIssueData[] = [
 ];
 
 const seed = async () => {
-  const storage = await getStorage(); // Just to initialize the storage (create tables if not exist)
+  const storage = await getStorage(); // Just to initialize the storage (create tables if they don't exist)
   await Promise.all(
     issuesData.map(async ({ timestamp, overrides }) => {
       const issueData = createCreateIssueData(timestamp, overrides);
@@ -815,14 +815,6 @@ describe("Seed required CRUD", () => {
           return withinDateRange(data.timestamp, start, end);
         };
 
-        console.log(
-          "\n\n\nCRAZE",
-          issuesData.filter(
-            (data) =>
-              dateFilterFn(data) && data.overrides && data.overrides.unhandled
-          )
-        );
-
         const getIncrement = (issueData: TestIssueData) => {
           if (
             issueData.overrides?.lastOccurrenceTimestamp &&
@@ -906,9 +898,20 @@ describe("Seed required CRUD", () => {
             mostRecurringIssuesFprints: issuesData
               .filter(dateFilterFn)
               .sort((a, b) => {
+                // Sort by total occurrences in descending order
                 const aCount = getIncrement(a);
                 const bCount = getIncrement(b);
-                return bCount - aCount;
+                const countDiff = bCount - aCount;
+                if (countDiff !== 0) return countDiff;
+
+                // and then by last occurrence timestamp in descending order (latest first)
+                const aTime = new Date(
+                  a.overrides?.lastOccurrenceTimestamp || a.timestamp
+                ).getTime();
+                const bTime = new Date(
+                  b.overrides?.lastOccurrenceTimestamp || b.timestamp
+                ).getTime();
+                return bTime - aTime;
               })
               .slice(0, 5)
               .map(
@@ -928,7 +931,8 @@ describe("Seed required CRUD", () => {
                 (data) =>
                   dateFilterFn(data) &&
                   data.overrides &&
-                  !data.overrides.unhandled
+                  !data.overrides.unhandled &&
+                  !data.overrides.isLog
               )
               .reduce(totalReduceFn, 0),
             totalOccurrences: issuesData
@@ -948,34 +952,33 @@ describe("Seed required CRUD", () => {
 
       const dataSet: TestCase[] = [
         createTestCase(10000, 0),
-        // createTestCase(25000, 5000),
-        // createTestCase(35000, 2000),
-        // createTestCase(15000, 10000),
-        // createTestCase(35000, 20000),
+        createTestCase(25000, 5000),
+        createTestCase(35000, 2000),
+        createTestCase(15000, 10000),
+        createTestCase(35000, 20000),
       ];
       const storage = await getStorage();
-      console.log(
-        await storage.getIssuesTotal({ searchString: "", tab: "unresolved" })
-      );
+
       for (const testCase of dataSet) {
-        console.log(
-          "\n\n\nCRAZE 2",
-          (
-            await pool.query(
-              SQL`SELECT
-                o.id,
-                o."issueId",
-                o."timestamp" AS "occurrenceTimestamp",
-                i."unhandled",
-                i."isLog",
-                i."name"
-              FROM codewatch_pg_occurrences AS o
-              INNER JOIN codewatch_pg_issues AS i ON o."issueId" = i."id"
-              WHERE o."timestamp" >= ${new Date(testCase.filter.startDate)}
-              AND o."timestamp" <= ${new Date(testCase.filter.endDate)}`
-            )
-          ).rows.map((row) => row.name)
-        );
+        // console.log(
+        //   "\n\n\nCRAZE 2",
+        //   (
+        //     await pool.query(
+        //       SQL`SELECT
+        //         o.id,
+        //         o."issueId",
+        //         o."timestamp" AS "occurrenceTimestamp",
+        //         i."unhandled",
+        //         i."isLog",
+        //         i."name",
+        //         i."fingerprint"
+        //       FROM codewatch_pg_occurrences AS o
+        //       INNER JOIN codewatch_pg_issues AS i ON o."issueId" = i."id"
+        //       WHERE o."timestamp" >= ${new Date(testCase.filter.startDate)}
+        //       AND o."timestamp" <= ${new Date(testCase.filter.endDate)}`
+        //     )
+        //   ).rows.map((row) => row.fingerprint)
+        // );
         const result = await storage.getStatsData(testCase.filter);
         const moddedResult: ModdedStatsData = {
           ...result,
@@ -983,7 +986,6 @@ describe("Seed required CRUD", () => {
             (issue) => issue.fingerprint
           ),
         };
-        console.log(moddedResult);
         expect(moddedResult).toMatchObject(testCase.expectedStats);
       }
       await storage.close();
