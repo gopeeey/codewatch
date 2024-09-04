@@ -237,7 +237,10 @@ export async function getStats(filter: GetStats) {
 
   const res = await client.post<GetStatsResponse["data"], GetStats>({
     url: "/stats",
-    body: filter,
+    body: {
+      startDate: new Date(parseInt(filter.startDate)).toISOString(),
+      endDate: new Date(parseInt(filter.endDate)).toISOString(),
+    },
   });
   if (res.error) return null;
   return res.data.stats;
