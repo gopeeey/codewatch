@@ -7,6 +7,7 @@ import {
   getIssuesTotal,
   getPaginatedIssues,
   getPaginatedOccurrences,
+  getStatsData,
   resolveIssues,
   unarchiveIssues,
   unresolveIssues,
@@ -58,6 +59,11 @@ export const appRoutes: AppRoutes = {
       route: "/api/issues/unarchive",
       method: "put",
       handler: unarchiveIssues,
+    },
+    {
+      route: "/api/issues/stats",
+      method: "post",
+      handler: getStatsData,
     },
 
     {

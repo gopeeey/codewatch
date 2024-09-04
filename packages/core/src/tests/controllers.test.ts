@@ -13,6 +13,7 @@ import {
   getIssuesTotal,
   getPaginatedIssues,
   getPaginatedOccurrences,
+  getStatsData,
   resolveIssues,
   unarchiveIssues,
   unresolveIssues,
@@ -164,6 +165,23 @@ describe("unarchiveIssues", () => {
       { storage }
     );
     expect(storage.issues[0].archived).toBe(false);
+  });
+});
+
+describe("getStatsData", () => {
+  it("should return a 200 and a stats object", async () => {
+    const storage = MockStorage.getInstance();
+    const filters = {
+      endDate: "2020-01-01",
+      startDate: "2019-01-01",
+    };
+    const expected = await storage.getStatsData(filters);
+    const response = await getStatsData(
+      { body: filters, query: {}, params: {} },
+      { storage }
+    );
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ data: { stats: expected } });
   });
 });
 

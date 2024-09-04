@@ -9,6 +9,8 @@ import {
   GetPaginatedIssuesResponse,
   GetPaginatedOccurrencesFilters,
   GetPaginatedOccurrencesResponse,
+  GetStats,
+  GetStatsResponse,
   ResolveIssues,
   ViewController,
 } from "@codewatch/types";
@@ -95,6 +97,14 @@ export const unarchiveIssues: Controller<never, ResolveIssues> = async (
 ) => {
   await deps.storage.unarchiveIssues(req.body.issueIds);
   return { status: 200 };
+};
+
+export const getStatsData: Controller<GetStatsResponse, GetStats> = async (
+  req,
+  deps
+) => {
+  const stats = await deps.storage.getStatsData(req.body);
+  return { status: 200, body: { data: { stats } } };
 };
 
 export const errorHandler: ErrorHandler = (error) => {
