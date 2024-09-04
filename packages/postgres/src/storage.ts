@@ -477,7 +477,7 @@ export class CodewatchPgStorage implements Storage {
                 COUNT(*) AS c,
                 date(tab."occurrenceTimestamp") AS "date"
               FROM tab
-          WHERE tab."unhandled" = true
+              WHERE tab."unhandled" = true
               GROUP BY date(tab."occurrenceTimestamp")
             ) tb
         ) AS "dailyUnhandledOccurrenceCount",

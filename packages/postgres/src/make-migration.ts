@@ -11,5 +11,6 @@ const filePath = path.join(
   "../migrations",
   Date.now() + "-" + filename + ".sql"
 );
+
 fs.writeFileSync(filePath, fileContent, "utf-8");
 console.log(`Created migration file at ${filePath}`);
