@@ -91,7 +91,7 @@ export async function getIssue(id: Issue["id"]) {
   if (isDev) {
     console.log("Fetching issue", id);
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    return {
+    const testIssue: Issue = {
       fingerprint: "2345678",
       id: "2345678",
       lastOccurrenceTimestamp: "2024-05-10T13:59:33.021Z",
@@ -104,7 +104,9 @@ export async function getIssue(id: Issue["id"]) {
       unhandled: true,
       createdAt: "2024-04-10T13:59:33.021Z",
       resolved: false,
+      isLog: false,
     };
+    return testIssue;
   } else {
     const res = await client.get<GetIssueByIdResponse["data"]>(`/${id}`);
     if (res.error) return null;
