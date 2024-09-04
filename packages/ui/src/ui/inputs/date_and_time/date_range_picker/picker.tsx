@@ -103,7 +103,7 @@ export function DateRangePicker({
   }, [onChange, handleClose, startDate, endDate]);
 
   return (
-    <Modal open={open} onClose={handleClose}>
+    <Modal open={open} onClose={handleClose} centered={false}>
       <ModalCard className="w-[26rem] py-7">
         {selectionMode === "date" ? (
           <RangeCalendar
