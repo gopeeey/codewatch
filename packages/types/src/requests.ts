@@ -32,4 +32,5 @@ export interface GetPaginatedOccurrencesFilters {
 export interface GetStats {
   startDate: string;
   endDate: string;
+  timezoneOffset: number;
 }
