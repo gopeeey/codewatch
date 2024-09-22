@@ -13,6 +13,7 @@ import {
   UnresolveIssues,
 } from "@codewatch/types";
 import { HttpClient } from "@lib/http_client";
+import moment from "moment";
 
 const client = new HttpClient({ baseUrl: "/issues" });
 const isDev = import.meta.env.MODE === "development";
@@ -235,13 +236,50 @@ export async function getStats(filter: GetStats) {
     return defaultData;
   }
 
+  const startDateString = new Date(parseInt(filter.startDate)).toISOString();
+  const endDateString = new Date(parseInt(filter.endDate)).toISOString();
   const res = await client.post<GetStatsResponse["data"], GetStats>({
     url: "/stats",
     body: {
-      startDate: new Date(parseInt(filter.startDate)).toISOString(),
-      endDate: new Date(parseInt(filter.endDate)).toISOString(),
+      startDate: startDateString,
+      endDate: endDateString,
     },
   });
   if (res.error) return null;
+
+  const fillOccurrenceDates = (
+    field: "dailyOccurrenceCount" | "dailyUnhandledOccurrenceCount"
+  ) => {
+    let index = 0;
+    const current = moment(startDateString);
+    const end = moment(endDateString);
+    current.set("hour", 0);
+    current.set("minute", 0);
+    current.set("second", 0);
+    end.set("hour", 0);
+    end.set("minute", 0);
+    end.set("second", 0);
+    const occurrences = res.data.stats[field];
+    const newOccurrences: GetStatsResponse["data"]["stats"]["dailyOccurrenceCount"] =
+      [];
+
+    while (current.isSameOrBefore(end)) {
+      const dateString = current.format("YYYY-MM-DD");
+      if (occurrences[index] && occurrences[index].date === dateString) {
+        newOccurrences.push(occurrences[index]);
+        index++;
+      } else {
+        newOccurrences.push({ date: dateString, count: 0 });
+      }
+
+      current.add(1, "day");
+    }
+
+    res.data.stats[field] = newOccurrences;
+  };
+
+  fillOccurrenceDates("dailyOccurrenceCount");
+  fillOccurrenceDates("dailyUnhandledOccurrenceCount");
+
   return res.data.stats;
 }
