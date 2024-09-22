@@ -436,14 +436,15 @@ export class CodewatchPgStorage implements Storage {
         o."issueId",
         o."timestamp" AS "occurrenceTimestamp",
         i."unhandled",
-		i."isLog"
+		    i."isLog"
       FROM codewatch_pg_occurrences AS o
       INNER JOIN codewatch_pg_issues AS i ON o."issueId" = i."id"
       WHERE o."timestamp" >= ${new Date(filters.startDate)}
       AND o."timestamp" <= ${new Date(filters.endDate)}
     )
 
-    SELECT 
+    SELECT
+
       COALESCE(
         (
           SELECT
@@ -452,6 +453,7 @@ export class CodewatchPgStorage implements Storage {
             'count', tb.c,
             'date', tb.date
             )
+            ORDER BY tb.date
           )
           FROM (
             SELECT
@@ -464,23 +466,27 @@ export class CodewatchPgStorage implements Storage {
         '[]'
       ) AS "dailyOccurrenceCount",
 
-      (
-        SELECT
-              COALESCE(jsonb_agg(
-                jsonb_build_object(
-                  'count', tb.c,
-                  'date', tb.date
-                )
-              ), '[]')
-            FROM (
-              SELECT
-                COUNT(*) AS c,
-                date(tab."occurrenceTimestamp") AS "date"
-              FROM tab
-              WHERE tab."unhandled" = true
-              GROUP BY date(tab."occurrenceTimestamp")
-            ) tb
-        ) AS "dailyUnhandledOccurrenceCount",
+      COALESCE(
+        (
+          SELECT
+            jsonb_agg(
+              jsonb_build_object(
+                'count', tb.c,
+                'date', tb.date
+              )
+              ORDER BY tb.date
+            )
+          FROM (
+            SELECT
+              COUNT(*) AS c,
+              date(tab."occurrenceTimestamp") AS "date"
+            FROM tab
+            WHERE tab."unhandled" = true
+            GROUP BY date(tab."occurrenceTimestamp")
+          ) tb
+        ),
+        '[]'
+      ) AS "dailyUnhandledOccurrenceCount",
 
       (
         SELECT
