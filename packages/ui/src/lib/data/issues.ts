@@ -256,15 +256,18 @@ export async function getStats(filter: GetStats) {
     current.set("hour", 0);
     current.set("minute", 0);
     current.set("second", 0);
+    current.set("millisecond", 0);
     end.set("hour", 0);
     end.set("minute", 0);
     end.set("second", 0);
+    end.set("millisecond", 0);
     const occurrences = res.data.stats[field];
     const newOccurrences: GetStatsResponse["data"]["stats"]["dailyOccurrenceCount"] =
       [];
 
     while (current.isSameOrBefore(end)) {
       const dateString = current.format("YYYY-MM-DD");
+      console.log(dateString);
       if (occurrences[index] && occurrences[index].date === dateString) {
         newOccurrences.push(occurrences[index]);
         index++;
