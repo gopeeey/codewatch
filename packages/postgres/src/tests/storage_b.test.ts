@@ -798,7 +798,11 @@ describe("Seed required CRUD", () => {
       }
       type TestCase = { filter: GetStats; expectedStats: ModdedStatsData };
 
-      const createTestCase = (startTime: number, endTime: number): TestCase => {
+      const createTestCase = (
+        startTime: number,
+        endTime: number,
+        timezoneOffset: number = new Date().getTimezoneOffset()
+      ): TestCase => {
         const dateFilterFn = (data: TestIssueData) => {
           const start = isoFromNow(startTime);
           const end = isoFromNow(endTime);
@@ -809,8 +813,9 @@ describe("Seed required CRUD", () => {
                 start,
                 end
               )
-            )
+            ) {
               return true;
+            }
           }
           return withinDateRange(data.timestamp, start, end);
         };
@@ -851,11 +856,15 @@ describe("Seed required CRUD", () => {
           agg: StatsData["dailyOccurrenceCount"],
           data: TestIssueData
         ) => {
-          const dateStr = (
-            data.overrides?.lastOccurrenceTimestamp || data.timestamp
-          ).split("T")[0];
-          const existingIndex = agg.findIndex((item) => item.date === dateStr);
+          const timestamp =
+            data.overrides?.lastOccurrenceTimestamp || data.timestamp;
+          // Format the timestamp for the current timezone and get the date part.
+          const date = new Date(
+            new Date(timestamp).getTime() - timezoneOffset * 60 * 1000
+          );
+          const dateStr = date.toISOString().split("T")[0];
 
+          const existingIndex = agg.findIndex((item) => item.date === dateStr);
           if (existingIndex > -1) {
             agg[existingIndex].count += getIncrement(data);
 
@@ -873,6 +882,7 @@ describe("Seed required CRUD", () => {
           filter: {
             startDate: isoFromNow(startTime),
             endDate: isoFromNow(endTime),
+            timezoneOffset,
           },
 
           expectedStats: {
@@ -950,12 +960,21 @@ describe("Seed required CRUD", () => {
         };
       };
 
+      let otherTimezone = new Date().getTimezoneOffset() + 120;
+      if (otherTimezone > 60 * 13) otherTimezone = 0;
+
       const dataSet: TestCase[] = [
         createTestCase(10000, 0),
         createTestCase(25000, 5000),
         createTestCase(35000, 2000),
         createTestCase(15000, 10000),
         createTestCase(35000, 20000),
+
+        createTestCase(10000, 0, otherTimezone),
+        createTestCase(25000, 5000, otherTimezone),
+        createTestCase(35000, 2000, otherTimezone),
+        createTestCase(15000, 10000, otherTimezone),
+        createTestCase(35000, 20000, otherTimezone),
       ];
       const storage = await getStorage();
 

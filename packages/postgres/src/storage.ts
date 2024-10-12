@@ -10,6 +10,7 @@ import path from "path";
 import { Pool, PoolClient, PoolConfig, types as pgTypes } from "pg";
 import SQL, { SQLStatement } from "sql-template-strings";
 import { DbIssue } from "./types";
+import { getTimezoneString } from "./utils";
 
 pgTypes.setTypeParser(pgTypes.builtins.TIMESTAMPTZ, (val) =>
   new Date(val).toISOString()
@@ -429,6 +430,8 @@ export class CodewatchPgStorage implements Storage {
   };
 
   getStatsData: Storage["getStatsData"] = async (filters) => {
+    const timezone = getTimezoneString(filters.timezoneOffset);
+    console.log("\n\n\nTHE TIMEZONE", timezone, filters.timezoneOffset);
     const query = SQL`--sql
     WITH tab AS (
       SELECT
@@ -444,8 +447,10 @@ export class CodewatchPgStorage implements Storage {
     )
 
     SELECT
+`;
 
-      COALESCE(
+    const dailyOccurrenceQuery = `
+    COALESCE(
         (
           SELECT
           jsonb_agg(
@@ -458,9 +463,9 @@ export class CodewatchPgStorage implements Storage {
           FROM (
             SELECT
               COUNT(*) AS c,
-              date(tab."occurrenceTimestamp") AS "date"
+              date(tab."occurrenceTimestamp" AT TIME ZONE '${timezone}') AS "date"
             FROM tab
-            GROUP BY date(tab."occurrenceTimestamp")
+            GROUP BY date(tab."occurrenceTimestamp" AT TIME ZONE '${timezone}')
           ) tb
         ), 
         '[]'
@@ -479,15 +484,17 @@ export class CodewatchPgStorage implements Storage {
           FROM (
             SELECT
               COUNT(*) AS c,
-              date(tab."occurrenceTimestamp") AS "date"
+              date(tab."occurrenceTimestamp" AT TIME ZONE '${timezone}') AS "date"
             FROM tab
             WHERE tab."unhandled" = true
-            GROUP BY date(tab."occurrenceTimestamp")
+            GROUP BY date(tab."occurrenceTimestamp" AT TIME ZONE '${timezone}')
           ) tb
         ),
         '[]'
       ) AS "dailyUnhandledOccurrenceCount",
+`;
 
+    const otherStatsQuery = SQL`--sql
       (
         SELECT
           COUNT(*)
@@ -545,6 +552,8 @@ export class CodewatchPgStorage implements Storage {
       ) AS "mostRecurringIssues"
     ;
     `;
+
+    query.append(dailyOccurrenceQuery).append(otherStatsQuery);
 
     const { rows } = await this._query<StatsData>(query);
 

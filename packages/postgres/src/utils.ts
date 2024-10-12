@@ -1,3 +1,5 @@
+import { timezones } from "./timezones";
+
 export function interpolate(
   x: number,
   x0: number,
@@ -20,4 +22,15 @@ export function randomChoice<T>(arr: T[]): T {
 
 export function randomBoolean() {
   return Math.random() >= 0.5;
+}
+
+export function getTimezoneString(offset: number) {
+  const sign = offset >= 0 ? "" : "-";
+  const absOffset = Math.abs(offset);
+  const hours = Math.floor(absOffset / 60);
+  const minutes = absOffset % 60;
+  const key = `${sign}${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}:00`;
+  return timezones[key];
 }

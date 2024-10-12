@@ -30,6 +30,7 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
+    "@codewatch/postgres": "file:",
     "pg": "^8.11.3",
     "sql-template-strings": "^2.2.2"
   }
