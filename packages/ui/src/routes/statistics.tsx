@@ -78,6 +78,7 @@ export default function StatisticsRoute() {
     const filters: GetStats = {
       startDate,
       endDate,
+      timezoneOffset: new Date().getTimezoneOffset(),
     };
 
     const newStatsData = await getStats(filters);

@@ -243,7 +243,7 @@ export async function getStats(filter: GetStats) {
     body: {
       startDate: startDateString,
       endDate: endDateString,
-      timezoneOffset: new Date().getTimezoneOffset(),
+      timezoneOffset: filter.timezoneOffset,
     },
   });
   if (res.error) return null;
