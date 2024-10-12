@@ -2,6 +2,7 @@ import {
   GetIssuesFilters,
   GetPaginatedIssuesFilters,
   GetPaginatedOccurrencesFilters,
+  GetStats,
 } from "@codewatch/types";
 import fs from "fs";
 import {
@@ -171,9 +172,10 @@ describe("unarchiveIssues", () => {
 describe("getStatsData", () => {
   it("should return a 200 and a stats object", async () => {
     const storage = MockStorage.getInstance();
-    const filters = {
+    const filters: GetStats = {
       endDate: "2020-01-01",
       startDate: "2019-01-01",
+      timezoneOffset: new Date().getTimezoneOffset(),
     };
     const expected = await storage.getStatsData(filters);
     const response = await getStatsData(
