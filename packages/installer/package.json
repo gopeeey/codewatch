@@ -22,7 +22,6 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@codewatch/installer": "file:",
     "@inquirer/prompts": "^5.3.2",
     "ora": "^8.0.1"
   }

@@ -9,7 +9,5 @@
   "workspaces": [],
   "author": "Samuel Gopeh",
   "license": "ISC",
-  "dependencies": {
-    "@codewatch/root": "file:"
-  }
+  "dependencies": {}
 }

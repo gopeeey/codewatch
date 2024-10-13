@@ -39,7 +39,5 @@
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
   },
-  "dependencies": {
-    "@codewatch/ui": "file:"
-  }
+  "dependencies": {}
 }

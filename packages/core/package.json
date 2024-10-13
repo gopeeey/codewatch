@@ -22,7 +22,6 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@codewatch/core": "file:",
     "source-map": "^0.7.4"
   }
 }
