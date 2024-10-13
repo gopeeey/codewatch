@@ -10,6 +10,7 @@ type Props = {
   cardClassName?: string;
   dimAppBar?: boolean;
   header?: React.ReactNode;
+  cardless?: boolean;
 };
 
 export function AppPage({
@@ -20,6 +21,7 @@ export function AppPage({
   cardClassName,
   dimAppBar = false,
   header,
+  cardless = false,
 }: Props) {
   return (
     <main className={clsx("sm:px-12 w-full", className)}>
@@ -29,14 +31,18 @@ export function AppPage({
         dim={dimAppBar}
       />
       {header ? <div className="mb-9">{header}</div> : null}
-      <Card
-        className={clsx(
-          "!rounded-t-xl !rounded-b-none sm:!rounded-xl min-h-screen lg:min-h-fit",
-          cardClassName
-        )}
-      >
-        {children}
-      </Card>
+      {cardless ? (
+        children
+      ) : (
+        <Card
+          className={clsx(
+            "!rounded-t-xl !rounded-b-none sm:!rounded-xl min-h-screen lg:min-h-fit",
+            cardClassName
+          )}
+        >
+          {children}
+        </Card>
+      )}
     </main>
   );
 }

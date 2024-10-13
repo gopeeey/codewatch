@@ -30,6 +30,8 @@ body {
   letter-spacing: 0.02rem;
 
   font-family: "Poppins", sans-serif;
+
+  background-color: #161b21;
 }
 @keyframes typing {
   from {

@@ -1,4 +1,4 @@
-import { Issue, Occurrence } from "./base";
+import { Issue, Occurrence, StatsData } from "./base";
 
 export type GetPaginatedIssuesResponse = { data: { issues: Issue[] } };
 
@@ -9,3 +9,9 @@ export type GetPaginatedOccurrencesResponse = {
 };
 
 export type GetIssueByIdResponse = { data: { issue: Issue } };
+
+export type GetStatsResponse = {
+  data: {
+    stats: StatsData;
+  };
+};

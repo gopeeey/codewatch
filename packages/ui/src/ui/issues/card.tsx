@@ -4,16 +4,37 @@ import { Issue } from "@codewatch/types";
 import { quantifyNumber } from "@lib/utils";
 import { Checkbox } from "@ui/inputs/checkbox";
 import { Skeleton } from "@ui/skeleton";
+import clsx from "clsx";
 import moment from "moment";
 import { Link } from "react-router-dom";
 
-type Props = { issue: Issue; selected: boolean; onSelect: () => void };
-export function IssueCard({ issue, selected, onSelect }: Props) {
+type Props = {
+  issue: Issue;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
+  className?: string;
+};
+export function IssueCard({
+  issue,
+  selected,
+  selectable = true,
+  onSelect,
+  className,
+}: Props) {
   return (
-    <div className="flex custom-rule items-center justify-between px-5 py-4 pr-8 transition-all duration-200 hover:bg-input-background-dark cursor-pointer">
+    <div
+      className={clsx(
+        "flex custom-rule items-center justify-between px-5 py-4 pr-8 transition-all duration-200 hover:bg-input-background-dark cursor-pointer",
+        className
+      )}
+    >
       {/* Details and checkbox */}
       <div className="flex items-start w-full">
-        <Checkbox className="mt-1" checked={selected} onChange={onSelect} />
+        {selectable ? (
+          <Checkbox className="mt-1" checked={selected} onChange={onSelect} />
+        ) : null}
+
         <Link to={`/issues/${issue.id}`} className="flex-grow">
           <div>
             <div className="text-base font-medium">{issue.name}</div>

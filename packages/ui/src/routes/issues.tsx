@@ -41,7 +41,6 @@ export default function IssuesRoute() {
     initialStartDate: searchParams.get("startDate"),
     initialEndDate: searchParams.get("endDate"),
     selectClassName: "sm:col-span-7 xl:col-auto",
-    valueContainerClassName: "truncate",
   });
   const [currentTab, setCurrentTab] = useState<IssueTab>(
     (searchParams.get("tab") as IssueTab) || "unresolved"

@@ -44,11 +44,12 @@ export default function IssueDetails() {
     endDate,
     setStartDate,
     setEndDate,
-    setDatePreset,
+    setDatePresetCode,
     dateRangeElement,
   } = useDateRange({
     initialStartDate: searchParams.get("startDate"),
     initialEndDate: searchParams.get("endDate"),
+    selectClassName: "max-w-[70%]",
   });
   const [page, setPage] = useState(
     Number(searchParams.get("page") ?? DEFAULT_PAGE)
@@ -139,7 +140,7 @@ export default function IssueDetails() {
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
     if (!startDateParam || !endDateParam) {
-      setDatePreset("4");
+      setDatePresetCode("4");
       setStartDate(`${new Date(issue.createdAt).getTime()}`);
       setEndDate(`${Date.now()}`);
     } else {

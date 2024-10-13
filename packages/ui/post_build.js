@@ -9,4 +9,4 @@ html.splice(4, 0, `<base href="<%= basePath %>" />`);
 
 fs.writeFileSync(path.join(__dirname, "dist/index.ejs"), html.join("\n"));
 fs.unlinkSync(targetPath);
-console.log("index.html -> index.ejs");
+console.log("Transforming: index.html -> index.ejs");

@@ -1,9 +1,16 @@
-import { Issue, Occurrence, Storage, Transaction } from "@codewatch/types";
+import {
+  Issue,
+  Occurrence,
+  StatsData,
+  Storage,
+  Transaction,
+} from "@codewatch/types";
 import fs from "fs";
 import path from "path";
 import { Pool, PoolClient, PoolConfig, types as pgTypes } from "pg";
 import SQL, { SQLStatement } from "sql-template-strings";
 import { DbIssue } from "./types";
+import { getTimezoneString } from "./utils";
 
 pgTypes.setTypeParser(pgTypes.builtins.TIMESTAMPTZ, (val) =>
   new Date(val).toISOString()
@@ -50,7 +57,7 @@ export class CodewatchPgStorage implements Storage {
     transaction?: Transaction
   ) => {
     if (transaction) {
-      return await (transaction as PgTransaction)._client.query(query);
+      return await (transaction as PgTransaction)._client.query<T>(query);
     } else {
       return await this._pool.query<T>(query);
     }
@@ -193,7 +200,8 @@ export class CodewatchPgStorage implements Storage {
       "lastOccurrenceMessage",
       "archived",
       "unhandled",
-      "createdAt"
+      "createdAt",
+      "isLog"
       )
       VALUES (
         ${data.fingerprint}, 
@@ -204,7 +212,8 @@ export class CodewatchPgStorage implements Storage {
         ${data.lastOccurrenceMessage},
         ${data.archived},
         ${data.unhandled},
-        ${data.createdAt}
+        ${data.createdAt},
+        ${data.isLog}
       ) RETURNING id;`;
     const { rows } = await this._query<{ id: DbIssue["id"] }>(
       query,
@@ -216,9 +225,10 @@ export class CodewatchPgStorage implements Storage {
   findIssueIdxArchiveStatusByFingerprint: Storage["findIssueIdxArchiveStatusByFingerprint"] =
     async (fingerprint, transaction) => {
       const query = SQL`SELECT id, archived FROM codewatch_pg_issues WHERE fingerprint = ${fingerprint};`;
-      const { rows } = await this._query<{
-        id: Pick<DbIssue, "id" | "archived">;
-      }>(query, transaction);
+      const { rows } = await this._query<Pick<DbIssue, "id" | "archived">>(
+        query,
+        transaction
+      );
       if (!rows.length) return null;
       return {
         id: rows[0].id.toString(),
@@ -417,6 +427,137 @@ export class CodewatchPgStorage implements Storage {
     await this._query(SQL`
       UPDATE codewatch_pg_issues SET archived = false WHERE id = ANY(${issueIds});
     `);
+  };
+
+  getStatsData: Storage["getStatsData"] = async (filters) => {
+    const timezone = getTimezoneString(filters.timezoneOffset);
+    console.log("\n\n\nTHE TIMEZONE", timezone, filters.timezoneOffset);
+    const query = SQL`--sql
+    WITH tab AS (
+      SELECT
+        o.id,
+        o."issueId",
+        o."timestamp" AS "occurrenceTimestamp",
+        i."unhandled",
+		    i."isLog"
+      FROM codewatch_pg_occurrences AS o
+      INNER JOIN codewatch_pg_issues AS i ON o."issueId" = i."id"
+      WHERE o."timestamp" >= ${new Date(filters.startDate)}
+      AND o."timestamp" <= ${new Date(filters.endDate)}
+    )
+
+    SELECT
+`;
+
+    const dailyOccurrenceQuery = `
+    COALESCE(
+        (
+          SELECT
+          jsonb_agg(
+            jsonb_build_object(
+            'count', tb.c,
+            'date', tb.date
+            )
+            ORDER BY tb.date
+          )
+          FROM (
+            SELECT
+              COUNT(*) AS c,
+              date(tab."occurrenceTimestamp" AT TIME ZONE '${timezone}') AS "date"
+            FROM tab
+            GROUP BY date(tab."occurrenceTimestamp" AT TIME ZONE '${timezone}')
+          ) tb
+        ), 
+        '[]'
+      ) AS "dailyOccurrenceCount",
+
+      COALESCE(
+        (
+          SELECT
+            jsonb_agg(
+              jsonb_build_object(
+                'count', tb.c,
+                'date', tb.date
+              )
+              ORDER BY tb.date
+            )
+          FROM (
+            SELECT
+              COUNT(*) AS c,
+              date(tab."occurrenceTimestamp" AT TIME ZONE '${timezone}') AS "date"
+            FROM tab
+            WHERE tab."unhandled" = true
+            GROUP BY date(tab."occurrenceTimestamp" AT TIME ZONE '${timezone}')
+          ) tb
+        ),
+        '[]'
+      ) AS "dailyUnhandledOccurrenceCount",
+`;
+
+    const otherStatsQuery = SQL`--sql
+      (
+        SELECT
+          COUNT(*)
+        FROM (
+          SELECT tab."issueId"
+          FROM tab
+          GROUP BY tab."issueId"
+        )
+      ) AS "totalIssues",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM tab
+        WHERE tab."isLog" = true
+      ) AS "totalLoggedData",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM tab
+        WHERE tab."unhandled" = true
+      ) AS "totalUnhandledOccurrences",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM tab
+        WHERE tab."unhandled" = false
+        AND tab."isLog" = false
+      ) AS "totalManuallyCapturedOccurrences",
+
+      (
+        SELECT
+          COUNT(*)
+        FROM tab
+      ) AS "totalOccurrences",
+
+      COALESCE(
+        (
+          SELECT 
+            jsonb_agg(c ORDER BY tbb.occurrences DESC, tbb."lastOccurrenceTimestamp" DESC)
+          FROM (
+            SELECT
+              COUNT(*) AS occurrences,
+              tab."issueId",
+              MAX(EXTRACT(epoch from tab."occurrenceTimestamp")) AS "lastOccurrenceTimestamp"
+            FROM tab
+            GROUP BY tab."issueId"
+            ORDER BY occurrences DESC, "lastOccurrenceTimestamp" DESC LIMIT 5
+          ) tbb
+          INNER JOIN codewatch_pg_issues c ON tbb."issueId" = c."id"
+        ), 
+        '[]'
+      ) AS "mostRecurringIssues"
+    ;
+    `;
+
+    query.append(dailyOccurrenceQuery).append(otherStatsQuery);
+
+    const { rows } = await this._query<StatsData>(query);
+
+    return rows[0];
   };
 }
 

@@ -1,4 +1,4 @@
-import { Issue, Occurrence, Storage } from "@codewatch/types";
+import { Issue, Occurrence, StatsData, Storage } from "@codewatch/types";
 
 export class MockStorage implements Storage {
   private _nextId: number = 1;
@@ -133,5 +133,20 @@ export class MockStorage implements Storage {
     filters
   ) => {
     return this.occurrences;
+  };
+
+  getStatsData: Storage["getStatsData"] = async () => {
+    const data: StatsData = {
+      dailyOccurrenceCount: [],
+      dailyUnhandledOccurrenceCount: [],
+      mostRecurringIssues: [],
+      totalIssues: 0,
+      totalLoggedData: 0,
+      totalManuallyCapturedOccurrences: 0,
+      totalOccurrences: 0,
+      totalUnhandledOccurrences: 0,
+    };
+
+    return data;
   };
 }

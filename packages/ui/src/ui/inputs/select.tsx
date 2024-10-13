@@ -72,18 +72,18 @@ export function Select({
         tabIndex={0}
         onClick={handleClick}
       >
-        <div className="flex items-center max-w-[95%]">
+        <div className="flex items-center max-w-[98%] pr-3">
           {startAdornment ? (
             <div className="block mr-3 -mt-0.5">{startAdornment}</div>
           ) : null}
-          <div className={valueContainerClassName}>{displayValue}</div>
+          <div className={clsx(valueContainerClassName)}>{displayValue}</div>
         </div>
 
         <img
           src={ChevronDownIcon}
           alt="chevron-down"
           width={11}
-          className={clsx("block ml-2 transition-all duration-150", {
+          className={clsx("block transition-all duration-150", {
             "origin-center rotate-180": isOpen,
           })}
         />

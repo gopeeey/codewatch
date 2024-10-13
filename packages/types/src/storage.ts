@@ -1,8 +1,9 @@
-import { Issue, Occurrence } from "./base";
+import { Issue, Occurrence, StatsData } from "./base";
 import {
   GetIssuesFilters,
   GetPaginatedIssuesFilters,
   GetPaginatedOccurrencesFilters,
+  GetStats,
 } from "./requests";
 
 export interface UpdateLastOccurrenceOnIssueType
@@ -47,6 +48,7 @@ export interface Storage {
     filters: GetPaginatedOccurrencesFilters
   ) => Promise<Occurrence[]>;
   getIssuesTotal: (filters: GetIssuesFilters) => Promise<number>;
+  getStatsData: (filters: GetStats) => Promise<StatsData>;
   deleteIssues: (issueIds: Issue["id"][]) => Promise<void>;
   resolveIssues: (issueIds: Issue["id"][]) => Promise<void>;
   unresolveIssues: (issueIds: Issue["id"][]) => Promise<void>;

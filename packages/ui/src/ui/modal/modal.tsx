@@ -5,9 +5,10 @@ type Props = {
   open: boolean;
   onClose: () => void;
   children: ReactElement;
+  centered?: boolean;
 };
 
-export function Modal({ open, onClose, children }: Props) {
+export function Modal({ open, onClose, children, centered = true }: Props) {
   const [transition, setTransition] = useState<"open" | "close">("close");
   const [showing, setShowing] = useState(false);
   const timeout = useRef<number | null>(null);
@@ -33,18 +34,6 @@ export function Modal({ open, onClose, children }: Props) {
     };
   }, [open]);
 
-  // useEffect(() => {
-  //   if (!open) return;
-  //   if (timeout.current) clearTimeout(timeout.current);
-  //   timeout.current = setTimeout(() => {
-  //     setTransition("open");
-  //   }, 10);
-
-  //   return () => {
-  //     if (timeout.current) clearTimeout(timeout.current);
-  //   };
-  // }, [open]);
-
   return showing ? (
     <div
       className={clsx(
@@ -61,10 +50,12 @@ export function Modal({ open, onClose, children }: Props) {
       />
       <div
         className={clsx(
-          "w-full h-full flex justify-center items-center transition-everything duration-500",
+          "w-full h-full flex justify-center transition-everything duration-500",
           {
             "scale-50": transition === "close",
             "scale-100": transition === "open",
+            "items-center": centered,
+            "py-20 overflow-auto": !centered,
           }
         )}
         ref={containerRef}

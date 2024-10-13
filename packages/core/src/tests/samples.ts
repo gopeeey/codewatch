@@ -12,5 +12,6 @@ export const testIssue: Issue = {
   totalOccurrences: 20,
   unhandled: false,
   resolved: false,
+  isLog: false,
 };
 export const testIssueArray = [testIssue, testIssue, testIssue];
