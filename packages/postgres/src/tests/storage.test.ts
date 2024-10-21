@@ -76,21 +76,27 @@ describe("close", () => {
 });
 
 describe("createIssue", () => {
-  it("should create a new error record", async () => {
+  it("should create a new issue row", async () => {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
     const storage = await getStorage();
     const transaction = await storage.createTransaction();
+    const testStart = Date.now();
     const id = await storage.createIssue(issueData, transaction);
+    const testEnd = Date.now();
 
     const { rows } = await (transaction as PgTransaction)._client.query<
-      Pick<DbIssue, "fingerprint" | "id">
-    >(SQL`SELECT fingerprint, id FROM codewatch_pg_issues;`);
+      Pick<DbIssue, "fingerprint" | "id" | "createdAt">
+    >(SQL`SELECT fingerprint, id, "createdAt" FROM codewatch_pg_issues;`);
 
     await transaction.rollbackAndEnd(); // Or commit and end, doesn't matter.
 
     expect(rows[0].id.toString()).toBe(id);
     expect(rows[0].fingerprint).toBe(issueData.fingerprint);
+    expect(new Date(rows[0].createdAt).getTime()).toBeGreaterThanOrEqual(
+      testStart
+    );
+    expect(new Date(rows[0].createdAt).getTime()).toBeLessThanOrEqual(testEnd);
     await storage.close();
   });
 });

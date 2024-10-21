@@ -200,7 +200,6 @@ export class CodewatchPgStorage implements Storage {
       "lastOccurrenceMessage",
       "archived",
       "unhandled",
-      "createdAt",
       "isLog"
       )
       VALUES (
@@ -212,7 +211,6 @@ export class CodewatchPgStorage implements Storage {
         ${data.lastOccurrenceMessage},
         ${data.archived},
         ${data.unhandled},
-        ${data.createdAt},
         ${data.isLog}
       ) RETURNING id;`;
     const { rows } = await this._query<{ id: DbIssue["id"] }>(
