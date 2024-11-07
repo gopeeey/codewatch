@@ -102,18 +102,21 @@ export function RangeCalendar({
             className={clsx(
               "relative py-3.5 px-3 flex justify-center items-center",
               {
-                "bg-primary-400/20": date.isBetween(start, end, "day"),
-                "bg-gradient-to-r from-transparent to-primary-400/20":
-                  date.isSame(start, "day"),
-                "bg-gradient-to-l from-transparent to-primary-400/20":
-                  date.isSame(end, "day"),
+                // "bg-primary-400/20": date.isBetween(start, end, "day"),
+                // "bg-gradient-to-r from-transparent to-primary-400/20":
+                //   date.isSame(start, "day"),
+                "bg-primary-400/20": date.isBetween(start, end, "day", "[]"),
+                "rounded-l-2xl": date.isSame(start, "day"),
+                "rounded-r-2xl": date.isSame(end, "day"),
+                // "bg-gradient-to-l from-transparent to-primary-400/20":
+                //   date.isSame(end, "day"),
               }
             )}
             key={date.toISOString()}
           >
             <ButtonBase
               className={clsx(
-                "absolute w-9 h-9 text-sm text-center rounded-md hover:bg-input-background-dark",
+                "absolute w-9 h-9 text-sm text-center rounded-xl hover:bg-input-background-dark",
                 {
                   "text-grey-900": !date.isSame(focusDate, "month"),
                   "border-dashed border border-primary-400": date.isSame(
