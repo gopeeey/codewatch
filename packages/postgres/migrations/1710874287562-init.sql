@@ -17,8 +17,7 @@ CREATE TABLE IF NOT EXISTS codewatch_pg_issues (
 );
 
 CREATE INDEX IF NOT EXISTS codewatch_pg_issues_name_idx ON codewatch_pg_issues USING gist ("name" gist_trgm_ops(siglen=256));
-CREATE INDEX IF NOT EXISTS codewatch_pg_issues_created_at_idx ON codewatch_pg_issues ("createdAt");
-
+CREATE INDEX IF NOT EXISTS codewatch_pg_issues_created_at_idx ON codewatch_pg_issues USING brin ("createdAt");
 CREATE TABLE IF NOT EXISTS codewatch_pg_occurrences (
     id BIGSERIAL PRIMARY KEY,
     "issueId" INTEGER NOT NULL,
@@ -32,6 +31,9 @@ CREATE TABLE IF NOT EXISTS codewatch_pg_occurrences (
 );
 
 CREATE INDEX IF NOT EXISTS codewatch_pg_occurrences_issueid_idx ON codewatch_pg_occurrences ("issueId");
+-- Not using BRIN for this next one because there's no guarantee that the order of the createdAt 
+-- will follow the order of the records on the table.
+CREATE INDEX IF NOT EXISTS codewatch_pg_occurrences_created_at_idx ON codewatch_pg_occurrences(timestamp);
 
 --down
 DROP INDEX IF EXISTS codewatch_pg_occurrences_issueid_idx;

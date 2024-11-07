@@ -358,7 +358,7 @@ export class CodewatchPgStorage implements Storage {
     }
 
     if (filters.searchString.length) {
-      query.append(SQL` AND name ILIKE ${"%" + filters.searchString + "%"} `);
+      query.append(SQL` AND ${filters.searchString} % name `);
     }
 
     if (filters.startDate) {
