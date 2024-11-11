@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 
-import { select } from "@inquirer/prompts";
 import { exec } from "child_process";
 import ora from "ora";
 import { promisify } from "util";
+import { Registry } from "./registry";
+import { Terminal } from "./terminal";
+import {
+  RegistryInterface,
+  ServerFramework,
+  Storage,
+  TerminalInterface,
+} from "./types";
 
 const execAsync = promisify(exec);
-
-const supportedServerFrameworks = [
-  "express",
-  "fastify",
-  "koa",
-  "hapi",
-  "nestjs",
-] as const;
-type ServerFramework = (typeof supportedServerFrameworks)[number];
 
 const serverFrameworkChoices: { name: string; value: ServerFramework }[] = [
   { name: "Express", value: "express" },
@@ -24,9 +22,6 @@ const serverFrameworkChoices: { name: string; value: ServerFramework }[] = [
   { name: "NestJS", value: "nestjs" },
 ];
 
-const supportedStorages = ["postgresql", "mongodb"] as const;
-type Storage = (typeof supportedStorages)[number];
-
 const storageChoices: { name: string; value: Storage }[] = [
   { name: "PostgreSQL", value: "postgresql" },
   { name: "MongoDB", value: "mongodb" },
@@ -34,17 +29,17 @@ const storageChoices: { name: string; value: Storage }[] = [
 
 const spinner = ora();
 
-async function main() {
+async function main(registry: RegistryInterface, terminal: TerminalInterface) {
   const isLocal = process.argv[2] === "--local";
 
-  const serverFramework = await select({
+  const serverFramework = await terminal.select({
     message: "Choose a server framework:",
-    choices: serverFrameworkChoices,
+    options: serverFrameworkChoices,
   });
 
-  const storage = await select({
+  const storage = await terminal.select({
     message: "Choose a storage system:",
-    choices: storageChoices,
+    options: storageChoices,
   });
 
   try {
@@ -124,4 +119,32 @@ async function spin(text: string, action: () => Promise<void>) {
   spinner.stop();
 }
 
-main();
+if (require.main === module) {
+  const registry = new Registry();
+  const terminal = new Terminal();
+  main(registry, terminal);
+}
+
+export default main;
+// Install (fresh install no existing core version):
+// Ask for user's stack and determine latest most compatible core version
+// Install that core version
+// Install dependencies that are compatible with that core version
+
+// Install (a core version is already installed):
+// Ask for user's stack and determine latest most compatible core version
+// Check if the determined core version is greater than the installed version
+// If yes, ask the user if they want to install that latest version
+// Install dependencies that are compatible with the chosen core version
+
+// Install --version:
+// Ask for user's stack
+// Determine if each of the dependencies are compatible with the specified core version (if there's a version of the dependecy for the specified core version)
+// Check if the specified version exists
+// If not, throw an error
+// If yes, install the specified version
+// Update dependencies that are compatible with the new core version
+
+// Update:
+// Update the core version to the latest
+// Update dependencies that are compatible with the new core version
