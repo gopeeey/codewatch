@@ -8,4 +8,8 @@ export class Terminal implements TerminalInterface {
       choices: options,
     });
   }
+
+  display(message: string) {
+    console.log(message);
+  }
 }

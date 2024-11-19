@@ -1,4 +1,4 @@
-import { RepoDataType } from "../types";
+import { PluginName, RepoDataType } from "../types";
 
 export const coreExample: RepoDataType = {
   name: "@codewatch/core",
@@ -33,3 +33,69 @@ export const storageExample: RepoDataType = {
     },
   },
 };
+
+export const serverFrameworkExample: RepoDataType = {
+  name: "@codewatch/express",
+  "dist-tags": {
+    latest: "1.0.1",
+  },
+  versions: {
+    "1.0.0": {
+      dependencies: {
+        "@codewatch/core": "^1.0.0",
+      },
+    },
+    "1.0.1": {
+      dependencies: {
+        "@codewatch/core": "^1.0.0",
+      },
+    },
+  },
+};
+
+type CustomExampleArgs = {
+  base: "core" | PluginName;
+  latest?: string;
+  versions?: {
+    [key: string]: string; // key is the version, value is the core version
+  }[];
+};
+export function customExample({
+  base,
+  latest,
+  versions,
+}: CustomExampleArgs): RepoDataType {
+  let example: RepoDataType;
+
+  switch (base) {
+    case "core":
+      example = structuredClone(coreExample);
+      break;
+    case "postgresql":
+      example = structuredClone(storageExample);
+      break;
+    case "express":
+      example = structuredClone(serverFrameworkExample);
+      break;
+    default:
+      throw new Error(`Invalid base type: ${base}`);
+  }
+
+  if (latest) {
+    example["dist-tags"].latest = latest;
+  }
+
+  if (versions) {
+    example.versions = {};
+    versions.forEach((versionData) => {
+      const [version, coreVersion] = Object.entries(versionData)[0];
+      example.versions[version] = {
+        dependencies: {
+          "@codewatch/core": coreVersion,
+        },
+      };
+    });
+  }
+
+  return example;
+}

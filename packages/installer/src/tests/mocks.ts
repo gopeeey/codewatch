@@ -1,10 +1,15 @@
 import {
+  PluginName,
   RegistryInterface,
   RepoDataType,
   SelectOptions,
   TerminalInterface,
 } from "../types";
-import { coreExample, storageExample } from "./examples";
+import {
+  coreExample,
+  serverFrameworkExample,
+  storageExample,
+} from "./examples";
 
 class Mock {
   calls: {
@@ -27,34 +32,62 @@ export class TerminalMock implements TerminalInterface {
         return options[0].value;
       }
     );
+
+  display = jest.fn();
 }
 
 export class RegistryMock implements RegistryInterface {
-  private _nextResponse: RepoDataType | null = null;
-  async get(name: string) {
-    if (this._nextResponse) {
-      const res = this._nextResponse;
-      this._nextResponse = null;
+  private _nextCoreResponse: RepoDataType | null = null;
+  private _nextStorageResponse: RepoDataType | null = null;
+  private _nextServerFrameworkResponse: RepoDataType | null = null;
+
+  async getCore() {
+    if (this._nextCoreResponse) {
+      const res = this._nextCoreResponse;
+      this._nextCoreResponse = null;
       return res;
     }
+    return coreExample;
+  }
 
+  async getPlugin(name: PluginName) {
     switch (name) {
-      case "@codewatch/core":
-        return coreExample;
-        break;
-      case "@codewatch/postgres":
+      case "postgresql":
+        if (this._nextStorageResponse) {
+          const res = this._nextStorageResponse;
+          this._nextStorageResponse = null;
+          return res;
+        }
         return storageExample;
         break;
-      // case "@codewatch/express":
-      //     break;
-      // case "@codewatch/mongodb":
+      case "express":
+        if (this._nextServerFrameworkResponse) {
+          const res = this._nextServerFrameworkResponse;
+          this._nextServerFrameworkResponse = null;
+          return res;
+        }
+        return serverFrameworkExample;
+        break;
+      // case "mongodb":
       //     break;
       default:
-        throw new Error("Unsupported repo " + name);
+        throw new Error("Unsupported plugin " + name);
     }
   }
 
-  setNextResponse(res: RepoDataType) {
-    this._nextResponse = res;
+  setNextCoreResponse(res: RepoDataType) {
+    this._nextCoreResponse = res;
+  }
+
+  setNextStorageResponse(res: RepoDataType) {
+    this._nextStorageResponse = res;
+  }
+
+  setNextServerFrameworkResponse(res: RepoDataType) {
+    this._nextServerFrameworkResponse = res;
   }
 }
+
+export const mockInstall = jest
+  .fn()
+  .mockImplementation(async (dependencies: string[]) => {});

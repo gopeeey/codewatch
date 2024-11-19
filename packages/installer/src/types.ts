@@ -1,9 +1,9 @@
 const supportedServerFrameworks = [
   "express",
-  "fastify",
-  "koa",
-  "hapi",
-  "nestjs",
+  // "fastify",
+  // "koa",
+  // "hapi",
+  // "nestjs",
 ] as const;
 export type ServerFramework = (typeof supportedServerFrameworks)[number];
 
@@ -15,6 +15,12 @@ export type Dependencies = {
   storage: Storage;
 };
 
+const pluginNames = [
+  ...supportedServerFrameworks,
+  ...supportedStorages,
+] as const;
+export type PluginName = (typeof pluginNames)[number];
+
 export type SelectOptions<T extends string> = {
   message: string;
   options: { name: string; value: T }[];
@@ -22,6 +28,7 @@ export type SelectOptions<T extends string> = {
 
 export interface TerminalInterface {
   select: <T extends string>(options: SelectOptions<T>) => Promise<T>;
+  display: (message: string) => void;
 }
 
 export type RepoDataType = {
@@ -39,5 +46,8 @@ export type RepoDataType = {
 };
 
 export interface RegistryInterface {
-  get: (name: string) => Promise<RepoDataType>;
+  getCore: () => Promise<RepoDataType>;
+  getPlugin: (name: PluginName) => Promise<RepoDataType>;
 }
+
+export type InstallFn = (dependencies: string[]) => Promise<void>;

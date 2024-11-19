@@ -1,10 +1,15 @@
-import { RegistryInterface, RepoDataType } from "./types";
+import { PluginName, RegistryInterface, RepoDataType } from "./types";
 
 export class Registry implements RegistryInterface {
-  private baseUrl: string = "https://registry.npmjs.org/";
+  private _baseUrl: string = "https://registry.npmjs.org/";
+  private _pluginLib: { [name in PluginName]: string } = {
+    express: "@codewatch/express",
+    postgresql: "@codewatch/postgres",
+    mongodb: "@codewatch/mongodb",
+  };
 
-  async get(name: string) {
-    const response = await fetch(this.url(name));
+  async getCore() {
+    const response = await fetch(this._url("@codewatch/core"));
     if (!response.ok) {
       throw new Error(response.statusText);
     }
@@ -13,11 +18,24 @@ export class Registry implements RegistryInterface {
     return data as unknown as RepoDataType;
   }
 
-  url(name: string) {
+  async getPlugin(name: PluginName) {
+    let plugin = this._pluginLib[name];
+    if (!plugin) throw new Error("Unsupported plugin " + name);
+
+    const response = await fetch(this._url(plugin));
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const data = response.json();
+    return data as unknown as RepoDataType;
+  }
+
+  private _url(name: string) {
     if (name[0] === "@" && name.indexOf("/") !== -1) {
       name = "@" + encodeURIComponent(name.slice(1));
     }
-    return this.baseUrl + name;
+    return this._baseUrl + name;
   }
 }
 
