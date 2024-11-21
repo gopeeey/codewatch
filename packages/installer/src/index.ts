@@ -188,6 +188,13 @@ async function main(
         }
 
         await install([`@codewatch/core@${coreVersion}`]);
+        const depList: string[] = [];
+        positions.forEach((pos) => {
+          depList.push(
+            `${repoGrid[pos[1]].name}@${repoGrid[pos[1]].deps[pos[0]][0]}`
+          );
+        });
+        await install(depList);
         break;
       }
     }
