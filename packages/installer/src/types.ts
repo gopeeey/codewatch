@@ -51,3 +51,9 @@ export interface RegistryInterface {
 }
 
 export type InstallFn = (dependencies: string[]) => Promise<void>;
+
+export interface InstallerInterface {
+  install: (dependencies: string[]) => Promise<void>;
+
+  checkInstalledCoreVersion: () => Promise<string | undefined>;
+}

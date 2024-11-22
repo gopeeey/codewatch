@@ -1,4 +1,5 @@
 import {
+  InstallerInterface,
   PluginName,
   RegistryInterface,
   RepoDataType,
@@ -24,14 +25,14 @@ class Mock {
   }
 }
 
+export const defaultTerminalSelectImpl = async <T extends string>({
+  options,
+}: SelectOptions<T>) => {
+  return options[0].value;
+};
+
 export class TerminalMock implements TerminalInterface {
-  select = jest
-    .fn()
-    .mockImplementation(
-      async <T extends string>({ options }: SelectOptions<T>) => {
-        return options[0].value;
-      }
-    );
+  select = jest.fn().mockImplementation(defaultTerminalSelectImpl);
 
   display = jest.fn();
 }
@@ -91,3 +92,9 @@ export class RegistryMock implements RegistryInterface {
 export const mockInstall = jest
   .fn()
   .mockImplementation(async (dependencies: string[]) => {});
+
+export class MockInstaller implements InstallerInterface {
+  install = jest.fn().mockImplementation(async (dependencies: string[]) => {});
+
+  checkInstalledCoreVersion = jest.fn().mockResolvedValue(undefined);
+}

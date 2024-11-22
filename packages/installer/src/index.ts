@@ -1,22 +1,26 @@
 #!/usr/bin/env node
 
-import { exec } from "child_process";
 import ora from "ora";
-import { promisify } from "util";
-import { npmInstall } from "./installer";
+import { NpmInstaller } from "./installer";
 import { Registry } from "./registry";
 import { Terminal } from "./terminal";
 import {
-  InstallFn,
+  InstallerInterface,
+  PluginName,
   RegistryInterface,
   RepoDataType,
   ServerFramework,
   Storage,
   TerminalInterface,
 } from "./types";
-import { extractSign, gt, intersects, lte, maxVersion } from "./utils";
-
-const execAsync = promisify(exec);
+import {
+  contains,
+  extractSign,
+  gt,
+  intersects,
+  lte,
+  maxVersion,
+} from "./utils";
 
 const serverFrameworkChoices: { name: string; value: ServerFramework }[] = [
   { name: "Express", value: "express" },
@@ -36,10 +40,8 @@ const spinner = ora();
 async function main(
   registry: RegistryInterface,
   terminal: TerminalInterface,
-  install: InstallFn
+  installer: InstallerInterface
 ) {
-  const isLocal = process.argv[2] === "--local";
-
   try {
     const serverFramework = await terminal.select({
       message: "Choose a server framework:",
@@ -51,175 +53,50 @@ async function main(
       options: storageChoices,
     });
 
+    const existingCoreVersion = await installer.checkInstalledCoreVersion();
+    let pluginsToInstall: string[] = [];
+
     const deps = [serverFramework, storage];
-    const repos: RepoDataType[] = [];
-    for (const dep of deps) {
-      const repo = await registry.getPlugin(dep);
-      repos.push(repo);
-    }
 
-    const repoGrid = repos.map((repo) => {
-      const coreVersions: [string, string][] = [];
-      for (const [versionNumber, versionObj] of Object.entries(repo.versions)) {
-        const coreDependency = versionObj.dependencies["@codewatch/core"];
-        if (coreDependency) {
-          coreVersions.push([versionNumber, coreDependency]);
-        }
+    if (existingCoreVersion) {
+      const decision = await terminal.select({
+        message: `@codewatch/core version ${existingCoreVersion} is already installed. Would you like me overwrite it and determine the most compatible version for you, or continue with the installed version?`,
+        options: [
+          {
+            name: "Determine the most compatible version for me (recommended)",
+            value: "overwrite",
+          },
+          { name: "Use installed version", value: "existing" },
+        ],
+      });
+
+      if (decision === "overwrite") {
+        const { core, plugins } = await findMostCompatibleCoreAndPluginVersions(
+          deps,
+          registry
+        );
+        await installer.install([core]);
+        pluginsToInstall = plugins;
+      } else {
+        console.log("\n\n\nHELLO WORLD");
+        pluginsToInstall = await findCompatiblePluginVersionForCore(
+          deps,
+          existingCoreVersion,
+          registry
+        );
+        console.log("\n\n\nHI THRE", pluginsToInstall);
       }
-
-      return {
-        name: repo.name,
-        deps: coreVersions.sort((a, b) => {
-          const maxA = maxVersion(a[1]);
-          const maxB = maxVersion(b[1]);
-
-          if (maxA === maxB) {
-            if (gt(b[1], a[1])) return 1;
-            if (gt(a[1], b[1])) return -1;
-            if (gt(b[0], a[0])) return 1;
-            if (gt(a[0], b[0])) return -1;
-            return 0;
-          } else {
-            if (maxA > maxB) return 1;
-            return -1;
-          }
-        }),
-      };
-    });
-
-    if (repoGrid.length !== repos.length)
-      throw new Error("Dependency versions mismatch");
-    repoGrid.sort((a, b) => a.deps.length - b.deps.length);
-
-    const positions = repoGrid.map((_, index) => [0, index]);
-
-    // console.log("\n\n\nTHESE ARE THE CURRENT VERSIONS", JSON.stringify(repoGrid));
-
-    while (true) {
-      const currentVersions = positions.map(
-        (pos) => repoGrid[pos[1]].deps[pos[0]]
+    } else {
+      const { core, plugins } = await findMostCompatibleCoreAndPluginVersions(
+        deps,
+        registry
       );
 
-      if (currentVersions.some((ver) => ver === undefined)) {
-        // We're out of versions for a particular repo
-        // Find the incompatibility in the first row and throw an error
-
-        const firstRow = repoGrid.map((repo) => ({
-          ...repo,
-          deps: repo.deps[0],
-        }));
-        for (let i = 0; i < firstRow.length - 1; i++) {
-          for (let j = 1; j < firstRow.length; j++) {
-            if (!intersects([firstRow[i].deps[1], firstRow[j].deps[1]])) {
-              throw new Error(
-                `Some of the plugins you selected are incompatible.\n${firstRow[i].name} requires @codewatch/core version ${firstRow[i].deps[1]}, but ${firstRow[j].name} requires @codewatch/core version ${firstRow[j].deps[1]}`
-              );
-            }
-          }
-        }
-      }
-
-      const compatible = intersects(currentVersions.map((ver) => ver[1]));
-      if (!compatible) {
-        // Current versions are incompatible
-        // Drop down the column with the largest maxed out version, then retry
-
-        let posIndex = 0;
-        let maxVal = 0;
-
-        for (let i = 0; i < positions.length; i++) {
-          console.log("stuck here");
-          const val = Number(
-            maxVersion(
-              repoGrid[positions[i][1]].deps[positions[i][0]][1]
-            ).replace(".", "")
-          );
-
-          if (val > maxVal) {
-            posIndex = i;
-            maxVal = val;
-          }
-        }
-
-        while (
-          currentVersions.every(
-            (ver) =>
-              repoGrid[positions[posIndex][1]].deps[positions[posIndex][0]] !==
-                undefined &&
-              lte(
-                ver[1],
-                repoGrid[positions[posIndex][1]].deps[positions[posIndex][0]][1]
-              )
-          )
-        ) {
-          positions[posIndex][0]++;
-        }
-      } else {
-        // Install the version with the smallest range
-        let coreVersion = currentVersions[0][1];
-        let maxSign = extractSign(currentVersions[0][1]);
-
-        for (const [_, version] of currentVersions.slice(1)) {
-          const sign = extractSign(version);
-
-          if (sign === "") {
-            maxSign = "";
-            coreVersion = version;
-            break;
-          }
-
-          switch (sign) {
-            case "^":
-              if (maxSign === "^") {
-                coreVersion = gt(version, coreVersion) ? version : coreVersion;
-              }
-              break;
-            case "~":
-              if (maxSign === "~") {
-                coreVersion = gt(version, coreVersion) ? version : coreVersion;
-              } else {
-                maxSign = sign;
-                coreVersion = version;
-              }
-              break;
-            default:
-              throw new Error(`Unsupported semver sign ${sign}`);
-          }
-        }
-
-        await install([`@codewatch/core@${coreVersion}`]);
-        const depList: string[] = [];
-        positions.forEach((pos) => {
-          depList.push(
-            `${repoGrid[pos[1]].name}@${repoGrid[pos[1]].deps[pos[0]][0]}`
-          );
-        });
-        await install(depList);
-        break;
-      }
+      await installer.install([core]);
+      pluginsToInstall = plugins;
     }
 
-    // try {
-    //   await spin("Installing core", async () => {
-    //     await installCore(isLocal);
-    //   });
-
-    //   await spin("Installing UI", async () => {
-    //     await installUi(isLocal);
-    //   });
-
-    //   await spin(`Installing ${serverFramework} adapter`, async () => {
-    //     await installServerFramework(serverFramework, isLocal);
-    //   });
-
-    //   await spin(`Installing ${storage} adapter`, async () => {
-    //     await installStorage(storage, isLocal);
-    //   });
-    // } catch (err) {
-    //   console.error(err);
-    //   spinner.stop();
-    //   process.exit(1);
-    // }
+    await installer.install(pluginsToInstall);
   } catch (err) {
     if (err instanceof Error) {
       terminal.display(err.message);
@@ -229,51 +106,221 @@ async function main(
   }
 }
 
-async function installCore(isLocal: boolean) {
-  if (isLocal) {
-    await execAsync("yalc add @codewatch/core");
-  } else {
-    // await execAsync("npm install @codewatch/core");
+async function findMostCompatibleCoreAndPluginVersions(
+  deps: PluginName[],
+  registry: RegistryInterface
+): Promise<{
+  core: string;
+  plugins: string[];
+}> {
+  const repos: RepoDataType[] = [];
+  for (const dep of deps) {
+    const repo = await registry.getPlugin(dep);
+    repos.push(repo);
   }
-}
 
-async function installUi(isLocal: boolean) {
-  if (isLocal) {
-    await execAsync("yalc add @codewatch/ui");
-  } else {
-    // await execAsync("npm install @codewatch/ui");
-  }
-}
-
-async function installServerFramework(
-  framework: ServerFramework,
-  isLocal: boolean
-) {
-  switch (framework) {
-    case "express":
-      if (isLocal) {
-        await execAsync("yalc add @codewatch/express");
-      } else {
-        // await execAsync("npm install @codewatch/express");
+  const repoGrid = repos.map((repo) => {
+    const coreVersions: [string, string][] = [];
+    for (const [versionNumber, versionObj] of Object.entries(repo.versions)) {
+      const coreDependency = versionObj.dependencies["@codewatch/core"];
+      if (coreDependency) {
+        coreVersions.push([versionNumber, coreDependency]);
       }
-      break;
-    default:
-      console.log("Not implemented yet: " + framework);
+    }
+
+    return {
+      name: repo.name,
+      deps: coreVersions.sort((a, b) => {
+        const maxA = maxVersion(a[1]);
+        const maxB = maxVersion(b[1]);
+
+        if (maxA === maxB) {
+          if (gt(b[1], a[1])) return 1;
+          if (gt(a[1], b[1])) return -1;
+          if (gt(b[0], a[0])) return 1;
+          if (gt(a[0], b[0])) return -1;
+          return 0;
+        } else {
+          if (maxA > maxB) return 1;
+          return -1;
+        }
+      }),
+    };
+  });
+
+  console.log("\n\n\n\nNEW PLACE", JSON.stringify(repoGrid));
+
+  if (repoGrid.length !== repos.length)
+    throw new Error("Dependency versions mismatch");
+  repoGrid.sort((a, b) => a.deps.length - b.deps.length);
+
+  const positions = repoGrid.map((_, index) => [0, index]);
+
+  // console.log("\n\n\nTHESE ARE THE CURRENT VERSIONS", JSON.stringify(repoGrid));
+
+  while (true) {
+    const currentVersions = positions.map(
+      (pos) => repoGrid[pos[1]].deps[pos[0]]
+    );
+
+    if (currentVersions.some((ver) => ver === undefined)) {
+      // We're out of versions for a particular repo
+      // Find the incompatibility in the first row and throw an error
+
+      const firstRow = repoGrid.map((repo) => ({
+        ...repo,
+        deps: repo.deps[0],
+      }));
+      for (let i = 0; i < firstRow.length - 1; i++) {
+        for (let j = 1; j < firstRow.length; j++) {
+          if (!intersects([firstRow[i].deps[1], firstRow[j].deps[1]])) {
+            throw new Error(
+              `Some of the plugins you selected are incompatible.\n${firstRow[i].name} requires @codewatch/core version ${firstRow[i].deps[1]}, but ${firstRow[j].name} requires @codewatch/core version ${firstRow[j].deps[1]}`
+            );
+          }
+        }
+      }
+    }
+
+    const compatible = intersects(currentVersions.map((ver) => ver[1]));
+    if (!compatible) {
+      // Current versions are incompatible
+      // Drop down the column with the largest maxed out version, then retry
+
+      let posIndex = 0;
+      let maxVal = 0;
+
+      for (let i = 0; i < positions.length; i++) {
+        const val = Number(
+          maxVersion(
+            repoGrid[positions[i][1]].deps[positions[i][0]][1]
+          ).replace(".", "")
+        );
+
+        if (val > maxVal) {
+          posIndex = i;
+          maxVal = val;
+        }
+      }
+
+      while (
+        currentVersions.every(
+          (ver) =>
+            repoGrid[positions[posIndex][1]].deps[positions[posIndex][0]] !==
+              undefined &&
+            lte(
+              ver[1],
+              repoGrid[positions[posIndex][1]].deps[positions[posIndex][0]][1]
+            )
+        )
+      ) {
+        positions[posIndex][0]++;
+      }
+    } else {
+      // Install the version with the smallest range
+      let coreVersion = currentVersions[0][1];
+      let maxSign = extractSign(currentVersions[0][1]);
+
+      for (const [_, version] of currentVersions.slice(1)) {
+        const sign = extractSign(version);
+
+        if (sign === "") {
+          maxSign = "";
+          coreVersion = version;
+          break;
+        }
+
+        switch (sign) {
+          case "^":
+            if (maxSign === "^") {
+              coreVersion = gt(version, coreVersion) ? version : coreVersion;
+            }
+            break;
+          case "~":
+            if (maxSign === "~") {
+              coreVersion = gt(version, coreVersion) ? version : coreVersion;
+            } else {
+              maxSign = sign;
+              coreVersion = version;
+            }
+            break;
+          default:
+            throw new Error(`Unsupported semver sign ${sign}`);
+        }
+      }
+
+      const depList: string[] = [];
+      positions.forEach((pos) => {
+        depList.push(
+          `${repoGrid[pos[1]].name}@${repoGrid[pos[1]].deps[pos[0]][0]}`
+        );
+      });
+      return {
+        core: `@codewatch/core@${coreVersion}`,
+        plugins: depList,
+      };
+    }
   }
 }
 
-async function installStorage(storage: Storage, isLocal: boolean) {
-  switch (storage) {
-    case "postgresql":
-      if (isLocal) {
-        await execAsync("yalc add @codewatch/postgres");
-      } else {
-        // await execAsync("npm install @codewatch/postgres");
-      }
-      break;
-    default:
-      console.log("Not implemented yet: " + storage);
+async function findCompatiblePluginVersionForCore(
+  deps: PluginName[],
+  coreVersion: string,
+  registry: RegistryInterface
+): Promise<string[]> {
+  const repos: RepoDataType[] = [];
+  for (const dep of deps) {
+    const repo = await registry.getPlugin(dep);
+    repos.push(repo);
   }
+
+  const resolvedDeps: string[] = [];
+
+  repos.forEach((repo) => {
+    const coreVersions: [string, string][] = [];
+    for (const [versionNumber, versionObj] of Object.entries(repo.versions)) {
+      const coreDependency = versionObj.dependencies["@codewatch/core"];
+      if (coreDependency) {
+        coreVersions.push([versionNumber, coreDependency]);
+      }
+    }
+
+    coreVersions.sort((a, b) => {
+      const maxA = maxVersion(a[1]);
+      const maxB = maxVersion(b[1]);
+
+      if (maxA === maxB) {
+        if (gt(b[1], a[1])) return 1;
+        if (gt(a[1], b[1])) return -1;
+        if (gt(b[0], a[0])) return 1;
+        if (gt(a[0], b[0])) return -1;
+        return 0;
+      } else {
+        if (maxA > maxB) return 1;
+        return -1;
+      }
+    });
+
+    let found = false;
+    for (const version of coreVersions) {
+      if (contains(version[1], coreVersion)) {
+        found = true;
+        resolvedDeps.push(`${repo.name}@${version[0]}`);
+        break;
+      }
+    }
+
+    if (!found) {
+      throw new Error(
+        `No compatible version of ${repo.name} found for @codewatch/core version ${coreVersion}`
+      );
+    }
+  });
+
+  if (resolvedDeps.length !== deps.length) {
+    throw new Error("Dependency versions mismatch");
+  }
+  return resolvedDeps;
 }
 
 async function spin(text: string, action: () => Promise<void>) {
@@ -286,22 +333,11 @@ async function spin(text: string, action: () => Promise<void>) {
 if (require.main === module) {
   const registry = new Registry();
   const terminal = new Terminal();
-  main(registry, terminal, npmInstall);
+  const npmInstaller = new NpmInstaller();
+  main(registry, terminal, npmInstaller);
 }
 
 export default main;
-// Install (fresh install no existing core version):
-// Ask for user's stack
-// Determine latest most compatible core version
-// Install that core version
-// Install dependencies that are compatible with that core version
-
-// Install (a core version is already installed):
-// Ask for user's stack
-// Determine latest most compatible core version
-// Check if the determined core version is greater than the installed version
-// If yes, ask the user if they want to install that latest version
-// Install dependencies that are compatible with the chosen core version
 
 // Install --version:
 // Ask for user's stack

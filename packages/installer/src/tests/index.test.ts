@@ -5,19 +5,163 @@ import {
   serverFrameworkExample,
   storageExample,
 } from "./examples";
-import { mockInstall, RegistryMock, TerminalMock } from "./mocks";
+import {
+  MockInstaller,
+  RegistryMock,
+  TerminalMock,
+  defaultTerminalSelectImpl,
+} from "./mocks";
 
 const terminal = new TerminalMock();
 const registry = new RegistryMock();
+const mockInstaller = new MockInstaller();
 
 async function run() {
-  await main(registry, terminal, mockInstall);
+  await main(registry, terminal, mockInstaller);
 }
+
+const scenarios: (
+  | {
+      dependencies: {
+        serverFramework: RepoDataType;
+        storage: RepoDataType;
+      };
+      expectedCoreVersion: string;
+      expectedStorageVersion: string;
+      expectedServerFrameworkVersion: string;
+      message?: undefined;
+    }
+  | {
+      dependencies: {
+        serverFramework: RepoDataType;
+        storage: RepoDataType;
+      };
+      expectedCoreVersion: null;
+      expectedStorageVersion: null;
+      expectedServerFrameworkVersion: null;
+      message: string;
+    }
+)[] = [
+  {
+    dependencies: {
+      serverFramework: serverFrameworkExample,
+      storage: storageExample,
+    },
+    expectedCoreVersion: "^1.0.0",
+    expectedServerFrameworkVersion: "1.0.1",
+    expectedStorageVersion: "1.0.1",
+  },
+  {
+    dependencies: {
+      serverFramework: customExample({
+        base: "express",
+        latest: "2.0.0",
+        versions: [
+          { "2.0.0": "^1.5.6" },
+          { "1.5.6": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
+      storage: customExample({
+        base: "postgresql",
+        latest: "3.2.1",
+        versions: [
+          { "3.2.1": "^1.4.0" },
+          { "2.0.0": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
+    },
+    expectedCoreVersion: "^1.5.6",
+    expectedServerFrameworkVersion: "2.0.0",
+    expectedStorageVersion: "3.2.1",
+  },
+  {
+    dependencies: {
+      serverFramework: customExample({
+        base: "express",
+        latest: "3.2.1",
+        versions: [
+          { "3.2.1": "^1.4.0" },
+          { "2.0.0": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
+      storage: customExample({
+        base: "postgresql",
+        latest: "2.0.0",
+        versions: [
+          { "2.0.0": "^1.5.6" },
+          { "1.5.6": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
+    },
+    expectedCoreVersion: "^1.5.6",
+    expectedServerFrameworkVersion: "3.2.1",
+    expectedStorageVersion: "2.0.0",
+  },
+  {
+    dependencies: {
+      serverFramework: customExample({
+        base: "express",
+        latest: "2.0.0",
+        versions: [
+          { "2.0.0": "^3.5.6" },
+          { "1.5.6": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
+      storage: customExample({
+        base: "postgresql",
+        latest: "3.2.1",
+        versions: [
+          { "3.2.1": "^2.4.0" },
+          { "2.0.0": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
+    },
+    /*
+     * Since there's a difference in the major core version (^3.5.6 and ^2.4.0),
+     * it should check the next version of each dependency to find
+     * the latest compatible core version.
+     * */
+    expectedCoreVersion: "^1.0.0",
+    expectedServerFrameworkVersion: "1.5.6",
+    expectedStorageVersion: "2.0.0",
+  },
+  {
+    dependencies: {
+      serverFramework: customExample({
+        base: "express",
+        latest: "2.0.0",
+        versions: [{ "2.0.0": "^1.5.6" }, { "1.0.0": "^1.0.0" }],
+      }),
+      storage: customExample({
+        base: "postgresql",
+        latest: "1.0.0",
+        versions: [{ "1.0.0": "^2.4.0" }],
+      }),
+    },
+    /*
+     * Here, because of the difference in the major core versions,
+     * and the storage plugin has no previous versions that use a core version
+     * that might be compatible with the other plugins(server framework),
+     * it should not install any core version, and should display a message
+     * that explains the first incompatibility.
+     * */
+    expectedCoreVersion: null,
+    expectedServerFrameworkVersion: null,
+    expectedStorageVersion: null,
+    message: `Some of the plugins you selected are incompatible.\n@codewatch/postgres requires @codewatch/core version ^2.4.0, but @codewatch/express requires @codewatch/core version ^1.5.6`,
+  },
+];
 
 describe("main", () => {
   it("should query the user for their choice of plugins", async () => {
     await run();
-    expect(terminal.select).toHaveBeenCalledTimes(2);
+    expect(terminal.select.mock.calls.length).toBeGreaterThanOrEqual(2);
 
     expect(terminal.select).toHaveBeenCalledWith({
       message: expect.stringContaining("server framework"),
@@ -31,143 +175,10 @@ describe("main", () => {
   });
 
   describe("given there's no existing core version", () => {
-    const scenarios: (
-      | {
-          dependencies: {
-            serverFramework: RepoDataType;
-            storage: RepoDataType;
-          };
-          expectedCoreVersion: string;
-          expectedStorageVersion: string;
-          expectedServerFrameworkVersion: string;
-          message?: undefined;
-        }
-      | {
-          dependencies: {
-            serverFramework: RepoDataType;
-            storage: RepoDataType;
-          };
-          expectedCoreVersion: null;
-          expectedStorageVersion: null;
-          expectedServerFrameworkVersion: null;
-          message: string;
-        }
-    )[] = [
-      {
-        dependencies: {
-          serverFramework: serverFrameworkExample,
-          storage: storageExample,
-        },
-        expectedCoreVersion: "^1.0.0",
-        expectedServerFrameworkVersion: "1.0.1",
-        expectedStorageVersion: "1.0.1",
-      },
-      {
-        dependencies: {
-          serverFramework: customExample({
-            base: "express",
-            latest: "2.0.0",
-            versions: [
-              { "2.0.0": "^1.5.6" },
-              { "1.5.6": "^1.0.0" },
-              { "1.0.0": "^1.0.0" },
-            ],
-          }),
-          storage: customExample({
-            base: "postgresql",
-            latest: "3.2.1",
-            versions: [
-              { "3.2.1": "^1.4.0" },
-              { "2.0.0": "^1.0.0" },
-              { "1.0.0": "^1.0.0" },
-            ],
-          }),
-        },
-        expectedCoreVersion: "^1.5.6",
-        expectedServerFrameworkVersion: "2.0.0",
-        expectedStorageVersion: "3.2.1",
-      },
-      {
-        dependencies: {
-          serverFramework: customExample({
-            base: "express",
-            latest: "3.2.1",
-            versions: [
-              { "3.2.1": "^1.4.0" },
-              { "2.0.0": "^1.0.0" },
-              { "1.0.0": "^1.0.0" },
-            ],
-          }),
-          storage: customExample({
-            base: "postgresql",
-            latest: "2.0.0",
-            versions: [
-              { "2.0.0": "^1.5.6" },
-              { "1.5.6": "^1.0.0" },
-              { "1.0.0": "^1.0.0" },
-            ],
-          }),
-        },
-        expectedCoreVersion: "^1.5.6",
-        expectedServerFrameworkVersion: "3.2.1",
-        expectedStorageVersion: "2.0.0",
-      },
-      {
-        dependencies: {
-          serverFramework: customExample({
-            base: "express",
-            latest: "2.0.0",
-            versions: [
-              { "2.0.0": "^3.5.6" },
-              { "1.5.6": "^1.0.0" },
-              { "1.0.0": "^1.0.0" },
-            ],
-          }),
-          storage: customExample({
-            base: "postgresql",
-            latest: "3.2.1",
-            versions: [
-              { "3.2.1": "^2.4.0" },
-              { "2.0.0": "^1.0.0" },
-              { "1.0.0": "^1.0.0" },
-            ],
-          }),
-        },
-        /*
-         * Since there's a difference in the major core version (^3.5.6 and ^2.4.0),
-         * it should check the next version of each dependency to find
-         * the latest compatible core version.
-         * */
-        expectedCoreVersion: "^1.0.0",
-        expectedServerFrameworkVersion: "1.5.6",
-        expectedStorageVersion: "2.0.0",
-      },
-      {
-        dependencies: {
-          serverFramework: customExample({
-            base: "express",
-            latest: "2.0.0",
-            versions: [{ "2.0.0": "^1.5.6" }, { "1.0.0": "^1.0.0" }],
-          }),
-          storage: customExample({
-            base: "postgresql",
-            latest: "1.0.0",
-            versions: [{ "1.0.0": "^2.4.0" }],
-          }),
-        },
-        /*
-         * Here, because of the difference in the major core versions,
-         * and the storage plugin has no previous versions that use a core version
-         * that might be compatible with the other plugins(server framework),
-         * it should not install any core version, and should display a message
-         * that explains the first incompatibility.
-         * */
-        expectedCoreVersion: null,
-        expectedServerFrameworkVersion: null,
-        expectedStorageVersion: null,
-        message: `Some of the plugins you selected are incompatible.\n@codewatch/postgres requires @codewatch/core version ^2.4.0, but @codewatch/express requires @codewatch/core version ^1.5.6`,
-      },
-    ];
+    beforeEach(() => {
+      mockInstaller.checkInstalledCoreVersion.mockResolvedValueOnce(undefined);
+    });
+
     /*
      * The latest compatible core version isn't necessarily the latest version.
      * It's the latest version that's compatible with all the dependencies in
@@ -183,13 +194,13 @@ describe("main", () => {
         await run();
 
         if (scenario.expectedCoreVersion) {
-          expect(mockInstall).toHaveBeenCalledWith([
+          expect(mockInstaller.install).toHaveBeenCalledWith([
             `@codewatch/core@${scenario.expectedCoreVersion}`,
           ]);
-          mockInstall.mockClear();
+          mockInstaller.install.mockClear();
         } else {
-          expect(mockInstall).not.toHaveBeenCalled();
-          mockInstall.mockClear();
+          expect(mockInstaller.install).not.toHaveBeenCalled();
+          mockInstaller.install.mockClear();
           if (scenario.message) {
             expect(terminal.display).toHaveBeenCalledWith(
               expect.stringContaining(scenario.message)
@@ -209,7 +220,7 @@ describe("main", () => {
         await run();
 
         if (scenario.expectedStorageVersion) {
-          const calls = mockInstall.mock.calls;
+          const calls = mockInstaller.install.mock.calls;
           expect(calls.length).toBe(2); // First call to install the core, second call to install plugins.
           expect(calls[1][0].length).toBe(2);
           expect(calls[1][0]).toContain(
@@ -218,10 +229,10 @@ describe("main", () => {
           expect(calls[1][0]).toContain(
             `${scenario.dependencies.serverFramework.name}@${scenario.expectedServerFrameworkVersion}`
           );
-          mockInstall.mockClear();
+          mockInstaller.install.mockClear();
         } else {
-          expect(mockInstall).not.toHaveBeenCalled();
-          mockInstall.mockClear();
+          expect(mockInstaller.install).not.toHaveBeenCalled();
+          mockInstaller.install.mockClear();
           if (scenario.message) {
             expect(terminal.display).toHaveBeenCalledWith(
               expect.stringContaining(scenario.message)
@@ -229,6 +240,347 @@ describe("main", () => {
           }
         }
       }
+    });
+  });
+
+  describe("given a version of the core is already installed", () => {
+    function setupWithBaseScenario() {
+      const scenario = scenarios[0];
+      const foundVersion = "2.4.0";
+
+      function setupMocks() {
+        registry.setNextStorageResponse(scenario.dependencies.storage);
+        registry.setNextServerFrameworkResponse(
+          scenario.dependencies.serverFramework
+        );
+
+        mockInstaller.checkInstalledCoreVersion.mockResolvedValueOnce(
+          foundVersion
+        );
+      }
+
+      return { scenario, foundVersion, setupMocks };
+    }
+    it("should notify the user and ask if to overwrite the installation, or use the installed version", async () => {
+      const { foundVersion, setupMocks } = setupWithBaseScenario();
+      setupMocks();
+
+      await run();
+
+      expect(terminal.select.mock.calls.length).toBeGreaterThanOrEqual(3);
+
+      expect(terminal.select).toHaveBeenCalledWith({
+        message: `@codewatch/core version ${foundVersion} is already installed. Would you like me overwrite it and determine the most compatible version for you, or continue with the installed version?`,
+        options: [
+          {
+            name: "Determine the most compatible version for me (recommended)",
+            value: "overwrite",
+          },
+          { name: "Use installed version", value: "existing" },
+        ],
+      });
+    });
+
+    describe("given the user asks to overwrite", () => {
+      const { scenario, foundVersion, setupMocks } = setupWithBaseScenario();
+
+      beforeEach(() => {
+        setupMocks();
+        terminal.select
+          .mockImplementationOnce(defaultTerminalSelectImpl)
+          .mockImplementationOnce(defaultTerminalSelectImpl)
+          .mockResolvedValueOnce("overwrite");
+      });
+
+      it("should determine and install the most compatible core version", async () => {
+        await run();
+
+        expect(mockInstaller.install).toHaveBeenCalledWith([
+          `@codewatch/core@${scenario.expectedCoreVersion}`,
+        ]);
+      });
+
+      it("should install the correct plugin versions", async () => {
+        await run();
+
+        const calls = mockInstaller.install.mock.calls;
+        expect(calls.length).toBe(2); // First call to install the core, second call to install plugins.
+        expect(calls[1][0].length).toBe(2);
+        expect(calls[1][0]).toContain(
+          `${scenario.dependencies.storage.name}@${scenario.expectedStorageVersion}`
+        );
+        expect(calls[1][0]).toContain(
+          `${scenario.dependencies.serverFramework.name}@${scenario.expectedServerFrameworkVersion}`
+        );
+      });
+    });
+
+    describe("given the user asks to use installed version", () => {
+      beforeEach(() => {
+        terminal.select
+          .mockImplementationOnce(defaultTerminalSelectImpl)
+          .mockImplementationOnce(defaultTerminalSelectImpl)
+          .mockResolvedValueOnce("existing");
+      });
+
+      it("should not install a new version of the core", async () => {
+        const { scenario, setupMocks } = setupWithBaseScenario();
+        setupMocks();
+
+        await run();
+
+        expect(mockInstaller.install).not.toHaveBeenCalledWith([
+          `@codewatch/core@${scenario.expectedCoreVersion}`,
+        ]);
+      });
+
+      describe("given the installed version is compatible with the selected plugins", () => {
+        const scenarios2: {
+          dependencies: {
+            serverFramework: RepoDataType;
+            storage: RepoDataType;
+          };
+          installedCoreVersion: string;
+          expectedServerFrameworkVersion: string;
+          expectedStorageVersion: string;
+        }[] = [
+          {
+            dependencies: {
+              serverFramework: serverFrameworkExample,
+              storage: storageExample,
+            },
+            installedCoreVersion: "1.0.0",
+            expectedServerFrameworkVersion: "1.0.1",
+            expectedStorageVersion: "1.0.1",
+          },
+          {
+            dependencies: {
+              serverFramework: customExample({
+                base: "express",
+                latest: "2.0.0",
+                versions: [
+                  { "2.0.0": "^1.5.6" },
+                  { "1.5.6": "^1.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+              storage: customExample({
+                base: "postgresql",
+                latest: "3.2.1",
+                versions: [
+                  { "3.2.1": "^1.4.0" },
+                  { "2.0.0": "^1.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+            },
+            installedCoreVersion: "1.2.6",
+            expectedServerFrameworkVersion: "1.5.6",
+            expectedStorageVersion: "2.0.0",
+          },
+          {
+            dependencies: {
+              serverFramework: customExample({
+                base: "express",
+                latest: "3.2.1",
+                versions: [
+                  { "3.2.1": "^1.4.0" },
+                  { "2.0.0": "^1.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+              storage: customExample({
+                base: "postgresql",
+                latest: "2.0.0",
+                versions: [
+                  { "2.0.0": "^1.5.6" },
+                  { "1.5.6": "^1.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+            },
+            installedCoreVersion: "1.2.6",
+            expectedServerFrameworkVersion: "2.0.0",
+            expectedStorageVersion: "1.5.6",
+          },
+          {
+            dependencies: {
+              serverFramework: customExample({
+                base: "express",
+                latest: "2.0.0",
+                versions: [
+                  { "2.0.0": "^3.5.6" },
+                  { "1.5.6": "^2.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+              storage: customExample({
+                base: "postgresql",
+                latest: "3.2.1",
+                versions: [
+                  { "3.2.1": "^2.4.0" },
+                  { "2.0.0": "^1.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+            },
+            installedCoreVersion: "1.0.0",
+            expectedServerFrameworkVersion: "1.0.0",
+            expectedStorageVersion: "2.0.0",
+          },
+        ];
+
+        it("should install the correct versions of the plugins", async () => {
+          for (let i = 0; i < scenarios2.length; i++) {
+            const scenario = scenarios2[i];
+
+            mockInstaller.checkInstalledCoreVersion.mockResolvedValueOnce(
+              scenario.installedCoreVersion
+            );
+
+            terminal.select
+              .mockImplementationOnce(defaultTerminalSelectImpl)
+              .mockImplementationOnce(defaultTerminalSelectImpl)
+              .mockResolvedValueOnce("existing");
+
+            registry.setNextStorageResponse(scenario.dependencies.storage);
+            registry.setNextServerFrameworkResponse(
+              scenario.dependencies.serverFramework
+            );
+
+            await run();
+
+            const calls = mockInstaller.install.mock.calls;
+            expect(calls.length).toBe(i + 1);
+            expect(calls[i][0].length).toBe(2);
+            expect(calls[i][0]).toContain(
+              `${scenario.dependencies.storage.name}@${scenario.expectedStorageVersion}`
+            );
+            expect(calls[i][0]).toContain(
+              `${scenario.dependencies.serverFramework.name}@${scenario.expectedServerFrameworkVersion}`
+            );
+          }
+        });
+      });
+
+      describe("given the installed version is not compatible with the selected plugins", () => {
+        const scenarios3: {
+          dependencies: {
+            serverFramework: RepoDataType;
+            storage: RepoDataType;
+          };
+          installedCoreVersion: string;
+        }[] = [
+          {
+            dependencies: {
+              serverFramework: serverFrameworkExample,
+              storage: storageExample,
+            },
+            installedCoreVersion: "4.0.0",
+          },
+          {
+            dependencies: {
+              serverFramework: customExample({
+                base: "express",
+                latest: "2.0.0",
+                versions: [
+                  { "2.0.0": "~1.5.6" },
+                  { "1.5.6": "^0.9.0" },
+                  { "1.0.0": "^0.6.0" },
+                ],
+              }),
+              storage: customExample({
+                base: "postgresql",
+                latest: "3.2.1",
+                versions: [
+                  { "3.2.1": "~1.4.0" },
+                  { "2.0.0": "^0.9.0" },
+                  { "1.0.0": "^0.6.0" },
+                ],
+              }),
+            },
+            installedCoreVersion: "1.3.0",
+          },
+          {
+            dependencies: {
+              serverFramework: customExample({
+                base: "express",
+                latest: "3.2.1",
+                versions: [
+                  { "3.2.1": "^1.4.0" },
+                  { "2.0.0": "^1.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+              storage: customExample({
+                base: "postgresql",
+                latest: "2.0.0",
+                versions: [
+                  { "2.0.0": "^1.5.6" },
+                  { "1.5.6": "^1.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+            },
+            installedCoreVersion: "2.2.6",
+          },
+          {
+            dependencies: {
+              serverFramework: customExample({
+                base: "express",
+                latest: "2.0.0",
+                versions: [
+                  { "2.0.0": "^3.5.6" },
+                  { "1.5.6": "^2.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+              storage: customExample({
+                base: "postgresql",
+                latest: "3.2.1",
+                versions: [
+                  { "3.2.1": "^2.4.0" },
+                  { "2.0.0": "^1.0.0" },
+                  { "1.0.0": "^1.0.0" },
+                ],
+              }),
+            },
+            installedCoreVersion: "0.9.0",
+          },
+        ];
+
+        it("should display an error message that states the first incompatible plugin", async () => {
+          for (let i = 0; i < scenarios3.length; i++) {
+            const scenario = scenarios3[i];
+
+            mockInstaller.checkInstalledCoreVersion.mockResolvedValueOnce(
+              scenario.installedCoreVersion
+            );
+
+            terminal.select
+              .mockImplementationOnce(defaultTerminalSelectImpl)
+              .mockImplementationOnce(defaultTerminalSelectImpl)
+              .mockResolvedValueOnce("existing");
+
+            registry.setNextStorageResponse(scenario.dependencies.storage);
+            registry.setNextServerFrameworkResponse(
+              scenario.dependencies.serverFramework
+            );
+
+            await run();
+
+            expect(mockInstaller.install).not.toHaveBeenCalled();
+            expect(terminal.display).toHaveBeenCalledWith(
+              expect.stringContaining(`No compatible version of `)
+            );
+            expect(terminal.display).toHaveBeenCalledWith(
+              expect.stringContaining(
+                ` found for @codewatch/core version ${scenario.installedCoreVersion}`
+              )
+            );
+          }
+        });
+      });
     });
   });
 });
