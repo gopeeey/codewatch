@@ -78,13 +78,11 @@ async function main(
         await installer.install([core]);
         pluginsToInstall = plugins;
       } else {
-        console.log("\n\n\nHELLO WORLD");
         pluginsToInstall = await findCompatiblePluginVersionForCore(
           deps,
           existingCoreVersion,
           registry
         );
-        console.log("\n\n\nHI THRE", pluginsToInstall);
       }
     } else {
       const { core, plugins } = await findMostCompatibleCoreAndPluginVersions(
@@ -147,8 +145,6 @@ async function findMostCompatibleCoreAndPluginVersions(
       }),
     };
   });
-
-  console.log("\n\n\n\nNEW PLACE", JSON.stringify(repoGrid));
 
   if (repoGrid.length !== repos.length)
     throw new Error("Dependency versions mismatch");

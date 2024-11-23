@@ -1,4 +1,5 @@
 import { exec } from "child_process";
+import fs from "fs";
 import { promisify } from "util";
 import { InstallerInterface } from "./types";
 
@@ -10,6 +11,16 @@ export class NpmInstaller implements InstallerInterface {
   }
 
   async checkInstalledCoreVersion(): Promise<string | undefined> {
-    return "coming soon";
+    try {
+      const packageJsonPath = require.resolve("@codewatch/core/package.json");
+      const packageJsonStr = await fs.promises.readFile(
+        packageJsonPath,
+        "utf-8"
+      );
+      const packageJson: { version: string } = JSON.parse(packageJsonStr);
+      return packageJson.version;
+    } catch (err) {
+      return undefined;
+    }
   }
 }
