@@ -10,7 +10,7 @@
     "publish-local": "npm link"
   },
   "bin": {
-    "codewatch-install": "dist/index.js"
+    "codewatch-installer": "dist/index.js"
   },
   "type": "module",
   "author": "Samuel Gopeh",

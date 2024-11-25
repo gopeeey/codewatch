@@ -5,6 +5,7 @@ import {
   lt as sLt,
   lte as sLte,
   satisfies,
+  valid,
 } from "semver";
 
 export function intersects(ranges: string[]): boolean {
@@ -83,4 +84,9 @@ export function gte(v1: string, v2: string): boolean {
 
 export function contains(range: string, version: string): boolean {
   return satisfies(version, range);
+}
+
+export function validSemver(version: string): boolean {
+  version = removeSign(version);
+  return Boolean(valid(version));
 }

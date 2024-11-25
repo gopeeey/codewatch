@@ -21,6 +21,9 @@ const pluginNames = [
 ] as const;
 export type PluginName = (typeof pluginNames)[number];
 
+export const availableCommands = ["install", "update"] as const;
+export type Command = (typeof availableCommands)[number];
+
 export type SelectOptions<T extends string> = {
   message: string;
   options: { name: string; value: T }[];
