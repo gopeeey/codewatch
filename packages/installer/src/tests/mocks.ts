@@ -8,6 +8,7 @@ import {
 } from "../types";
 import {
   coreExample,
+  installerExample,
   serverFrameworkExample,
   storageExample,
 } from "./examples";
@@ -35,12 +36,15 @@ export class TerminalMock implements TerminalInterface {
   select = jest.fn().mockImplementation(defaultTerminalSelectImpl);
 
   display = jest.fn();
+
+  execute = jest.fn().mockResolvedValue("");
 }
 
 export class RegistryMock implements RegistryInterface {
   private _nextCoreResponse: RepoDataType | null = null;
   private _nextStorageResponse: RepoDataType | null = null;
   private _nextServerFrameworkResponse: RepoDataType | null = null;
+  private _nextInstallerResponse: RepoDataType | null = null;
 
   async getCore() {
     if (this._nextCoreResponse) {
@@ -76,6 +80,15 @@ export class RegistryMock implements RegistryInterface {
     }
   }
 
+  async getInstaller() {
+    if (this._nextInstallerResponse) {
+      const res = this._nextInstallerResponse;
+      this._nextInstallerResponse = null;
+      return res;
+    }
+    return installerExample;
+  }
+
   setNextCoreResponse(res: RepoDataType) {
     this._nextCoreResponse = res;
   }
@@ -87,14 +100,25 @@ export class RegistryMock implements RegistryInterface {
   setNextServerFrameworkResponse(res: RepoDataType) {
     this._nextServerFrameworkResponse = res;
   }
+
+  setNextInstallerResponse(res: RepoDataType) {
+    this._nextInstallerResponse = res;
+  }
 }
 
-export const mockInstall = jest
-  .fn()
-  .mockImplementation(async (dependencies: string[]) => {});
-
 export class MockInstaller implements InstallerInterface {
+  _execute: TerminalInterface["execute"];
+
+  constructor(execute: TerminalInterface["execute"]) {
+    this._execute = execute;
+  }
   install = jest.fn().mockImplementation(async (dependencies: string[]) => {});
 
   checkInstalledCoreVersion = jest.fn().mockResolvedValue(undefined);
+
+  checkInstallerVersion = jest
+    .fn()
+    .mockImplementation(async (command: string) => {
+      return await this._execute(command);
+    });
 }

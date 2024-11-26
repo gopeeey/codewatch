@@ -1,3 +1,4 @@
+import path from "path";
 import Main from "..";
 import { RepoDataType } from "../types";
 import {
@@ -15,7 +16,7 @@ import {
 
 const terminal = new TerminalMock();
 const registry = new RegistryMock();
-const mockInstaller = new MockInstaller();
+const mockInstaller = new MockInstaller(terminal.execute);
 
 const originalArgv = [...process.argv];
 
@@ -945,6 +946,41 @@ describe("main", () => {
           });
         });
       });
+    });
+  });
+
+  describe("given there is a new version of the installer available", () => {
+    it("should display a message indicating the new version", async () => {
+      const testFolder = path.join(process.cwd(), "testFolder");
+      const packageJsonPath = path.join(
+        testFolder,
+        "@codewatch/installer/package.json"
+      );
+
+      const scenarios = [
+        { version: "1.0.0", latestVersion: "2.0.0" },
+        { version: "2.0.0", latestVersion: "2.5.0" },
+        { version: "3.0.0", latestVersion: "4.0.0" },
+      ];
+
+      for (const scenario of scenarios) {
+        mockInstaller.checkInstallerVersion.mockResolvedValueOnce(
+          scenario.version
+        );
+        registry.setNextInstallerResponse(
+          customExample({
+            base: "installer",
+            latest: scenario.latestVersion,
+          })
+        );
+        await run("install");
+
+        expect(terminal.display).toHaveBeenCalledWith(
+          expect.stringContaining(
+            `New version of @codewatch/installer available: ${scenario.latestVersion}`
+          )
+        );
+      }
     });
   });
 });

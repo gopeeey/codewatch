@@ -1,35 +1,20 @@
-import fs from "fs";
 import path from "path";
 import { NpmInstaller } from "../installer";
+import { TerminalMock } from "./mocks";
+import { deleteFolder, seedPackageJson } from "./utils";
 
-async function seedPackageJson(json: { [key: string]: any }) {
-  const filePath = path.join(
-    process.cwd(),
-    "node_modules/@codewatch/core/package.json"
-  );
-
-  const exists = fs.existsSync(filePath);
-  if (!exists) {
-    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-  }
-
-  await fs.promises.writeFile(filePath, JSON.stringify(json));
-}
-
-async function cleanUp() {
-  const cleanPath = path.join(process.cwd(), "node_modules/@codewatch/core");
-
-  const exists = fs.existsSync(cleanPath);
-  if (exists) {
-    await fs.promises.rm(cleanPath, { recursive: true });
-  }
-}
+const seedFilePath = path.join(
+  process.cwd(),
+  "node_modules/@codewatch/core/package.json"
+);
+const deleteFolderPath = path.dirname(seedFilePath);
 
 afterEach(async () => {
-  await cleanUp();
+  await deleteFolder(deleteFolderPath);
 });
 
-const npmInstaller = new NpmInstaller();
+const terminal = new TerminalMock();
+const npmInstaller = new NpmInstaller(terminal.execute);
 
 describe("Npm Installer", () => {
   describe("checkInstalledCoreVersion", () => {
@@ -38,16 +23,16 @@ describe("Npm Installer", () => {
         const versions = ["1.0.0", "1.0.1", "1.0.2", "3.4.3", "3.4.4", "7.0.8"];
 
         for (const version of versions) {
-          await seedPackageJson({
-            name: "@codewatch/core",
-            version,
-          });
+          await seedPackageJson(
+            { name: "@codewatch/core", version },
+            seedFilePath
+          );
 
           const installedVersion =
             await npmInstaller.checkInstalledCoreVersion();
           expect(installedVersion).toBe(version);
 
-          await cleanUp();
+          await deleteFolder(deleteFolderPath);
         }
       });
     });
@@ -57,6 +42,34 @@ describe("Npm Installer", () => {
         const installedVersion = await npmInstaller.checkInstalledCoreVersion();
         expect(installedVersion).toBeUndefined();
       });
+    });
+  });
+
+  describe("checkInstallerVersion", () => {
+    const testFolder = path.join(process.cwd(), "testFolder");
+
+    afterEach(async () => {
+      await deleteFolder(testFolder);
+    });
+
+    it("should return the installed version of the installer", async () => {
+      const packageJsonPath = path.join(
+        testFolder,
+        "@codewatch/installer/package.json"
+      );
+      const versions = ["1.0.0", "1.0.1", "1.0.2", "3.4.3", "3.4.4", "7.0.8"];
+
+      for (const version of versions) {
+        terminal.execute.mockResolvedValueOnce(testFolder);
+
+        await seedPackageJson({ version: version }, packageJsonPath);
+
+        const expectedVersion = await npmInstaller.checkInstallerVersion();
+
+        await deleteFolder(testFolder);
+
+        expect(expectedVersion).toBe(version);
+      }
     });
   });
 });

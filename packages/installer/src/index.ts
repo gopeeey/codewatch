@@ -75,10 +75,9 @@ class Main {
           await this._install();
           break;
 
-        case "update":
-          await this._getPluginChoices();
-          break;
+        // Had intentions for an "update" command, but we'll see
       }
+      await this._checkForInstallerUpdates();
     } catch (err) {
       if (err instanceof Error) {
         this._terminal.display(err.message);
@@ -432,6 +431,21 @@ class Main {
 
     this._pluginsToInstall = resolvedDeps;
   }
+
+  private async _checkForInstallerUpdates() {
+    try {
+      const installerRepo = await this._registry.getInstaller();
+      const latest = installerRepo["dist-tags"].latest;
+      const current = await this._installer.checkInstallerVersion();
+      if (current !== latest) {
+        this._terminal.display(
+          `New version of @codewatch/installer available: ${latest}\nPlease run 'npm update -g @codewatch/installer' to update.`
+        );
+      }
+    } catch (err) {
+      // Let it fail silently for now
+    }
+  }
 }
 
 const spinner = ora();
@@ -445,7 +459,7 @@ async function spin(text: string, action: () => Promise<void>) {
 if (require.main === module) {
   const registry = new Registry();
   const terminal = new Terminal();
-  const npmInstaller = new NpmInstaller();
+  const npmInstaller = new NpmInstaller(terminal.execute);
   const main = new Main(registry, terminal, npmInstaller);
   main.run();
 }

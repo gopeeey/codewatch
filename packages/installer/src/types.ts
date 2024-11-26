@@ -21,7 +21,7 @@ const pluginNames = [
 ] as const;
 export type PluginName = (typeof pluginNames)[number];
 
-export const availableCommands = ["install", "update"] as const;
+export const availableCommands = ["install"] as const;
 export type Command = (typeof availableCommands)[number];
 
 export type SelectOptions<T extends string> = {
@@ -32,6 +32,7 @@ export type SelectOptions<T extends string> = {
 export interface TerminalInterface {
   select: <T extends string>(options: SelectOptions<T>) => Promise<T>;
   display: (message: string) => void;
+  execute: (command: string) => Promise<string | null>;
 }
 
 export type RepoDataType = {
@@ -51,12 +52,13 @@ export type RepoDataType = {
 export interface RegistryInterface {
   getCore: () => Promise<RepoDataType>;
   getPlugin: (name: PluginName) => Promise<RepoDataType>;
+  getInstaller: () => Promise<RepoDataType>;
 }
-
-export type InstallFn = (dependencies: string[]) => Promise<void>;
 
 export interface InstallerInterface {
   install: (dependencies: string[]) => Promise<void>;
 
   checkInstalledCoreVersion: () => Promise<string | undefined>;
+
+  checkInstallerVersion: () => Promise<string>;
 }

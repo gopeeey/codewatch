@@ -53,8 +53,23 @@ export const serverFrameworkExample: RepoDataType = {
   },
 };
 
+export const installerExample: RepoDataType = {
+  name: "@codewatch/installer",
+  "dist-tags": {
+    latest: "1.0.1",
+  },
+  versions: {
+    "1.0.0": {
+      dependencies: {},
+    },
+    "1.0.1": {
+      dependencies: {},
+    },
+  },
+};
+
 type CustomExampleArgs = {
-  base: "core" | PluginName;
+  base: "core" | "installer" | PluginName;
   latest?: string;
   versions?: {
     [key: string]: string; // key is the version, value is the core version
@@ -76,6 +91,9 @@ export function customExample({
       break;
     case "express":
       example = structuredClone(serverFrameworkExample);
+      break;
+    case "installer":
+      example = structuredClone(installerExample);
       break;
     default:
       throw new Error(`Invalid base type: ${base}`);
