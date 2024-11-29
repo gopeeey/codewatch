@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import {
   InstallerInterface,
   PluginName,
@@ -33,11 +34,17 @@ export const defaultTerminalSelectImpl = async <T extends string>({
 };
 
 export class TerminalMock implements TerminalInterface {
-  select = jest.fn().mockImplementation(defaultTerminalSelectImpl);
+  select = jest.fn<any>().mockImplementation(defaultTerminalSelectImpl);
 
   display = jest.fn();
 
-  execute = jest.fn().mockResolvedValue("");
+  displaySpinner = jest
+    .fn<TerminalInterface["displaySpinner"]>()
+    .mockImplementation(async (text, action) => {
+      return await action();
+    });
+
+  execute = jest.fn<TerminalInterface["execute"]>().mockResolvedValue("");
 }
 
 export class RegistryMock implements RegistryInterface {
@@ -112,13 +119,15 @@ export class MockInstaller implements InstallerInterface {
   constructor(execute: TerminalInterface["execute"]) {
     this._execute = execute;
   }
-  install = jest.fn().mockImplementation(async (dependencies: string[]) => {});
+  install = jest
+    .fn<InstallerInterface["install"]>()
+    .mockImplementation(async (dependencies: string[]) => {});
 
-  checkInstalledCoreVersion = jest.fn().mockResolvedValue(undefined);
+  checkInstalledCoreVersion = jest
+    .fn<InstallerInterface["checkInstalledCoreVersion"]>()
+    .mockResolvedValue(undefined);
 
   checkInstallerVersion = jest
-    .fn()
-    .mockImplementation(async (command: string) => {
-      return await this._execute(command);
-    });
+    .fn<InstallerInterface["checkInstallerVersion"]>()
+    .mockResolvedValue("1.0.0");
 }

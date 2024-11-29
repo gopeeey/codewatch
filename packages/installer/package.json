@@ -1,10 +1,10 @@
 {
   "name": "@codewatch/installer",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Installer for codewatch packages",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "dev": "tsup && node dist/index.js",
     "build": "tsup",
     "publish-local": "npm link"

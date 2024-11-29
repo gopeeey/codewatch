@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import ora from "ora";
+import { pathToFileURL } from "url";
 import { NpmInstaller } from "./installer";
 import { Registry } from "./registry";
 import { Terminal } from "./terminal";
@@ -71,7 +72,10 @@ class Main {
           await this._validateSpecifiedVersion();
           await this._getPluginChoices();
           if (!this.specifiedVersion) await this._checkExistingCoreVersion();
-          await this._getCoreAndPluginsToInstall();
+          await this._terminal.displaySpinner(
+            "Checking compatibility",
+            this._getCoreAndPluginsToInstall.bind(this)
+          );
           await this._install();
           break;
 
@@ -221,10 +225,17 @@ class Main {
 
   private async _install() {
     if (this._coreToInstall) {
-      await this._installer.install([this._coreToInstall]);
+      this._terminal.displaySpinner(
+        `Installing ${this._coreToInstall}`,
+        async () => {
+          await this._installer.install([this._coreToInstall as string]);
+        }
+      );
     }
     if (this._pluginsToInstall.length) {
-      await this._installer.install(this._pluginsToInstall);
+      this._terminal.displaySpinner(`Installing plugins`, async () => {
+        await this._installer.install(this._pluginsToInstall);
+      });
     }
   }
 
@@ -456,7 +467,7 @@ async function spin(text: string, action: () => Promise<void>) {
   spinner.stop();
 }
 
-if (require.main === module) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const registry = new Registry();
   const terminal = new Terminal();
   const npmInstaller = new NpmInstaller(terminal.execute);
@@ -465,9 +476,5 @@ if (require.main === module) {
 }
 
 export default Main;
-
-// Update:
-// Update the core version to the latest
-// Update dependencies that are compatible with the new core version
 
 // Implement the spinners (with tests)

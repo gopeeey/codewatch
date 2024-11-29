@@ -1,9 +1,11 @@
 import { exec } from "child_process";
 import fs from "fs";
+import { createRequire } from "module";
 import path from "path";
 import { promisify } from "util";
 import { InstallerInterface, TerminalInterface } from "./types";
 
+const require = createRequire(import.meta.url);
 const execAsync = promisify(exec);
 
 export class NpmInstaller implements InstallerInterface {

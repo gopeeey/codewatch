@@ -4,9 +4,7 @@ module.exports = {
   testMatch: ["**/**/*.test.ts"],
   verbose: true,
   clearMocks: true,
-  transform: {
-    "^.+\\.ts?$": ["ts-jest", { tsConfig: "tsconfig.json" }],
-  },
+  transform: {},
   preset: "ts-jest/presets/js-with-ts-esm",
   transformIgnorePatterns: [],
 };

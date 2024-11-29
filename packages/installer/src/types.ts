@@ -32,6 +32,7 @@ export type SelectOptions<T extends string> = {
 export interface TerminalInterface {
   select: <T extends string>(options: SelectOptions<T>) => Promise<T>;
   display: (message: string) => void;
+  displaySpinner: (text: string, action: () => Promise<void>) => Promise<void>;
   execute: (command: string) => Promise<string | null>;
 }
 
