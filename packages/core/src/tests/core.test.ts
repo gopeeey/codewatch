@@ -1,4 +1,4 @@
-import { Issue } from "@codewatch/types";
+import { Issue } from "@types";
 import { CaptureDataOpts, Core } from "../core";
 import { MockStorage } from "./mock_storage";
 

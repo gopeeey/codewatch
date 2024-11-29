@@ -13,7 +13,7 @@ import {
   GetStatsResponse,
   ResolveIssues,
   ViewController,
-} from "@codewatch/types";
+} from "@types";
 
 class NonInternalError extends Error {
   status: number;

@@ -12,7 +12,21 @@
     "noEmit": true,
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "baseUrl": ".",
+    "plugins": [
+      {
+        "transform": "typescript-transform-paths"
+      } /* Transform paths in output .js files */,
+      {
+        "transform": "typescript-transform-paths" /* Transform paths in output .d.ts files */,
+        "afterDeclarations": true
+      }
+    ],
+    "paths": {
+      "@types/*": ["./src/types/*"],
+      "@types": ["./src/types/index"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules"]

@@ -1,4 +1,4 @@
-import { Issue, Occurrence, StatsData, Storage } from "@codewatch/types";
+import { Issue, Occurrence, StatsData, Storage } from "@types";
 
 export class MockStorage implements Storage {
   private _nextId: number = 1;
@@ -49,6 +49,7 @@ export class MockStorage implements Storage {
       ...data,
       id: (this._nextId++).toString(),
       resolved: false,
+      createdAt: new Date().toISOString(),
     });
     return (this._nextId - 1).toString();
   };

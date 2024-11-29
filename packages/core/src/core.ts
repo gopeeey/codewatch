@@ -1,10 +1,4 @@
-import {
-  Issue,
-  Occurrence,
-  StdChannelLog,
-  Storage,
-  SystemInfo,
-} from "@codewatch/types";
+import { Issue, Occurrence, StdChannelLog, Storage, SystemInfo } from "@types";
 import os from "os";
 import { generateFingerprint, mapStackToSource } from "./utils";
 
@@ -109,7 +103,6 @@ export class Core {
             lastOccurrenceMessage: err.message,
             archived: false,
             unhandled: Boolean(unhandled),
-            createdAt: currentTimestamp,
             isLog: !unhandled && Boolean(extraData),
           },
           transaction

@@ -1,4 +1,4 @@
-import { AppRoutes } from "@codewatch/types";
+import { AppRoutes } from "@types";
 import {
   archiveIssues,
   deleteIssues,

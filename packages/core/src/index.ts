@@ -1,4 +1,4 @@
-import { Occurrence, ServerAdapter, Storage } from "@codewatch/types";
+import { Occurrence, ServerAdapter, Storage } from "@types";
 import path from "path";
 import { errorHandler } from "./controllers";
 import { CaptureDataOpts, Core, CoreOptions } from "./core";
@@ -8,7 +8,7 @@ export interface Config extends CoreOptions {
   storage: Storage;
   serverAdapter: ServerAdapter;
 }
-export function initCodewatch({ storage, serverAdapter, ...config }: Config) {
+export function init({ storage, serverAdapter, ...config }: Config) {
   Core.init(storage, config);
   const uiBasePath = path.join(
     path.dirname(require.resolve("@codewatch/ui/package.json")),
@@ -23,7 +23,7 @@ export function initCodewatch({ storage, serverAdapter, ...config }: Config) {
     .setApiRoutes(appRoutes.api, { storage });
 }
 
-export function closeCodewatch() {
+export function close() {
   Core.close();
 }
 
