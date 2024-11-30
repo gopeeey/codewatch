@@ -2,7 +2,7 @@
   "name": "codewatch-installer",
   "version": "0.1.0",
   "description": "Installer for codewatch packages",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "dev": "tsup && node dist/index.js",
@@ -14,7 +14,17 @@
   },
   "type": "module",
   "author": "Samuel Gopeh",
-  "license": "ISC",
+  "license": "MIT",
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "installer"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/installer"
+  },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.14",
