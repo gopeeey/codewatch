@@ -17,6 +17,11 @@
     "monitoring",
     "adapter"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/express"
+  },
   "dependencies": {
     "codewatch-core": "^0.1.1",
     "ejs": "^3.1.10",
