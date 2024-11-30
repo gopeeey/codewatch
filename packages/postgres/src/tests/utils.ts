@@ -1,7 +1,7 @@
 import { Issue } from "codewatch-core/dist/types";
 import { config } from "dotenv";
 import Levenshtein from "levenshtein";
-import { Pool } from "pg";
+import pg from "pg";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage } from "../storage";
 import { DbIssue } from "../types";
@@ -10,7 +10,7 @@ config();
 
 export const dbSetup = () => {
   // Connect to the database
-  const pool = new Pool({
+  const pool = new pg.Pool({
     user: process.env.POSTGRES_DB_USERNAME,
     host: process.env.POSTGRES_DB_HOST,
     database: process.env.POSTGRES_DB_NAME,
@@ -67,7 +67,7 @@ export const createCreateIssueData = (
   return issue;
 };
 
-export const insertTestIssue = async (pool: Pool, data: CreateIssueData) => {
+export const insertTestIssue = async (pool: pg.Pool, data: CreateIssueData) => {
   const query = SQL`INSERT INTO codewatch_pg_issues ( "`;
   const keys: string[] = [];
   const values: string[] = [];

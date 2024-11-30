@@ -1,6 +1,6 @@
 {
   "name": "codewatch-postgres",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Postgresql adapter for codewatch",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

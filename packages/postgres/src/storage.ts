@@ -7,15 +7,15 @@ import {
 } from "codewatch-core/dist/types";
 import fs from "fs";
 import path from "path";
-import { Pool, PoolClient, PoolConfig, types as pgTypes } from "pg";
+import pg from "pg";
 import SQL, { SQLStatement } from "sql-template-strings";
 import { DbIssue } from "./types";
 import { getTimezoneString } from "./utils";
 
-pgTypes.setTypeParser(pgTypes.builtins.TIMESTAMPTZ, (val) =>
+pg.types.setTypeParser(pg.types.builtins.TIMESTAMPTZ, (val) =>
   new Date(val).toISOString()
 );
-pgTypes.setTypeParser(pgTypes.builtins.INT8, (num) => parseInt(num, 10));
+pg.types.setTypeParser(pg.types.builtins.INT8, (num) => parseInt(num, 10));
 
 type Migration = {
   id: number;
@@ -28,9 +28,9 @@ export class CodewatchPgStorage implements Storage {
   ready = false;
   migrationsBasePath = path.join(__dirname, "../migrations");
 
-  constructor(config: PoolConfig) {
+  constructor(config: pg.PoolConfig) {
     if (!config.max) config.max = 2;
-    this._pool = new Pool(config);
+    this._pool = new pg.Pool(config);
   }
 
   init: Storage["init"] = async () => {
@@ -559,13 +559,13 @@ export class CodewatchPgStorage implements Storage {
 }
 
 export class PgTransaction implements Transaction {
-  _client: PoolClient;
+  _client: pg.PoolClient;
 
-  private constructor(client: PoolClient) {
+  private constructor(client: pg.PoolClient) {
     this._client = client;
   }
 
-  static async start(pool: Pool) {
+  static async start(pool: pg.Pool) {
     const client = await pool.connect();
     await client.query("BEGIN");
     return new PgTransaction(client);
