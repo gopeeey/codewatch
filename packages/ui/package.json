@@ -2,6 +2,7 @@
   "name": "codewatch-ui",
   "private": false,
   "version": "0.1.0",
+  "description": "Dashboard UI for codewatch",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +11,17 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "build-pd": "npm run build && yalc publish --push"
+  },
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "dashboard",
+    "ui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/ui"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
@@ -39,6 +51,6 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
-    "codewatch-core": "^0.1.0"
+    "codewatch-core": "^0.1.1"
   }
 }
