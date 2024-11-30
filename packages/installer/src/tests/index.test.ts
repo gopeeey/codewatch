@@ -166,7 +166,7 @@ const scenarios: (
     expectedCoreVersion: null,
     expectedServerFrameworkVersion: null,
     expectedStorageVersion: null,
-    message: `Some of the plugins you selected are incompatible.\n@codewatch/postgres requires codewatch-core version ^2.4.0, but @codewatch/express requires codewatch-core version ^1.5.6`,
+    message: `Some of the plugins you selected are incompatible.\ncodewatch-postgres requires codewatch-core version ^2.4.0, but codewatch-express requires codewatch-core version ^1.5.6`,
   },
 ];
 
@@ -954,7 +954,7 @@ describe("main", () => {
       const testFolder = path.join(process.cwd(), "testFolder");
       const packageJsonPath = path.join(
         testFolder,
-        "@codewatch/installer/package.json"
+        "codewatch-installer/package.json"
       );
 
       const scenarios = [
@@ -977,7 +977,7 @@ describe("main", () => {
 
         expect(terminal.display).toHaveBeenCalledWith(
           expect.stringContaining(
-            `New version of @codewatch/installer available: ${scenario.latestVersion}`
+            `New version of codewatch-installer available: ${scenario.latestVersion}`
           )
         );
       }

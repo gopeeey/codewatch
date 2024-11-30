@@ -55,7 +55,7 @@ describe("Npm Installer", () => {
     it("should return the installed version of the installer", async () => {
       const packageJsonPath = path.join(
         testFolder,
-        "@codewatch/installer/package.json"
+        "codewatch-installer/package.json"
       );
       const versions = ["1.0.0", "1.0.1", "1.0.2", "3.4.3", "3.4.4", "7.0.8"];
 

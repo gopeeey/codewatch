@@ -136,7 +136,7 @@ class Main {
       options: storageChoices,
     });
 
-    this.dependencies = [serverFramework, storage];
+    this.dependencies = [serverFramework, storage, "ui"];
   }
 
   private async _checkExistingCoreVersion() {
@@ -450,7 +450,7 @@ class Main {
       const current = await this._installer.checkInstallerVersion();
       if (current !== latest) {
         this._terminal.display(
-          `New version of @codewatch/installer available: ${latest}\nPlease run 'npm update -g @codewatch/installer' to update.`
+          `New version of codewatch-installer available: ${latest}\nPlease run 'npm update -g codewatch-installer' to update.`
         );
       }
     } catch (err) {

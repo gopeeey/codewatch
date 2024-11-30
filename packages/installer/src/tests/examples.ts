@@ -16,7 +16,7 @@ export const coreExample: RepoDataType = {
 };
 
 export const storageExample: RepoDataType = {
-  name: "@codewatch/postgres",
+  name: "codewatch-postgres",
   "dist-tags": {
     latest: "1.0.1",
   },
@@ -35,7 +35,7 @@ export const storageExample: RepoDataType = {
 };
 
 export const serverFrameworkExample: RepoDataType = {
-  name: "@codewatch/express",
+  name: "codewatch-express",
   "dist-tags": {
     latest: "1.0.1",
   },
@@ -54,7 +54,7 @@ export const serverFrameworkExample: RepoDataType = {
 };
 
 export const installerExample: RepoDataType = {
-  name: "@codewatch/installer",
+  name: "codewatch-installer",
   "dist-tags": {
     latest: "1.0.1",
   },

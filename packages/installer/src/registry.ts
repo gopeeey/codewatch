@@ -3,9 +3,10 @@ import { PluginName, RegistryInterface, RepoDataType } from "./types";
 export class Registry implements RegistryInterface {
   private _baseUrl: string = "https://registry.npmjs.org/";
   private _pluginLib: { [name in PluginName]: string } = {
-    express: "@codewatch/express",
-    postgresql: "@codewatch/postgres",
-    mongodb: "@codewatch/mongodb",
+    express: "codewatch-express",
+    postgresql: "codewatch-postgres",
+    mongodb: "codewatch-mongodb",
+    ui: "codewatch-ui",
   };
 
   async getCore() {
@@ -32,7 +33,7 @@ export class Registry implements RegistryInterface {
   }
 
   async getInstaller() {
-    const response = await fetch(this._url("@codewatch/installer"));
+    const response = await fetch(this._url("codewatch-installer"));
     if (!response.ok) {
       throw new Error(response.statusText);
     }

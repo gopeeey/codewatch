@@ -18,6 +18,7 @@ export type Dependencies = {
 const pluginNames = [
   ...supportedServerFrameworks,
   ...supportedStorages,
+  "ui",
 ] as const;
 export type PluginName = (typeof pluginNames)[number];
 

@@ -38,7 +38,7 @@ export class NpmInstaller implements InstallerInterface {
     if (npmRoot == null) throw new Error("Failed to find npm root");
     const packageJsonPath = path.join(
       npmRoot,
-      "@codewatch/installer/package.json"
+      "codewatch-installer/package.json"
     );
     const packageJsonStr = await fs.promises.readFile(packageJsonPath, "utf-8");
     const packageJson: { version: string } = JSON.parse(packageJsonStr);
