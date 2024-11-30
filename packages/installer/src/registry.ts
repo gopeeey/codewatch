@@ -9,7 +9,7 @@ export class Registry implements RegistryInterface {
   };
 
   async getCore() {
-    const response = await fetch(this._url("@codewatch/core"));
+    const response = await fetch(this._url("codewatch-core"));
     if (!response.ok) {
       throw new Error(response.statusText);
     }

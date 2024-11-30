@@ -1,7 +1,7 @@
 import { PluginName, RepoDataType } from "../types";
 
 export const coreExample: RepoDataType = {
-  name: "@codewatch/core",
+  name: "codewatch-core",
   "dist-tags": {
     latest: "1.0.1",
   },
@@ -23,12 +23,12 @@ export const storageExample: RepoDataType = {
   versions: {
     "1.0.0": {
       dependencies: {
-        "@codewatch/core": "^1.0.0",
+        "codewatch-core": "^1.0.0",
       },
     },
     "1.0.1": {
       dependencies: {
-        "@codewatch/core": "^1.0.0",
+        "codewatch-core": "^1.0.0",
       },
     },
   },
@@ -42,12 +42,12 @@ export const serverFrameworkExample: RepoDataType = {
   versions: {
     "1.0.0": {
       dependencies: {
-        "@codewatch/core": "^1.0.0",
+        "codewatch-core": "^1.0.0",
       },
     },
     "1.0.1": {
       dependencies: {
-        "@codewatch/core": "^1.0.0",
+        "codewatch-core": "^1.0.0",
       },
     },
   },
@@ -109,7 +109,7 @@ export function customExample({
       const [version, coreVersion] = Object.entries(versionData)[0];
       example.versions[version] = {
         dependencies: {
-          "@codewatch/core": coreVersion,
+          "codewatch-core": coreVersion,
         },
       };
     });

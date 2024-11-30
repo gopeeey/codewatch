@@ -1,8 +1,10 @@
 {
-  "name": "@codewatch/core",
+  "name": "codewatch-core",
   "version": "0.1.0",
-  "description": "",
+  "description": "Core for codewatch",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "scripts": {
     "prepare": "npx ts-patch install -s",
     "test": "jest",
@@ -11,7 +13,17 @@
     "build-pd": "tsup && yalc publish --push"
   },
   "author": "Samuel Gopeh",
-  "license": "ISC",
+  "license": "MIT",
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "dashboard"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/core"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.7",

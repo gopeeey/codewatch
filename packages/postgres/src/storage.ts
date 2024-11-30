@@ -4,7 +4,7 @@ import {
   StatsData,
   Storage,
   Transaction,
-} from "@codewatch/types";
+} from "codewatch-core/dist/types";
 import fs from "fs";
 import path from "path";
 import { Pool, PoolClient, PoolConfig, types as pgTypes } from "pg";

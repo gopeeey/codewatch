@@ -1,14 +1,10 @@
-import { Occurrence, ServerAdapter, Storage } from "@types";
+import { CaptureDataOpts, InitConfig, Occurrence } from "@types";
 import path from "path";
 import { errorHandler } from "./controllers";
-import { CaptureDataOpts, Core, CoreOptions } from "./core";
+import { Core } from "./core";
 import { appRoutes } from "./routes";
 
-export interface Config extends CoreOptions {
-  storage: Storage;
-  serverAdapter: ServerAdapter;
-}
-export function init({ storage, serverAdapter, ...config }: Config) {
+export function init({ storage, serverAdapter, ...config }: InitConfig) {
   Core.init(storage, config);
   const uiBasePath = path.join(
     path.dirname(require.resolve("@codewatch/ui/package.json")),

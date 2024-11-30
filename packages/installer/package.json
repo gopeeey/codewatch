@@ -1,5 +1,5 @@
 {
-  "name": "@codewatch/installer",
+  "name": "codewatch-installer",
   "version": "0.1.0",
   "description": "Installer for codewatch packages",
   "main": "index.js",

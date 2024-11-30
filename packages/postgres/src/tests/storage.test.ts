@@ -2,7 +2,7 @@ import {
   Issue,
   Occurrence,
   UpdateLastOccurrenceOnIssueType,
-} from "@codewatch/types";
+} from "codewatch-core/dist/types";
 import SQL from "sql-template-strings";
 import { PgTransaction } from "../storage";
 import { DbIssue } from "../types";

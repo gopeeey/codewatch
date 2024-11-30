@@ -1,5 +1,5 @@
-import { Issue } from "@types";
-import { CaptureDataOpts, Core } from "../core";
+import { CaptureDataOpts, Issue } from "@types";
+import { Core } from "../core";
 import { MockStorage } from "./mock_storage";
 
 beforeEach(() => {

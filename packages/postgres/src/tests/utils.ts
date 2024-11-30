@@ -1,4 +1,4 @@
-import { Issue } from "@codewatch/types";
+import { Issue } from "codewatch-core/dist/types";
 import { config } from "dotenv";
 import Levenshtein from "levenshtein";
 import { Pool } from "pg";

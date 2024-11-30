@@ -1,11 +1,5 @@
 import SearchIcon from "@assets/search.svg";
 import SortIcon from "@assets/sort.svg";
-import {
-  GetIssuesFilters,
-  GetPaginatedIssuesFilters,
-  Issue,
-  IssueTab,
-} from "@codewatch/types";
 import { useDebounce } from "@hooks/use_debounce";
 import { ConfirmationDialogContext } from "@lib/contexts";
 import {
@@ -24,6 +18,12 @@ import { EmptyState } from "@ui/empty_state";
 import { Checkbox, Select, TextField, useDateRange } from "@ui/inputs";
 import { IssueCard, IssueCardSkeleton, IssuesTabs } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
+import {
+  GetIssuesFilters,
+  GetPaginatedIssuesFilters,
+  Issue,
+  IssueTab,
+} from "codewatch-core/dist/types";
 import {
   ChangeEvent,
   useCallback,

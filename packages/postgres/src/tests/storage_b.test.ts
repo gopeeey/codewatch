@@ -6,7 +6,7 @@ import {
   Issue,
   Occurrence,
   StatsData,
-} from "@codewatch/types";
+} from "codewatch-core/dist/types";
 import SQL from "sql-template-strings";
 import { PgTransaction } from "../storage";
 import { DbIssue } from "../types";

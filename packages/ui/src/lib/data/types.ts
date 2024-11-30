@@ -1,4 +1,4 @@
-import { Occurrence, StdChannelLog } from "@codewatch/types";
+import { Occurrence, StdChannelLog } from "codewatch-core/dist/types";
 
 export interface StdChannelLogWithId extends StdChannelLog {
   id: string;

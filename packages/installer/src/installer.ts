@@ -21,7 +21,7 @@ export class NpmInstaller implements InstallerInterface {
 
   async checkInstalledCoreVersion(): Promise<string | undefined> {
     try {
-      const packageJsonPath = require.resolve("@codewatch/core/package.json");
+      const packageJsonPath = require.resolve("codewatch-core/package.json");
       const packageJsonStr = await fs.promises.readFile(
         packageJsonPath,
         "utf-8"

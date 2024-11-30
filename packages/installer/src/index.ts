@@ -120,7 +120,7 @@ class Main {
       )
     ) {
       throw new Error(
-        `No @codewatch/core version matching ${this.specifiedVersion} found`
+        `No codewatch-core version matching ${this.specifiedVersion} found`
       );
     }
   }
@@ -145,7 +145,7 @@ class Main {
     if (!this._existingCoreVersion) return;
 
     const decision = await this._terminal.select({
-      message: `@codewatch/core version ${this._existingCoreVersion} is already installed. Would you like me overwrite it and determine the most compatible version for you, or continue with the installed version?`,
+      message: `codewatch-core version ${this._existingCoreVersion} is already installed. Would you like me overwrite it and determine the most compatible version for you, or continue with the installed version?`,
       options: [
         {
           name: "Determine the most compatible version for me (recommended)",
@@ -187,7 +187,7 @@ class Main {
           for (const version of coreVersions) {
             try {
               await this._findCompatiblePluginVersionForCore(version);
-              this._coreToInstall = `@codewatch/core@${version}`;
+              this._coreToInstall = `codewatch-core@${version}`;
               found = true;
               break;
             } catch (err) {
@@ -199,7 +199,7 @@ class Main {
                   ? match[0]
                   : "one of your selected plugins";
                 initialError = new Error(
-                  `No compatible version of ${incompatiblePlugin} found for @codewatch/core version ${this.specifiedVersion}`
+                  `No compatible version of ${incompatiblePlugin} found for codewatch-core version ${this.specifiedVersion}`
                 );
               }
               continue;
@@ -209,7 +209,7 @@ class Main {
           if (!found && initialError) throw initialError;
         } else {
           await this._findCompatiblePluginVersionForCore(this.specifiedVersion);
-          this._coreToInstall = `@codewatch/core@${this.specifiedVersion}`;
+          this._coreToInstall = `codewatch-core@${this.specifiedVersion}`;
         }
       } else {
         await this._findMostCompatibleCoreAndPluginVersions();
@@ -249,7 +249,7 @@ class Main {
     const repoGrid = repos.map((repo) => {
       const coreVersions: [string, string][] = [];
       for (const [versionNumber, versionObj] of Object.entries(repo.versions)) {
-        const coreDependency = versionObj.dependencies["@codewatch/core"];
+        const coreDependency = versionObj.dependencies["codewatch-core"];
         if (coreDependency) {
           coreVersions.push([versionNumber, coreDependency]);
         }
@@ -298,7 +298,7 @@ class Main {
           for (let j = 1; j < firstRow.length; j++) {
             if (!intersects([firstRow[i].deps[1], firstRow[j].deps[1]])) {
               throw new Error(
-                `Some of the plugins you selected are incompatible.\n${firstRow[i].name} requires @codewatch/core version ${firstRow[i].deps[1]}, but ${firstRow[j].name} requires @codewatch/core version ${firstRow[j].deps[1]}`
+                `Some of the plugins you selected are incompatible.\n${firstRow[i].name} requires codewatch-core version ${firstRow[i].deps[1]}, but ${firstRow[j].name} requires codewatch-core version ${firstRow[j].deps[1]}`
               );
             }
           }
@@ -378,7 +378,7 @@ class Main {
             `${repoGrid[pos[1]].name}@${repoGrid[pos[1]].deps[pos[0]][0]}`
           );
         });
-        this._coreToInstall = `@codewatch/core@${coreVersion}`;
+        this._coreToInstall = `codewatch-core@${coreVersion}`;
         this._pluginsToInstall = depList;
         break;
       }
@@ -398,7 +398,7 @@ class Main {
     repos.forEach((repo) => {
       const coreVersions: [string, string][] = [];
       for (const [versionNumber, versionObj] of Object.entries(repo.versions)) {
-        const coreDependency = versionObj.dependencies["@codewatch/core"];
+        const coreDependency = versionObj.dependencies["codewatch-core"];
         if (coreDependency) {
           coreVersions.push([versionNumber, coreDependency]);
         }
@@ -431,7 +431,7 @@ class Main {
 
       if (!found) {
         throw new Error(
-          `No compatible version of ${repo.name} found for @codewatch/core version ${coreVersion}`
+          `No compatible version of ${repo.name} found for codewatch-core version ${coreVersion}`
         );
       }
     });

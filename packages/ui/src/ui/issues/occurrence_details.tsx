@@ -1,9 +1,9 @@
 import ChevronDownIcon from "@assets/chevron-down.svg";
 import ClockIcon from "@assets/clock.svg";
-import { Occurrence } from "@codewatch/types";
 import { OccurrenceWithId } from "@lib/data";
 import { displayDuration, displayMemory } from "@lib/utils";
 import clsx from "clsx";
+import { Occurrence } from "codewatch-core/dist/types";
 import moment from "moment";
 import { useState } from "react";
 import JsonView from "react18-json-view";

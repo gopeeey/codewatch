@@ -3,7 +3,6 @@ import ChevronDownIcon from "@assets/chevron-down.svg";
 import ClockIcon from "@assets/clock.svg";
 import DeleteIcon from "@assets/delete-tiny.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
-import { GetPaginatedOccurrencesFilters, Issue } from "@codewatch/types";
 import { ConfirmationDialogContext } from "@lib/contexts";
 import {
   OccurrenceWithId,
@@ -28,6 +27,10 @@ import {
 } from "@ui/issues";
 import { Pagination } from "@ui/pagination";
 import clsx from "clsx";
+import {
+  GetPaginatedOccurrencesFilters,
+  Issue,
+} from "codewatch-core/dist/types";
 import moment from "moment";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";

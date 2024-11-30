@@ -1,6 +1,6 @@
 {
-  "name": "@codewatch/express",
-  "version": "1.0.0",
+  "name": "codewatch-express",
+  "version": "0.1.0",
   "description": "Express.js adapter for codewatch",
   "main": "dist/index.js",
   "scripts": {
@@ -10,11 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "codewatch-core": "^0.1.0",
     "ejs": "^3.1.10",
     "express": "^4.19.2"
   },
   "devDependencies": {
-    "@codewatch/types": "file:.yalc/@codewatch/types",
     "@types/ejs": "^3.1.5",
     "@types/express": "^4.17.21",
     "@types/node": "^20.12.7",

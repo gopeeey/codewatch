@@ -5,7 +5,7 @@ import { deleteFolder, seedPackageJson } from "./utils";
 
 const seedFilePath = path.join(
   process.cwd(),
-  "node_modules/@codewatch/core/package.json"
+  "node_modules/codewatch-core/package.json"
 );
 const deleteFolderPath = path.dirname(seedFilePath);
 
@@ -18,13 +18,13 @@ const npmInstaller = new NpmInstaller(terminal.execute);
 
 describe("Npm Installer", () => {
   describe("checkInstalledCoreVersion", () => {
-    describe("given @codewatch/core is installed", () => {
+    describe("given codewatch-core is installed", () => {
       it("should return the installed version", async () => {
         const versions = ["1.0.0", "1.0.1", "1.0.2", "3.4.3", "3.4.4", "7.0.8"];
 
         for (const version of versions) {
           await seedPackageJson(
-            { name: "@codewatch/core", version },
+            { name: "codewatch-core", version },
             seedFilePath
           );
 
@@ -37,7 +37,7 @@ describe("Npm Installer", () => {
       });
     });
 
-    describe("given @codewatch/core is not installed", () => {
+    describe("given codewatch-core is not installed", () => {
       it("should return undefined", async () => {
         const installedVersion = await npmInstaller.checkInstalledCoreVersion();
         expect(installedVersion).toBeUndefined();

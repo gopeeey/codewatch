@@ -166,7 +166,7 @@ const scenarios: (
     expectedCoreVersion: null,
     expectedServerFrameworkVersion: null,
     expectedStorageVersion: null,
-    message: `Some of the plugins you selected are incompatible.\n@codewatch/postgres requires @codewatch/core version ^2.4.0, but @codewatch/express requires @codewatch/core version ^1.5.6`,
+    message: `Some of the plugins you selected are incompatible.\n@codewatch/postgres requires codewatch-core version ^2.4.0, but @codewatch/express requires codewatch-core version ^1.5.6`,
   },
 ];
 
@@ -211,7 +211,7 @@ describe("main", () => {
 
             if (scenario.expectedCoreVersion) {
               expect(mockInstaller.install).toHaveBeenCalledWith([
-                `@codewatch/core@${scenario.expectedCoreVersion}`,
+                `codewatch-core@${scenario.expectedCoreVersion}`,
               ]);
               mockInstaller.install.mockClear();
             } else {
@@ -287,7 +287,7 @@ describe("main", () => {
           expect(terminal.select.mock.calls.length).toBeGreaterThanOrEqual(3);
 
           expect(terminal.select).toHaveBeenCalledWith({
-            message: `@codewatch/core version ${foundVersion} is already installed. Would you like me overwrite it and determine the most compatible version for you, or continue with the installed version?`,
+            message: `codewatch-core version ${foundVersion} is already installed. Would you like me overwrite it and determine the most compatible version for you, or continue with the installed version?`,
             options: [
               {
                 name: "Determine the most compatible version for me (recommended)",
@@ -313,7 +313,7 @@ describe("main", () => {
             await run();
 
             expect(mockInstaller.install).toHaveBeenCalledWith([
-              `@codewatch/core@${scenario.expectedCoreVersion}`,
+              `codewatch-core@${scenario.expectedCoreVersion}`,
             ]);
           });
 
@@ -344,7 +344,7 @@ describe("main", () => {
             await run();
 
             expect(mockInstaller.install).not.toHaveBeenCalledWith([
-              `@codewatch/core@${scenario.expectedCoreVersion}`,
+              `codewatch-core@${scenario.expectedCoreVersion}`,
             ]);
           });
 
@@ -589,7 +589,7 @@ describe("main", () => {
                 );
                 expect(terminal.display).toHaveBeenCalledWith(
                   expect.stringContaining(
-                    ` found for @codewatch/core version ${scenario.installedCoreVersion}`
+                    ` found for codewatch-core version ${scenario.installedCoreVersion}`
                   )
                 );
               }
@@ -651,7 +651,7 @@ describe("main", () => {
             expect(terminal.select).not.toHaveBeenCalled();
             expect(terminal.display).toHaveBeenCalledWith(
               expect.stringContaining(
-                `No @codewatch/core version matching ${scenario.version} found`
+                `No codewatch-core version matching ${scenario.version} found`
               )
             );
           }
@@ -785,7 +785,7 @@ describe("main", () => {
 
               await run("install", scenario.specifiedVersion);
               expect(mockInstaller.install).toHaveBeenCalledWith([
-                `@codewatch/core@${scenario.expectedVersion}`,
+                `codewatch-core@${scenario.expectedVersion}`,
               ]);
               expect(mockInstaller.install).toHaveBeenCalledWith(
                 expect.arrayContaining([
@@ -940,7 +940,7 @@ describe("main", () => {
               await run("install", scenario.specifiedVersion);
               expect(mockInstaller.install).not.toHaveBeenCalled();
               expect(terminal.display).toHaveBeenCalledWith(
-                `No compatible version of ${scenario.incompatiblePlugin} found for @codewatch/core version ${scenario.specifiedVersion}`
+                `No compatible version of ${scenario.incompatiblePlugin} found for codewatch-core version ${scenario.specifiedVersion}`
               );
             }
           });

@@ -1,10 +1,10 @@
 import ClockIcon from "@assets/clock.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
-import { Issue } from "@codewatch/types";
 import { quantifyNumber } from "@lib/utils";
 import { Checkbox } from "@ui/inputs/checkbox";
 import { Skeleton } from "@ui/skeleton";
 import clsx from "clsx";
+import { Issue } from "codewatch-core/dist/types";
 import moment from "moment";
 import { Link } from "react-router-dom";
 
