@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
     "test": "jest --runInBand",
     "make-migration": "ts-node-dev src/make-migration.ts",
@@ -10,7 +13,17 @@
     "build-pd": "tsup && yalc publish --push"
   },
   "author": "Samuel Gopeh",
-  "license": "ISC",
+  "license": "MIT",
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "storage"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/core"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/levenshtein": "^1.0.4",

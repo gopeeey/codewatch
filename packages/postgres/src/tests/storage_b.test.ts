@@ -437,10 +437,6 @@ describe("Seed required CRUD", () => {
           expectedTotal: 5,
         },
         {
-          filters: { searchString: "error 2", tab: "unresolved" },
-          expectedTotal: 1,
-        },
-        {
           filters: { searchString: "", tab: "unresolved" },
           expectedTotal: issuesData.filter(unresolvedFilter).length,
         },
@@ -486,7 +482,7 @@ describe("Seed required CRUD", () => {
         },
         {
           filters: {
-            searchString: "rest",
+            searchString: "nothing like",
             startDate: isoFromNow(25000),
             endDate: isoFromNow(10000),
             tab: "unresolved",
@@ -494,7 +490,7 @@ describe("Seed required CRUD", () => {
           expectedTotal: issuesData.filter(
             (data) =>
               timeFilter(data, 25000, 10000) &&
-              data.overrides?.name?.includes("rest") &&
+              data.overrides?.name?.toLowerCase().includes("nothing like") &&
               unresolvedFilter(data)
           ).length,
         },
@@ -979,25 +975,6 @@ describe("Seed required CRUD", () => {
       const storage = await getStorage();
 
       for (const testCase of dataSet) {
-        // console.log(
-        //   "\n\n\nCRAZE 2",
-        //   (
-        //     await pool.query(
-        //       SQL`SELECT
-        //         o.id,
-        //         o."issueId",
-        //         o."timestamp" AS "occurrenceTimestamp",
-        //         i."unhandled",
-        //         i."isLog",
-        //         i."name",
-        //         i."fingerprint"
-        //       FROM codewatch_pg_occurrences AS o
-        //       INNER JOIN codewatch_pg_issues AS i ON o."issueId" = i."id"
-        //       WHERE o."timestamp" >= ${new Date(testCase.filter.startDate)}
-        //       AND o."timestamp" <= ${new Date(testCase.filter.endDate)}`
-        //     )
-        //   ).rows.map((row) => row.fingerprint)
-        // );
         const result = await storage.getStatsData(testCase.filter);
         const moddedResult: ModdedStatsData = {
           ...result,

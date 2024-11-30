@@ -429,7 +429,6 @@ export class CodewatchPgStorage implements Storage {
 
   getStatsData: Storage["getStatsData"] = async (filters) => {
     const timezone = getTimezoneString(filters.timezoneOffset);
-    console.log("\n\n\nTHE TIMEZONE", timezone, filters.timezoneOffset);
     const query = SQL`--sql
     WITH tab AS (
       SELECT
