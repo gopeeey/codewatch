@@ -12,6 +12,7 @@
     "dev": "ts-node-dev src/index.ts",
     "build-pd": "tsup && yalc publish --push"
   },
+  "type": "module",
   "author": "Samuel Gopeh",
   "license": "MIT",
   "keywords": [

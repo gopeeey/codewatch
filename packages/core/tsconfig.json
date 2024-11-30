@@ -6,7 +6,7 @@
     "strictNullChecks": true,
     "target": "ES2022",
     "moduleResolution": "Node10",
-    "module": "CommonJS",
+    "module": "ES2022",
     "declaration": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -14,6 +14,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "allowJs": true,
     "plugins": [
       {
         "transform": "typescript-transform-paths"
