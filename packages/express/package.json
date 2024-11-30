@@ -3,14 +3,22 @@
   "version": "0.1.0",
   "description": "Express.js adapter for codewatch",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
     "build": "tsup",
     "build-pd": "tsup && yalc publish --push"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Samuel Gopeh",
+  "license": "MIT",
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "adapter"
+  ],
   "dependencies": {
-    "codewatch-core": "^0.1.0",
+    "codewatch-core": "^0.1.1",
     "ejs": "^3.1.10",
     "express": "^4.19.2"
   },
