@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-import ora from "ora";
-import { pathToFileURL } from "url";
 import { NpmInstaller } from "./installer";
 import { Registry } from "./registry";
 import { Terminal } from "./terminal";
@@ -81,6 +79,7 @@ class Main {
 
         // Had intentions for an "update" command, but we'll see
       }
+      this._terminal.display("Done!");
       await this._checkForInstallerUpdates();
     } catch (err) {
       if (err instanceof Error) {
@@ -145,7 +144,7 @@ class Main {
     if (!this._existingCoreVersion) return;
 
     const decision = await this._terminal.select({
-      message: `codewatch-core version ${this._existingCoreVersion} is already installed. Would you like me overwrite it and determine the most compatible version for you, or continue with the installed version?`,
+      message: `codewatch-core version ${this._existingCoreVersion} is already installed. Would you like to overwrite it and determine the most compatible version for you, or continue with the installed version?`,
       options: [
         {
           name: "Determine the most compatible version for me (recommended)",
@@ -192,9 +191,7 @@ class Main {
               break;
             } catch (err) {
               if (err instanceof Error && !initialError) {
-                const match = err.message.match(
-                  /(@[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+)/
-                );
+                const match = err.message.match(/(codewatch-[a-zA-Z0-9_-]+)/);
                 const incompatiblePlugin = match
                   ? match[0]
                   : "one of your selected plugins";
@@ -225,15 +222,16 @@ class Main {
 
   private async _install() {
     if (this._coreToInstall) {
-      this._terminal.displaySpinner(
+      await this._terminal.displaySpinner(
         `Installing ${this._coreToInstall}`,
         async () => {
+          await this._installer.clearInstallation();
           await this._installer.install([this._coreToInstall as string]);
         }
       );
     }
     if (this._pluginsToInstall.length) {
-      this._terminal.displaySpinner(`Installing plugins`, async () => {
+      await this._terminal.displaySpinner(`Installing plugins`, async () => {
         await this._installer.install(this._pluginsToInstall);
       });
     }
@@ -378,6 +376,7 @@ class Main {
             `${repoGrid[pos[1]].name}@${repoGrid[pos[1]].deps[pos[0]][0]}`
           );
         });
+
         this._coreToInstall = `codewatch-core@${coreVersion}`;
         this._pluginsToInstall = depList;
         break;
@@ -459,22 +458,18 @@ class Main {
   }
 }
 
-const spinner = ora();
-async function spin(text: string, action: () => Promise<void>) {
-  spinner.text = text;
-  spinner.start();
-  await action();
-  spinner.stop();
-}
+// if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+//   const registry = new Registry();
+//   const terminal = new Terminal();
+//   const npmInstaller = new NpmInstaller(terminal.execute);
+//   const main = new Main(registry, terminal, npmInstaller);
+//   main.run();
+// }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const registry = new Registry();
-  const terminal = new Terminal();
-  const npmInstaller = new NpmInstaller(terminal.execute);
-  const main = new Main(registry, terminal, npmInstaller);
-  main.run();
-}
+const registry = new Registry();
+const terminal = new Terminal();
+const npmInstaller = new NpmInstaller(terminal.execute);
+const main = new Main(registry, terminal, npmInstaller);
+main.run();
 
 export default Main;
-
-// Implement the spinners (with tests)

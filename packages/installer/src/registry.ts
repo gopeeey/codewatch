@@ -1,13 +1,12 @@
-import { PluginName, RegistryInterface, RepoDataType } from "./types";
+import {
+  PluginName,
+  RegistryInterface,
+  RepoDataType,
+  pluginLib,
+} from "./types";
 
 export class Registry implements RegistryInterface {
   private _baseUrl: string = "https://registry.npmjs.org/";
-  private _pluginLib: { [name in PluginName]: string } = {
-    express: "codewatch-express",
-    postgresql: "codewatch-postgres",
-    mongodb: "codewatch-mongodb",
-    ui: "codewatch-ui",
-  };
 
   async getCore() {
     const response = await fetch(this._url("codewatch-core"));
@@ -20,7 +19,7 @@ export class Registry implements RegistryInterface {
   }
 
   async getPlugin(name: PluginName) {
-    let plugin = this._pluginLib[name];
+    let plugin = pluginLib[name];
     if (!plugin) throw new Error("Unsupported plugin " + name);
 
     const response = await fetch(this._url(plugin));

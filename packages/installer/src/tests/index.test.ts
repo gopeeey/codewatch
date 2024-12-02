@@ -6,6 +6,7 @@ import {
   customExample,
   serverFrameworkExample,
   storageExample,
+  uiExample,
 } from "./examples";
 import {
   MockInstaller,
@@ -37,20 +38,24 @@ const scenarios: (
       dependencies: {
         serverFramework: RepoDataType;
         storage: RepoDataType;
+        ui: RepoDataType;
       };
       expectedCoreVersion: string;
       expectedStorageVersion: string;
       expectedServerFrameworkVersion: string;
+      expectedUiVersion: string;
       message?: undefined;
     }
   | {
       dependencies: {
         serverFramework: RepoDataType;
         storage: RepoDataType;
+        ui: RepoDataType;
       };
       expectedCoreVersion: null;
       expectedStorageVersion: null;
       expectedServerFrameworkVersion: null;
+      expectedUiVersion: null;
       message: string;
     }
 )[] = [
@@ -58,10 +63,12 @@ const scenarios: (
     dependencies: {
       serverFramework: serverFrameworkExample,
       storage: storageExample,
+      ui: uiExample,
     },
     expectedCoreVersion: "^1.0.0",
     expectedServerFrameworkVersion: "1.0.1",
     expectedStorageVersion: "1.0.1",
+    expectedUiVersion: "1.0.1",
   },
   {
     dependencies: {
@@ -76,6 +83,15 @@ const scenarios: (
       }),
       storage: customExample({
         base: "postgresql",
+        latest: "3.2.1",
+        versions: [
+          { "3.2.1": "^1.4.0" },
+          { "2.0.0": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
+      ui: customExample({
+        base: "ui",
         latest: "3.2.1",
         versions: [
           { "3.2.1": "^1.4.0" },
@@ -87,6 +103,7 @@ const scenarios: (
     expectedCoreVersion: "^1.5.6",
     expectedServerFrameworkVersion: "2.0.0",
     expectedStorageVersion: "3.2.1",
+    expectedUiVersion: "3.2.1",
   },
   {
     dependencies: {
@@ -108,9 +125,19 @@ const scenarios: (
           { "1.0.0": "^1.0.0" },
         ],
       }),
+      ui: customExample({
+        base: "ui",
+        latest: "3.2.1",
+        versions: [
+          { "3.2.1": "^1.4.0" },
+          { "2.0.0": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
     },
     expectedCoreVersion: "^1.5.6",
     expectedServerFrameworkVersion: "3.2.1",
+    expectedUiVersion: "3.2.1",
     expectedStorageVersion: "2.0.0",
   },
   {
@@ -133,6 +160,15 @@ const scenarios: (
           { "1.0.0": "^1.0.0" },
         ],
       }),
+      ui: customExample({
+        base: "ui",
+        latest: "3.2.1",
+        versions: [
+          { "3.2.1": "^2.4.0" },
+          { "2.0.0": "^1.0.0" },
+          { "1.0.0": "^1.0.0" },
+        ],
+      }),
     },
     /*
      * Since there's a difference in the major core version (^3.5.6 and ^2.4.0),
@@ -142,6 +178,7 @@ const scenarios: (
     expectedCoreVersion: "^1.0.0",
     expectedServerFrameworkVersion: "1.5.6",
     expectedStorageVersion: "2.0.0",
+    expectedUiVersion: "2.0.0",
   },
   {
     dependencies: {
@@ -152,6 +189,11 @@ const scenarios: (
       }),
       storage: customExample({
         base: "postgresql",
+        latest: "1.0.0",
+        versions: [{ "1.0.0": "^2.4.0" }],
+      }),
+      ui: customExample({
+        base: "ui",
         latest: "1.0.0",
         versions: [{ "1.0.0": "^2.4.0" }],
       }),
@@ -166,6 +208,7 @@ const scenarios: (
     expectedCoreVersion: null,
     expectedServerFrameworkVersion: null,
     expectedStorageVersion: null,
+    expectedUiVersion: null,
     message: `Some of the plugins you selected are incompatible.\ncodewatch-postgres requires codewatch-core version ^2.4.0, but codewatch-express requires codewatch-core version ^1.5.6`,
   },
 ];
@@ -238,7 +281,9 @@ describe("main", () => {
             if (scenario.expectedStorageVersion) {
               const calls = mockInstaller.install.mock.calls;
               expect(calls.length).toBe(2); // First call to install the core, second call to install plugins.
-              expect(calls[1][0].length).toBe(2);
+              expect(calls[1][0].length).toBe(
+                Object.keys(scenario.dependencies).length
+              );
               expect(calls[1][0]).toContain(
                 `${scenario.dependencies.storage.name}@${scenario.expectedStorageVersion}`
               );
@@ -287,7 +332,7 @@ describe("main", () => {
           expect(terminal.select.mock.calls.length).toBeGreaterThanOrEqual(3);
 
           expect(terminal.select).toHaveBeenCalledWith({
-            message: `codewatch-core version ${foundVersion} is already installed. Would you like me overwrite it and determine the most compatible version for you, or continue with the installed version?`,
+            message: `codewatch-core version ${foundVersion} is already installed. Would you like to overwrite it and determine the most compatible version for you, or continue with the installed version?`,
             options: [
               {
                 name: "Determine the most compatible version for me (recommended)",
@@ -322,7 +367,9 @@ describe("main", () => {
 
             const calls = mockInstaller.install.mock.calls;
             expect(calls.length).toBe(2); // First call to install the core, second call to install plugins.
-            expect(calls[1][0].length).toBe(2);
+            expect(calls[1][0].length).toBe(
+              Object.keys(scenario.dependencies).length
+            );
             expect(calls[1][0]).toContain(
               `${scenario.dependencies.storage.name}@${scenario.expectedStorageVersion}`
             );
@@ -353,19 +400,23 @@ describe("main", () => {
               dependencies: {
                 serverFramework: RepoDataType;
                 storage: RepoDataType;
+                ui: RepoDataType;
               };
               installedCoreVersion: string;
               expectedServerFrameworkVersion: string;
               expectedStorageVersion: string;
+              expectedUiVersion: string;
             }[] = [
               {
                 dependencies: {
                   serverFramework: serverFrameworkExample,
                   storage: storageExample,
+                  ui: uiExample,
                 },
                 installedCoreVersion: "1.0.0",
                 expectedServerFrameworkVersion: "1.0.1",
                 expectedStorageVersion: "1.0.1",
+                expectedUiVersion: "1.0.1",
               },
               {
                 dependencies: {
@@ -380,6 +431,15 @@ describe("main", () => {
                   }),
                   storage: customExample({
                     base: "postgresql",
+                    latest: "3.2.1",
+                    versions: [
+                      { "3.2.1": "^1.4.0" },
+                      { "2.0.0": "^1.0.0" },
+                      { "1.0.0": "^1.0.0" },
+                    ],
+                  }),
+                  ui: customExample({
+                    base: "ui",
                     latest: "3.2.1",
                     versions: [
                       { "3.2.1": "^1.4.0" },
@@ -391,6 +451,7 @@ describe("main", () => {
                 installedCoreVersion: "1.2.6",
                 expectedServerFrameworkVersion: "1.5.6",
                 expectedStorageVersion: "2.0.0",
+                expectedUiVersion: "2.0.0",
               },
               {
                 dependencies: {
@@ -412,9 +473,19 @@ describe("main", () => {
                       { "1.0.0": "^1.0.0" },
                     ],
                   }),
+                  ui: customExample({
+                    base: "ui",
+                    latest: "3.2.1",
+                    versions: [
+                      { "3.2.1": "^1.4.0" },
+                      { "2.0.0": "^1.0.0" },
+                      { "1.0.0": "^1.0.0" },
+                    ],
+                  }),
                 },
                 installedCoreVersion: "1.2.6",
                 expectedServerFrameworkVersion: "2.0.0",
+                expectedUiVersion: "2.0.0",
                 expectedStorageVersion: "1.5.6",
               },
               {
@@ -437,10 +508,20 @@ describe("main", () => {
                       { "1.0.0": "^1.0.0" },
                     ],
                   }),
+                  ui: customExample({
+                    base: "ui",
+                    latest: "3.2.1",
+                    versions: [
+                      { "3.2.1": "^2.4.0" },
+                      { "2.0.0": "^1.0.0" },
+                      { "1.0.0": "^1.0.0" },
+                    ],
+                  }),
                 },
                 installedCoreVersion: "1.0.0",
                 expectedServerFrameworkVersion: "1.0.0",
                 expectedStorageVersion: "2.0.0",
+                expectedUiVersion: "2.0.0",
               },
             ];
 
@@ -466,7 +547,9 @@ describe("main", () => {
 
                 const calls = mockInstaller.install.mock.calls;
                 expect(calls.length).toBe(i + 1);
-                expect(calls[i][0].length).toBe(2);
+                expect(calls[i][0].length).toBe(
+                  Object.keys(scenario.dependencies).length
+                );
                 expect(calls[i][0]).toContain(
                   `${scenario.dependencies.storage.name}@${scenario.expectedStorageVersion}`
                 );
@@ -665,10 +748,12 @@ describe("main", () => {
               coreRepo: coreExample,
               storageRepo: storageExample,
               serverFrameworkRepo: serverFrameworkExample,
+              uiRepo: uiExample,
               specifiedVersion: "1.0.0",
               expectedVersion: "1.0.0",
               expectedStorageVersion: "1.0.1",
               expectedServerFrameworkVersion: "1.0.1",
+              expectedUiVersion: "1.0.1",
             },
             {
               coreRepo: customExample({
@@ -702,6 +787,16 @@ describe("main", () => {
                 ],
               }),
               expectedServerFrameworkVersion: "3.0.0",
+              uiRepo: customExample({
+                base: "ui",
+                latest: "4.17.1",
+                versions: [
+                  { "4.17.1": "^3.16.0" },
+                  { "3.0.0": "^2.0.0" },
+                  { "2.0.0": "^2.0.0" },
+                ],
+              }),
+              expectedUiVersion: "3.0.0",
             },
             {
               coreRepo: customExample({
@@ -735,6 +830,16 @@ describe("main", () => {
                 ],
               }),
               expectedServerFrameworkVersion: "4.17.1",
+              uiRepo: customExample({
+                base: "ui",
+                latest: "4.17.1",
+                versions: [
+                  { "4.17.1": "^2.5.0" },
+                  { "3.0.0": "^2.0.0" },
+                  { "2.0.0": "^2.0.0" },
+                ],
+              }),
+              expectedUiVersion: "4.17.1",
             },
             {
               coreRepo: customExample({
@@ -768,6 +873,16 @@ describe("main", () => {
                 ],
               }),
               expectedServerFrameworkVersion: "3.0.0",
+              uiRepo: customExample({
+                base: "ui",
+                latest: "4.17.1",
+                versions: [
+                  { "4.17.1": "^2.5.0" },
+                  { "3.0.0": "^2.0.0" },
+                  { "2.0.0": "^2.0.0" },
+                ],
+              }),
+              expectedUiVersion: "3.0.0",
             },
           ];
 
@@ -782,6 +897,7 @@ describe("main", () => {
               registry.setNextServerFrameworkResponse(
                 scenario.serverFrameworkRepo
               );
+              registry.setNextUiResponse(scenario.uiRepo);
 
               await run("install", scenario.specifiedVersion);
               expect(mockInstaller.install).toHaveBeenCalledWith([
@@ -791,6 +907,7 @@ describe("main", () => {
                 expect.arrayContaining([
                   `${scenario.storageRepo.name}@${scenario.expectedStorageVersion}`,
                   `${scenario.serverFrameworkRepo.name}@${scenario.expectedServerFrameworkVersion}`,
+                  `${scenario.uiRepo.name}@${scenario.expectedUiVersion}`,
                 ])
               );
             }

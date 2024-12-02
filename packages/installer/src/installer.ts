@@ -1,12 +1,9 @@
-import { exec } from "child_process";
 import fs from "fs";
 import { createRequire } from "module";
 import path from "path";
-import { promisify } from "util";
-import { InstallerInterface, TerminalInterface } from "./types";
+import { InstallerInterface, pluginLib, TerminalInterface } from "./types";
 
 const require = createRequire(import.meta.url);
-const execAsync = promisify(exec);
 
 export class NpmInstaller implements InstallerInterface {
   _execute: TerminalInterface["execute"];
@@ -16,19 +13,28 @@ export class NpmInstaller implements InstallerInterface {
   }
 
   async install(dependencies: string[]): Promise<void> {
-    await execAsync(`npm install ${dependencies.join(" ")}`);
+    await this._execute(`npm install codewatch-core ${dependencies.join(" ")}`);
+  }
+
+  async clearInstallation(): Promise<void> {
+    const plugins = Object.values(pluginLib);
+    await this._execute(`npm uninstall ${plugins.join(" ")}`);
   }
 
   async checkInstalledCoreVersion(): Promise<string | undefined> {
     try {
-      const packageJsonPath = require.resolve("codewatch-core/package.json");
+      const packageJsonPath = require.resolve("codewatch-core/package.json", {
+        paths: [process.cwd()],
+      });
       const packageJsonStr = await fs.promises.readFile(
         packageJsonPath,
         "utf-8"
       );
       const packageJson: { version: string } = JSON.parse(packageJsonStr);
+      console.log("\n\n\nTHE EXISTING VERSION IS: " + packageJson.version);
       return packageJson.version;
     } catch (err) {
+      console.log("\n\n\nERROR FROM READING PACKAGE.JSON", err);
       return undefined;
     }
   }

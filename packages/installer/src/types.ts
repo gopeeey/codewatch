@@ -21,6 +21,12 @@ const pluginNames = [
   "ui",
 ] as const;
 export type PluginName = (typeof pluginNames)[number];
+export const pluginLib: { [name in PluginName]: string } = {
+  express: "codewatch-express",
+  postgresql: "codewatch-postgres",
+  mongodb: "codewatch-mongodb",
+  ui: "codewatch-ui",
+};
 
 export const availableCommands = ["install"] as const;
 export type Command = (typeof availableCommands)[number];
@@ -59,6 +65,8 @@ export interface RegistryInterface {
 
 export interface InstallerInterface {
   install: (dependencies: string[]) => Promise<void>;
+
+  clearInstallation: () => Promise<void>;
 
   checkInstalledCoreVersion: () => Promise<string | undefined>;
 

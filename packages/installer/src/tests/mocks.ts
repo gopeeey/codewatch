@@ -12,6 +12,7 @@ import {
   installerExample,
   serverFrameworkExample,
   storageExample,
+  uiExample,
 } from "./examples";
 
 class Mock {
@@ -51,6 +52,7 @@ export class RegistryMock implements RegistryInterface {
   private _nextCoreResponse: RepoDataType | null = null;
   private _nextStorageResponse: RepoDataType | null = null;
   private _nextServerFrameworkResponse: RepoDataType | null = null;
+  private _nextUiResponse: RepoDataType | null = null;
   private _nextInstallerResponse: RepoDataType | null = null;
 
   async getCore() {
@@ -79,6 +81,15 @@ export class RegistryMock implements RegistryInterface {
           return res;
         }
         return serverFrameworkExample;
+        break;
+      case "ui":
+        if (this._nextUiResponse) {
+          const res = this._nextUiResponse;
+          this._nextUiResponse = null;
+          return res;
+        }
+        return uiExample;
+        break;
         break;
       // case "mongodb":
       //     break;
@@ -111,6 +122,10 @@ export class RegistryMock implements RegistryInterface {
   setNextInstallerResponse(res: RepoDataType) {
     this._nextInstallerResponse = res;
   }
+
+  setNextUiResponse(res: RepoDataType) {
+    this._nextUiResponse = res;
+  }
 }
 
 export class MockInstaller implements InstallerInterface {
@@ -122,6 +137,10 @@ export class MockInstaller implements InstallerInterface {
   install = jest
     .fn<InstallerInterface["install"]>()
     .mockImplementation(async (dependencies: string[]) => {});
+
+  clearInstallation = jest
+    .fn<InstallerInterface["clearInstallation"]>()
+    .mockImplementation(async () => {});
 
   checkInstalledCoreVersion = jest
     .fn<InstallerInterface["checkInstalledCoreVersion"]>()

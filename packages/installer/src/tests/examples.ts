@@ -53,6 +53,25 @@ export const serverFrameworkExample: RepoDataType = {
   },
 };
 
+export const uiExample: RepoDataType = {
+  name: "codewatch-ui",
+  "dist-tags": {
+    latest: "1.0.1",
+  },
+  versions: {
+    "1.0.0": {
+      dependencies: {
+        "codewatch-core": "^1.0.0",
+      },
+    },
+    "1.0.1": {
+      dependencies: {
+        "codewatch-core": "^1.0.0",
+      },
+    },
+  },
+};
+
 export const installerExample: RepoDataType = {
   name: "codewatch-installer",
   "dist-tags": {
@@ -94,6 +113,9 @@ export function customExample({
       break;
     case "installer":
       example = structuredClone(installerExample);
+      break;
+    case "ui":
+      example = structuredClone(uiExample);
       break;
     default:
       throw new Error(`Invalid base type: ${base}`);

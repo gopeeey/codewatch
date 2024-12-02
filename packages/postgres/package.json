@@ -1,16 +1,17 @@
 {
   "name": "codewatch-postgres",
-  "version": "0.1.4",
+  "version": "0.1.7",
   "description": "Postgresql adapter for codewatch",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "test": "jest --runInBand",
     "make-migration": "ts-node-dev src/make-migration.ts",
     "build": "tsup",
-    "build-pd": "tsup && yalc publish --push"
+    "build-pd": "tsup && yalc publish --push",
+    "prepublish": "tsup"
   },
   "author": "Samuel Gopeh",
   "license": "MIT",
@@ -21,7 +22,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/gopeeey/codewatch.git",
+    "url": "git+https://github.com/gopeeey/codewatch.git",
     "directory": "packages/postgres"
   },
   "devDependencies": {

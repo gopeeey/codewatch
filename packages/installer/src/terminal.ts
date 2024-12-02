@@ -30,7 +30,6 @@ export class Terminal implements TerminalInterface {
       this._spinner.stop();
     } catch (err) {
       this._spinner.stop();
-      ``;
       throw err;
     }
   }

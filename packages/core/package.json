@@ -1,9 +1,9 @@
 {
   "name": "codewatch-core",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "description": "Core for codewatch",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "prepare": "npx ts-patch install -s",
@@ -11,6 +11,15 @@
     "build": "tsup",
     "dev": "ts-node-dev src/index.ts",
     "build-pd": "tsup && yalc publish --push"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "type": "module",
   "author": "Samuel Gopeh",
