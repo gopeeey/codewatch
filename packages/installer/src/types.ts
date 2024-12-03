@@ -7,7 +7,7 @@ const supportedServerFrameworks = [
 ] as const;
 export type ServerFramework = (typeof supportedServerFrameworks)[number];
 
-const supportedStorages = ["postgresql", "mongodb"] as const;
+const supportedStorages = ["postgresql"] as const;
 export type Storage = (typeof supportedStorages)[number];
 
 export type Dependencies = {
@@ -24,7 +24,6 @@ export type PluginName = (typeof pluginNames)[number];
 export const pluginLib: { [name in PluginName]: string } = {
   express: "codewatch-express",
   postgresql: "codewatch-postgres",
-  mongodb: "codewatch-mongodb",
   ui: "codewatch-ui",
 };
 

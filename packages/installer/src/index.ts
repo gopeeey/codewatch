@@ -34,7 +34,7 @@ const serverFrameworkChoices: { name: string; value: ServerFramework }[] = [
 
 const storageChoices: { name: string; value: Storage }[] = [
   { name: "PostgreSQL", value: "postgresql" },
-  { name: "MongoDB", value: "mongodb" },
+  // { name: "MongoDB", value: "mongodb" },
 ];
 
 class Main {
