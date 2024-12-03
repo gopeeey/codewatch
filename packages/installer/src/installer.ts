@@ -31,10 +31,8 @@ export class NpmInstaller implements InstallerInterface {
         "utf-8"
       );
       const packageJson: { version: string } = JSON.parse(packageJsonStr);
-      console.log("\n\n\nTHE EXISTING VERSION IS: " + packageJson.version);
       return packageJson.version;
     } catch (err) {
-      console.log("\n\n\nERROR FROM READING PACKAGE.JSON", err);
       return undefined;
     }
   }
