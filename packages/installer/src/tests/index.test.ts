@@ -1,6 +1,6 @@
 import path from "path";
 import Main from "..";
-import { Command, RepoDataType } from "../types";
+import { Command, pluginLib, RepoDataType } from "../types";
 import {
   coreExample,
   customExample,
@@ -9,10 +9,10 @@ import {
   uiExample,
 } from "./examples";
 import {
+  defaultTerminalSelectImpl,
   MockInstaller,
   RegistryMock,
   TerminalMock,
-  defaultTerminalSelectImpl,
 } from "./mocks";
 
 const terminal = new TerminalMock();
@@ -1064,9 +1064,12 @@ describe("main", () => {
   });
 
   describe("command: uninstall", () => {
-    it("should call the clearInstallation method on the installer", async () => {
+    it("should call the uninstall method on the installer", async () => {
       await run("uninstall");
-      expect(mockInstaller.clearInstallation).toHaveBeenCalledTimes(1);
+      expect(mockInstaller.uninstall).toHaveBeenCalledTimes(1);
+      expect(mockInstaller.uninstall).toHaveBeenCalledWith(
+        expect.arrayContaining(["codewatch-core", ...Object.values(pluginLib)])
+      );
     });
   });
 

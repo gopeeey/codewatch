@@ -138,9 +138,9 @@ export class MockInstaller implements InstallerInterface {
     .fn<InstallerInterface["install"]>()
     .mockImplementation(async (dependencies: string[]) => {});
 
-  clearInstallation = jest
-    .fn<InstallerInterface["clearInstallation"]>()
-    .mockImplementation(async () => {});
+  uninstall = jest
+    .fn<InstallerInterface["uninstall"]>()
+    .mockImplementation(async (dependencies: string[]) => {});
 
   checkInstalledCoreVersion = jest
     .fn<InstallerInterface["checkInstalledCoreVersion"]>()

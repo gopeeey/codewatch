@@ -65,7 +65,7 @@ export interface RegistryInterface {
 export interface InstallerInterface {
   install: (dependencies: string[]) => Promise<void>;
 
-  clearInstallation: () => Promise<void>;
+  uninstall: (dependencies: string[]) => Promise<void>;
 
   checkInstalledCoreVersion: () => Promise<string | undefined>;
 

@@ -7,6 +7,7 @@ import {
   availableCommands,
   Command,
   InstallerInterface,
+  pluginLib,
   PluginName,
   RegistryInterface,
   RepoDataType,
@@ -78,7 +79,10 @@ class Main {
           break;
 
         case "uninstall":
-          await this._installer.clearInstallation();
+          await this._installer.uninstall([
+            "codewatch-core",
+            ...Object.values(pluginLib),
+          ]);
           break;
         // Had intentions for an "update" command, but we'll see
       }
@@ -228,7 +232,7 @@ class Main {
       await this._terminal.displaySpinner(
         `Installing codewatch-core`,
         async () => {
-          await this._installer.clearInstallation();
+          await this._installer.uninstall([...Object.values(pluginLib)]);
           await this._installer.install([this._coreToInstall as string]);
         }
       );

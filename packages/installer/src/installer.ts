@@ -1,7 +1,7 @@
 import fs from "fs";
 import { createRequire } from "module";
 import path from "path";
-import { InstallerInterface, pluginLib, TerminalInterface } from "./types";
+import { InstallerInterface, TerminalInterface } from "./types";
 
 const require = createRequire(import.meta.url);
 
@@ -16,9 +16,8 @@ export class NpmInstaller implements InstallerInterface {
     await this._execute(`npm install codewatch-core ${dependencies.join(" ")}`);
   }
 
-  async clearInstallation(): Promise<void> {
-    const plugins = Object.values(pluginLib);
-    await this._execute(`npm uninstall ${plugins.join(" ")}`);
+  async uninstall(dependencies: string[]): Promise<void> {
+    await this._execute(`npm uninstall ${dependencies.join(" ")}`);
   }
 
   async checkInstalledCoreVersion(): Promise<string | undefined> {
