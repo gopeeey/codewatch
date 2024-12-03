@@ -10,7 +10,8 @@
     "build-s": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "build-pd": "npm run build && yalc publish --push"
+    "build-pd": "npm run build && yalc publish --push",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "error logging",

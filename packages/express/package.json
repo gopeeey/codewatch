@@ -8,7 +8,8 @@
   "type": "module",
   "scripts": {
     "build": "tsup",
-    "build-pd": "tsup && yalc publish --push"
+    "build-pd": "tsup && yalc publish --push",
+    "prepublishOnly": "tsup"
   },
   "author": "Samuel Gopeh",
   "license": "MIT",

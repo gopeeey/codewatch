@@ -11,7 +11,7 @@
     "make-migration": "ts-node-dev src/make-migration.ts",
     "build": "tsup",
     "build-pd": "tsup && yalc publish --push",
-    "prepublish": "tsup"
+    "prepublishOnly": "tsup"
   },
   "author": "Samuel Gopeh",
   "license": "MIT",
