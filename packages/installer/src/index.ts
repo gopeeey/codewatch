@@ -223,7 +223,7 @@ class Main {
   private async _install() {
     if (this._coreToInstall) {
       await this._terminal.displaySpinner(
-        `Installing ${this._coreToInstall}`,
+        `Installing codewatch-core`,
         async () => {
           await this._installer.clearInstallation();
           await this._installer.install([this._coreToInstall as string]);
