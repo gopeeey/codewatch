@@ -1,6 +1,6 @@
 import path from "path";
 import Main from "..";
-import { RepoDataType } from "../types";
+import { Command, RepoDataType } from "../types";
 import {
   coreExample,
   customExample,
@@ -21,10 +21,7 @@ const mockInstaller = new MockInstaller(terminal.execute);
 
 const originalArgv = [...process.argv];
 
-async function run(
-  command: "install" | "update" = "install",
-  version?: string
-) {
+async function run(command: Command = "install", version?: string) {
   process.argv.push(command);
   if (version) process.argv.push(version);
 
@@ -229,7 +226,7 @@ describe("main", () => {
     });
   });
 
-  describe("given the install command is passed", () => {
+  describe("command: install", () => {
     describe("given no version is specified", () => {
       describe("given there's no existing core version", () => {
         beforeEach(() => {
@@ -1063,6 +1060,13 @@ describe("main", () => {
           });
         });
       });
+    });
+  });
+
+  describe("command: uninstall", () => {
+    it("should call the clearInstallation method on the installer", async () => {
+      await run("uninstall");
+      expect(mockInstaller.clearInstallation).toHaveBeenCalledTimes(1);
     });
   });
 

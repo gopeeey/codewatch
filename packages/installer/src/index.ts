@@ -77,6 +77,9 @@ class Main {
           await this._install();
           break;
 
+        case "uninstall":
+          await this._installer.clearInstallation();
+          break;
         // Had intentions for an "update" command, but we'll see
       }
       this._terminal.display("Done!");
