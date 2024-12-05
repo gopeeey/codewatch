@@ -7,6 +7,11 @@ import { appRoutes } from "./routes";
 
 const require = createRequire(import.meta.url);
 
+/**
+ * Initializes the codewatch core and plugins
+ * @param {InitConfig} config - Specifies storage, server adapter, and other plugins, as well as other configurable options.
+ *
+ */
 export function init({ storage, serverAdapter, ...config }: InitConfig) {
   try {
     const uiBasePath = path.join(
@@ -28,10 +33,20 @@ export function init({ storage, serverAdapter, ...config }: InitConfig) {
   }
 }
 
+/**
+ * Closes the codewatch core and plugins
+ *
+ */
 export function close() {
   Core.close();
 }
 
+/**
+ * Captures an error and logs it to the configured storage.
+ * @param {Error|unknown} err - The error to capture.
+ * @param {Occurrence["extraData"]} extraData - Additional data to include with the error.
+ *
+ */
 export function captureError(
   err: unknown,
   extraData?: Occurrence["extraData"]
@@ -39,6 +54,12 @@ export function captureError(
   Core.captureError(err, false, extraData);
 }
 
+/**
+ * Captures additional data and logs it to the configured storage.
+ * @param {Record<any, any>} data - The data to capture.
+ * @param {CaptureDataOpts} [options] - Additional options for capturing the data.
+ *
+ */
 export function captureData(data: Record<any, any>, options?: CaptureDataOpts) {
   Core.captureData(data, options);
 }
