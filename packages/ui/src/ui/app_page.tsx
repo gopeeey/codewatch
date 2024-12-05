@@ -1,6 +1,7 @@
 import { AppBar } from "@ui/app_bar";
 import { Card } from "@ui/card";
 import clsx from "clsx";
+import { useEffect } from "react";
 
 type Props = {
   title: string;
@@ -23,6 +24,10 @@ export function AppPage({
   header,
   cardless = false,
 }: Props) {
+  useEffect(() => {
+    document.title = `${title} - Codewatch`;
+  }, [title]);
+
   return (
     <main className={clsx("sm:px-12 w-full", className)}>
       <AppBar
