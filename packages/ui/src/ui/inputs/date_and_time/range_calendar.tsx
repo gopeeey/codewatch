@@ -50,7 +50,14 @@ export function RangeCalendar({
         return;
       }
 
-      if (start) return setEnd(date);
+      if (start) {
+        date
+          .set("hour", 23)
+          .set("minute", 59)
+          .set("second", 59)
+          .set("millisecond", 999);
+        return setEnd(date);
+      }
 
       setStart(date);
     },

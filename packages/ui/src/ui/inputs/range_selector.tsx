@@ -22,7 +22,9 @@ export function RangeSelector({
     const el_x = x + width / 2;
 
     const handler = () => {
-      const newVal = document.elementFromPoint(el_x, el_y)?.innerHTML;
+      const newVal = document.elementFromPoint(el_x, el_y)?.lastChild
+        ?.textContent;
+
       if (newVal) onSelect(newVal);
     };
 
