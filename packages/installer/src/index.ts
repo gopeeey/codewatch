@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { pathToFileURL } from "url";
 import { NpmInstaller } from "./installer";
 import { Registry } from "./registry";
 import { Terminal } from "./terminal";
@@ -76,6 +77,8 @@ class Main {
             this._getCoreAndPluginsToInstall.bind(this)
           );
           await this._install();
+          this._terminal.display("Done!");
+          await this._checkForInstallerUpdates();
           break;
 
         case "uninstall":
@@ -83,11 +86,15 @@ class Main {
             "codewatch-core",
             ...Object.values(pluginLib),
           ]);
+          this._terminal.display("Done!");
+          await this._checkForInstallerUpdates();
+          break;
+
+        case "help":
+          this._displayHelpMessage();
           break;
         // Had intentions for an "update" command, but we'll see
       }
-      this._terminal.display("Done!");
-      await this._checkForInstallerUpdates();
     } catch (err) {
       if (err instanceof Error) {
         this._terminal.display(err.message);
@@ -105,9 +112,7 @@ class Main {
   private _validateCommand() {
     if (!availableCommands.includes(this.command)) {
       throw new Error(
-        `Invalid command: ${
-          this.command
-        }. Please use one of the following: ${availableCommands.join(", ")}`
+        `Invalid command: "${this.command}" \n\nTo see a list of supported commands, run: \ncodewatch-installer help`
       );
     }
   }
@@ -463,20 +468,58 @@ class Main {
       // Let it fail silently for now
     }
   }
+
+  private _displayHelpMessage() {
+    this._terminal.display("codewatch-installer <command>");
+    this._terminal.display("\nUsage:\n");
+    const usages: { command: string; description: string }[] = [];
+
+    usages.push({
+      command: "codewatch-installer install",
+      description:
+        "Install the latest version of codewatch core and compatible versions of the plugins selected from the resulting prompts",
+    });
+
+    usages.push({
+      command: "codewatch-installer install <foo>",
+      description:
+        "Install the <foo> version of codewatch core and compatible versions of the plugins selected from the resulting prompts",
+    });
+
+    usages.push({
+      command: "codewatch-installer uninstall",
+      description: "Uninstall codewatch and its plugins",
+    });
+
+    usages.push({
+      command: "codewatch-installer help",
+      description: "Display this help message",
+    });
+
+    let maxPadding = 0;
+    for (const usage of usages) {
+      maxPadding = Math.max(maxPadding, usage.command.length);
+    }
+    maxPadding += 4;
+
+    for (const usage of usages) {
+      this._terminal.display(
+        `${usage.command.padEnd(maxPadding)} ${usage.description}`
+      );
+    }
+
+    this._terminal.display("\nAll commands:\n");
+
+    this._terminal.display(availableCommands.join(", "));
+  }
 }
 
-// if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-//   const registry = new Registry();
-//   const terminal = new Terminal();
-//   const npmInstaller = new NpmInstaller(terminal.execute);
-//   const main = new Main(registry, terminal, npmInstaller);
-//   main.run();
-// }
-
-const registry = new Registry();
-const terminal = new Terminal();
-const npmInstaller = new NpmInstaller(terminal.execute);
-const main = new Main(registry, terminal, npmInstaller);
-main.run();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const registry = new Registry();
+  const terminal = new Terminal();
+  const npmInstaller = new NpmInstaller(terminal.execute);
+  const main = new Main(registry, terminal, npmInstaller);
+  main.run();
+}
 
 export default Main;

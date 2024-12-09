@@ -1,6 +1,6 @@
 import path from "path";
 import Main from "..";
-import { Command, pluginLib, RepoDataType } from "../types";
+import { availableCommands, Command, pluginLib, RepoDataType } from "../types";
 import {
   coreExample,
   customExample,
@@ -1069,6 +1069,35 @@ describe("main", () => {
       expect(mockInstaller.uninstall).toHaveBeenCalledTimes(1);
       expect(mockInstaller.uninstall).toHaveBeenCalledWith(
         expect.arrayContaining(["codewatch-core", ...Object.values(pluginLib)])
+      );
+    });
+  });
+
+  describe("command: help", () => {
+    it("should display the help message", async () => {
+      await run("help");
+      expect(terminal.display).toHaveBeenCalledWith(
+        expect.stringContaining("codewatch-installer <command>")
+      );
+      availableCommands.forEach((command) => {
+        expect(terminal.display).toHaveBeenCalledWith(
+          expect.stringContaining(`codewatch-installer ${command}`)
+        );
+      });
+    });
+  });
+
+  describe("given an invalid command is passed", () => {
+    it("should display an error message", async () => {
+      const invalidCommand = "invalid_command";
+      await run(invalidCommand as Command);
+      expect(terminal.display).toHaveBeenCalledWith(
+        expect.stringContaining(`Invalid command: "${invalidCommand}"`)
+      );
+      expect(terminal.display).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "To see a list of supported commands, run: \ncodewatch-installer help"
+        )
       );
     });
   });

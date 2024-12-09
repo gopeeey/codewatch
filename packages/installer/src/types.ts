@@ -27,7 +27,7 @@ export const pluginLib: { [name in PluginName]: string } = {
   ui: "codewatch-ui",
 };
 
-export const availableCommands = ["install", "uninstall"] as const;
+export const availableCommands = ["install", "uninstall", "help"] as const;
 export type Command = (typeof availableCommands)[number];
 
 export type SelectOptions<T extends string> = {
