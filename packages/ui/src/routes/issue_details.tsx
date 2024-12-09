@@ -68,7 +68,6 @@ export default function IssueDetails() {
   const [loadingOccurrences, setLoadingOccurrences] = useState(false);
   const occurrencesRef = useRef<string | null>(null);
   const urlParamsRef = useRef<string | null>(null);
-  const referrer = useRef<string>("");
 
   const fetchIssue = useCallback(async () => {
     if (!urlParams.issueId || urlParamsRef.current == urlParams.issueId) return;
@@ -86,7 +85,12 @@ export default function IssueDetails() {
   const fetchOccurrences = useCallback(async () => {
     if (!issue) return;
 
-    const filterStartDate = searchParams.get("startDate") ?? issue.createdAt;
+    let filterStartDate = searchParams.get("startDate");
+    if (!filterStartDate) {
+      const mment = moment(issue.createdAt);
+      mment.subtract(1, "second");
+      filterStartDate = mment.toISOString();
+    }
     const filterEndDate =
       searchParams.get("endDate") ?? new Date().toISOString();
     const page = Number(searchParams.get("page")) ?? DEFAULT_PAGE;
@@ -144,18 +148,15 @@ export default function IssueDetails() {
     const endDateParam = searchParams.get("endDate");
     if (!startDateParam || !endDateParam) {
       setDatePresetCode("4");
-      setStartDate(`${new Date(issue.createdAt).getTime()}`);
+      const createdAtMoment = moment(issue.createdAt);
+      createdAtMoment.subtract(1, "second");
+      setStartDate(`${createdAtMoment.toDate().getTime()}`);
       setEndDate(`${Date.now()}`);
     } else {
       fetchOccurrences();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, issue]);
-
-  useEffect(() => {
-    referrer.current = document.referrer;
-    console.log(referrer.current);
-  }, []);
 
   useEffect(() => {
     fetchIssue();
