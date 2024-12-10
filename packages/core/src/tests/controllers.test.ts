@@ -3,7 +3,7 @@ import {
   GetPaginatedIssuesFilters,
   GetPaginatedOccurrencesFilters,
   GetStats,
-} from "@codewatch/types";
+} from "@types";
 import fs from "fs";
 import {
   archiveIssues,

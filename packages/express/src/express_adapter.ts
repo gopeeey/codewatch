@@ -1,4 +1,4 @@
-import { ApiRequest, ServerAdapter } from "@codewatch/types";
+import { ApiRequest, ServerAdapter } from "codewatch-core/dist/types";
 import ejs from "ejs";
 import express, { NextFunction, Request, Response } from "express";
 
@@ -51,6 +51,10 @@ export class ExpressAdapter implements ServerAdapter {
     return this;
   };
 
+  /**
+   * Configures the base path for the dashboard routes.
+   * The base path should be the same as the url passed when using the middleware from the `getRouter` function.
+   */
   setBasePath: ServerAdapter["setBasePath"] = (basePath) => {
     this._basePath = basePath;
     return this;
@@ -82,6 +86,9 @@ export class ExpressAdapter implements ServerAdapter {
     return this;
   };
 
+  /**
+   * Gets a middleware you can add to your express routes in order to access the dashboard.
+   */
   getRouter() {
     return this._express;
   }

@@ -6,13 +6,28 @@
     "strictNullChecks": true,
     "target": "ES2022",
     "moduleResolution": "Node10",
-    "module": "CommonJS",
+    "module": "ES2022",
     "declaration": true,
     "isolatedModules": true,
     "noEmit": true,
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "baseUrl": ".",
+    "allowJs": true,
+    "plugins": [
+      {
+        "transform": "typescript-transform-paths"
+      } /* Transform paths in output .js files */,
+      {
+        "transform": "typescript-transform-paths" /* Transform paths in output .d.ts files */,
+        "afterDeclarations": true
+      }
+    ],
+    "paths": {
+      "@types/*": ["./src/types/*"],
+      "@types": ["./src/types/index"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules"]

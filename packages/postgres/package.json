@@ -1,18 +1,31 @@
 {
-  "name": "@codewatch/postgres",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "name": "codewatch-postgres",
+  "version": "0.1.9",
+  "description": "Postgresql adapter for codewatch",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
     "test": "jest --runInBand",
     "make-migration": "ts-node-dev src/make-migration.ts",
     "build": "tsup",
-    "build-pd": "tsup && yalc publish --push"
+    "build-pd": "tsup && yalc publish --push",
+    "prepublishOnly": "tsup"
   },
   "author": "Samuel Gopeh",
-  "license": "ISC",
+  "license": "MIT",
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "storage"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/postgres"
+  },
   "devDependencies": {
-    "@codewatch/types": "file:.yalc/@codewatch/types",
     "@types/jest": "^29.5.12",
     "@types/levenshtein": "^1.0.4",
     "@types/node": "^22.5.0",
@@ -30,7 +43,7 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@codewatch/postgres": "file:",
+    "codewatch-core": "^0.1.0",
     "pg": "^8.11.3",
     "sql-template-strings": "^2.2.2"
   }

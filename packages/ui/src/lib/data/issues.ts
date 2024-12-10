@@ -1,3 +1,4 @@
+import { HttpClient } from "@lib/http_client";
 import {
   ArchiveIssues,
   DeleteIssues,
@@ -11,8 +12,7 @@ import {
   Issue,
   ResolveIssues,
   UnresolveIssues,
-} from "@codewatch/types";
-import { HttpClient } from "@lib/http_client";
+} from "codewatch-core/dist/types";
 import moment from "moment";
 
 const client = new HttpClient({ baseUrl: "/issues" });

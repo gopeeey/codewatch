@@ -1,5 +1,5 @@
-import { Issue } from "@codewatch/types";
-import { CaptureDataOpts, Core } from "../core";
+import { CaptureDataOpts, Issue } from "@types";
+import { Core } from "../core";
 import { MockStorage } from "./mock_storage";
 
 beforeEach(() => {
@@ -100,7 +100,6 @@ describe("Core", () => {
             const prevIssue = storage.issues[0];
 
             await Core.captureError(testError);
-            console.log(storage.issues);
             expect(storage.occurrences).toHaveLength(prevOccurrencesLength);
             expect(storage.issues[0]).toEqual(prevIssue);
           });

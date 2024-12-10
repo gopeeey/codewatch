@@ -1,7 +1,8 @@
 {
-  "name": "@codewatch/ui",
+  "name": "codewatch-ui",
   "private": false,
-  "version": "0.0.0",
+  "version": "0.1.7",
+  "description": "Dashboard UI for codewatch",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,10 +10,21 @@
     "build-s": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "build-pd": "npm run build && yalc publish --push"
+    "build-pd": "npm run build && yalc publish --push",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "dashboard",
+    "ui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/ui"
   },
   "devDependencies": {
-    "@codewatch/types": "file:.yalc/@codewatch/types",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
@@ -40,6 +52,6 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
-    "@codewatch/ui": "file:"
+    "codewatch-core": "^0.1.1"
   }
 }

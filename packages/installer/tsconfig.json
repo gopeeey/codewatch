@@ -6,13 +6,14 @@
     "strictNullChecks": true,
     "target": "ES2022",
     "moduleResolution": "Node10",
-    "module": "CommonJS",
+    "module": "ES2022",
     "declaration": true,
     "isolatedModules": true,
     "noEmit": true,
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "allowJs": true
   },
   "include": ["src"],
   "exclude": ["node_modules"]

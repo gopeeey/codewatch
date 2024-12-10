@@ -1,4 +1,4 @@
-import { Issue } from "@codewatch/types";
+import { Issue } from "@types";
 
 export const testIssue: Issue = {
   createdAt: "2020-01-01T00:00:0",

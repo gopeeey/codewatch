@@ -1,4 +1,4 @@
-import { Issue, Occurrence } from "@codewatch/types";
+import { Issue, Occurrence } from "codewatch-core/dist/types";
 
 export interface DbIssue extends Omit<Issue, "id"> {
   id: number;

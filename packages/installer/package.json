@@ -1,29 +1,46 @@
 {
-  "name": "@codewatch/installer",
-  "version": "0.0.1",
+  "name": "codewatch-installer",
+  "version": "0.3.2",
   "description": "Installer for codewatch packages",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "dev": "tsup && node dist/index.js",
     "build": "tsup",
-    "publish-local": "npm link"
+    "prepublishOnly": "tsup"
   },
   "bin": {
-    "codewatch-install": "dist/index.js"
+    "codewatch-installer": "dist/index.js"
   },
   "type": "module",
   "author": "Samuel Gopeh",
-  "license": "ISC",
+  "license": "MIT",
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "installer"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/installer"
+  },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
-    "@types/node": "^20.14.12",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.17.9",
+    "@types/semver": "^7.5.8",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node-dev": "^2.0.0",
     "tsup": "^8.2.3",
+    "tsx": "^4.19.2",
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@codewatch/installer": "file:",
     "@inquirer/prompts": "^5.3.2",
-    "ora": "^8.0.1"
+    "node-fetch": "^3.3.2",
+    "ora": "^8.0.1",
+    "semver": "^7.6.3"
   }
 }

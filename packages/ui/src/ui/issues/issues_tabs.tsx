@@ -1,7 +1,7 @@
-import { IssueTab } from "@codewatch/types";
 import { quantifyNumber } from "@lib/utils";
 import { TabButton } from "@ui/tabs/button";
 import clsx from "clsx";
+import { IssueTab } from "codewatch-core/dist/types";
 
 export type TabType = "resolved" | "unresolved";
 type Props = {

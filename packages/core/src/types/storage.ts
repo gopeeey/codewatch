@@ -26,7 +26,7 @@ export interface Storage {
   createTransaction: () => Promise<Transaction>;
   runInTransaction: <T>(fn: (trx: Transaction) => Promise<T>) => Promise<T>;
   createIssue: (
-    data: Omit<Issue, "id" | "resolved">,
+    data: Omit<Issue, "id" | "resolved" | "createdAt">,
     transaction: Transaction
   ) => Promise<Issue["id"]>;
   addOccurrence: (data: Occurrence, transaction: Transaction) => Promise<void>;

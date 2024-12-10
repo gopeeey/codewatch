@@ -1,4 +1,3 @@
-import { GetStats, GetStatsResponse } from "@codewatch/types";
 import { getStats } from "@lib/data";
 import { quantifyNumber } from "@lib/utils";
 import { AppPage } from "@ui/app_page";
@@ -7,6 +6,7 @@ import { DatePreset, Select, useDateRange } from "@ui/inputs";
 import { IssueCard, TotalOccurrencesLoader } from "@ui/issues";
 import "chart.js/auto";
 import clsx from "clsx";
+import { GetStats, GetStatsResponse } from "codewatch-core/dist/types";
 import moment from "moment";
 import { useCallback, useEffect, useState } from "react";
 import { Bar, Doughnut } from "react-chartjs-2";

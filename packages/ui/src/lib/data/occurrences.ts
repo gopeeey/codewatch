@@ -1,9 +1,9 @@
+import { HttpClient } from "@lib/http_client";
 import {
   GetPaginatedOccurrencesFilters,
   GetPaginatedOccurrencesResponse,
   SystemInfo,
-} from "@codewatch/types";
-import { HttpClient } from "@lib/http_client";
+} from "codewatch-core/dist/types";
 import { nanoid } from "nanoid";
 import { OccurrenceWithId, StdChannelLogWithId } from "./types";
 

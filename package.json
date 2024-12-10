@@ -1,6 +1,6 @@
 {
-  "name": "@codewatch/root",
-  "version": "1.0.0",
+  "name": "codewatch",
+  "version": "0.1.0",
   "description": "An error logging and monitoring package",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -9,7 +9,5 @@
   "workspaces": [],
   "author": "Samuel Gopeh",
   "license": "ISC",
-  "dependencies": {
-    "@codewatch/root": "file:"
-  }
+  "dependencies": {}
 }

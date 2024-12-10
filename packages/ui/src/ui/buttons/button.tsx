@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { BaseButtonProps, ButtonBase } from "./base";
 
 interface Props extends BaseButtonProps {
-  color?: "primary" | "error";
+  color?: "primary" | "error" | "transparent";
 }
 export function Button({
   className,
@@ -17,6 +17,7 @@ export function Button({
         {
           "bg-primary-400 text-white hover:bg-primary-700": color === "primary",
           "bg-error text-white hover:bg-error-dark": color === "error",
+          "hover:bg-input-background-dark": color === "transparent",
         },
         className
       )}
