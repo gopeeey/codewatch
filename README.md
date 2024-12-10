@@ -69,7 +69,7 @@ app.use("/code", router);
 
 // ...the rest of your server setup
 
-app.listen(process.env.PORT || 3000, () => {
+app.listen(3000, () => {
   console.log("Server listening on port 3000");
   console.log("For the dashboard, open http://localhost:3000/code");
 });
