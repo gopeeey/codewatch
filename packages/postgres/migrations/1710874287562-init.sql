@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS codewatch_pg_occurrences (
     "stderrLogs" JSONB[] NOT NULL DEFAULT ARRAY[]::JSONB[],
     "extraData" JSONB,
     "systemInfo" JSONB,
+    "context" TEXT[][],
     FOREIGN KEY("issueId") REFERENCES codewatch_pg_issues("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 

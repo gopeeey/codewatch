@@ -127,6 +127,7 @@ describe("addOccurrence", () => {
         deviceUptime: 1234,
         freeMemory: 1234,
       },
+      context: [["foo", "bar"]],
     };
     await storage.addOccurrence(data, transaction);
 

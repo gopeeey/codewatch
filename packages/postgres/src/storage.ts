@@ -174,7 +174,8 @@ export class CodewatchPgStorage implements Storage {
         "stdoutLogs",
         "stderrLogs",
         "extraData",
-        "systemInfo"
+        "systemInfo",
+        "context"
       )
       VALUES (
         ${data.issueId}, 
@@ -183,7 +184,8 @@ export class CodewatchPgStorage implements Storage {
         ${data.stdoutLogs},
         ${data.stderrLogs},
         ${data.extraData},
-        ${data.systemInfo}
+        ${data.systemInfo},
+        ${data.context}
       );
     `,
       transaction
