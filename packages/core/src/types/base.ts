@@ -23,6 +23,8 @@ export type SystemInfo = {
   appUptime: number;
 };
 
+export type Context = [string, string][];
+
 export interface Occurrence {
   issueId: Issue["id"];
   message: string;
@@ -31,6 +33,7 @@ export interface Occurrence {
   stderrLogs: StdChannelLog[];
   extraData?: Record<any, any>;
   systemInfo?: SystemInfo;
+  context?: Context;
 }
 type DailyOccurrenceCount = { date: string; count: number };
 

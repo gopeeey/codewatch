@@ -1,4 +1,4 @@
-import { CaptureDataOpts, Issue } from "@types";
+import { CaptureDataOpts, Context, Issue, Occurrence } from "@types";
 import { Core } from "../core";
 import { MockStorage } from "./mock_storage";
 
@@ -51,26 +51,71 @@ describe("Core", () => {
 
     describe("when data is an error", () => {
       describe("given the error does not already exist in the storage", () => {
-        it("should save the error to the storage", async () => {
+        it("should save the error to the storage as an issue and add a corresponding occurrence record", async () => {
           const storage = MockStorage.getInstance();
           expect(storage.issues).toHaveLength(0);
 
-          await Core.captureError(testError);
-          const expected: Omit<Issue, "fingerprint"> = {
-            id: "1",
-            resolved: false,
-            lastOccurrenceTimestamp: expect.any(String),
-            lastOccurrenceMessage: expect.any(String),
-            unhandled: false,
-            archived: false,
-            name: testError.name,
-            stack: testError.stack as string,
-            totalOccurrences: expect.any(Number),
-            createdAt: expect.any(String),
-            isLog: false,
-          };
-          expect(storage.issues).toHaveLength(1);
-          expect(storage.issues[0]).toMatchObject(expected);
+          const scenarios = [
+            { optionalArgs: {}, expected: {} },
+            {
+              optionalArgs: { unhandled: true },
+              expected: { unhandled: true },
+            },
+            {
+              optionalArgs: { extraData: { foo: "bar" } },
+              expected: { isLog: true },
+            },
+            {
+              optionalArgs: { unhandled: true, extraData: { foo: "bar" } },
+              expected: { unhandled: true },
+            },
+            {
+              optionalArgs: { context: [["foo", "bar"]] as Context },
+              expected: {},
+            },
+          ];
+
+          for (let i = 0; i < scenarios.length; i++) {
+            const scenario = scenarios[i];
+
+            const err = new Error("Hello world");
+            const errName = "TestError" + i;
+            err.name = errName;
+
+            await Core.captureError(
+              err,
+              scenario.optionalArgs.unhandled,
+              scenario.optionalArgs.extraData,
+              scenario.optionalArgs.context
+            );
+            expect(storage.issues).toHaveLength(i + 1);
+            expect(storage.occurrences).toHaveLength(i + 1);
+            const expected: Omit<Issue, "fingerprint" | "id"> = {
+              resolved: false,
+              lastOccurrenceTimestamp: expect.any(String),
+              lastOccurrenceMessage: expect.any(String),
+              unhandled: false,
+              archived: false,
+              name: err.name,
+              stack: err.stack as string,
+              totalOccurrences: expect.any(Number),
+              createdAt: expect.any(String),
+              isLog: false,
+              ...scenario.expected,
+            };
+            const expectedOccurrence: Omit<Occurrence, "id"> = {
+              issueId: storage.issues[i].id,
+              message: err.message,
+              timestamp: expect.any(String),
+              stdoutLogs: expect.any(Array),
+              stderrLogs: expect.any(Array),
+              extraData: scenario.optionalArgs.extraData,
+              systemInfo: expect.any(Object),
+              context: scenario.optionalArgs.context,
+            };
+            expect(storage.issues[i]).toMatchObject(expected);
+            expect(storage.occurrences[i]).toMatchObject(expectedOccurrence);
+          }
         });
       });
 

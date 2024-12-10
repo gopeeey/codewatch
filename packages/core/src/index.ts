@@ -26,7 +26,8 @@ export function init({ storage, serverAdapter, ...config }: InitConfig) {
       .setErrorHandler(errorHandler)
       .setStaticPath(path.join(uiBasePath, "assets"), "/assets")
       .setEntryRoute(appRoutes.entry)
-      .setApiRoutes(appRoutes.api, { storage });
+      .setApiRoutes(appRoutes.api, { storage })
+      .setCaptureErrorFn(Core.captureError);
   } catch (err) {
     console.error("Failed to initialize codewatch");
     throw err;
@@ -47,11 +48,11 @@ export function close() {
  * @param {Occurrence["extraData"]} extraData - Additional data to include with the error.
  *
  */
-export function captureError(
+export async function captureError(
   err: unknown,
   extraData?: Occurrence["extraData"]
 ) {
-  Core.captureError(err, false, extraData);
+  await Core.captureError(err, false, extraData);
 }
 
 /**
@@ -60,6 +61,9 @@ export function captureError(
  * @param {CaptureDataOpts} [options] - Additional options for capturing the data.
  *
  */
-export function captureData(data: Record<any, any>, options?: CaptureDataOpts) {
-  Core.captureData(data, options);
+export async function captureData(
+  data: Record<any, any>,
+  options?: CaptureDataOpts
+) {
+  await Core.captureData(data, options);
 }

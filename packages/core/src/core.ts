@@ -60,7 +60,8 @@ export class Core {
   static async captureError(
     err: unknown,
     unhandled?: boolean,
-    extraData?: Occurrence["extraData"]
+    extraData?: Occurrence["extraData"],
+    context?: Occurrence["context"]
   ): Promise<void> {
     const instance = Core.getCore();
     if (!instance._storage.ready) return;
@@ -129,6 +130,7 @@ export class Core {
           stdoutLogs,
           extraData,
           systemInfo: instance._getSysInfo(),
+          context,
         },
         transaction
       );
