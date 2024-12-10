@@ -1,6 +1,6 @@
 {
   "name": "codewatch-express",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Express.js adapter for codewatch",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
