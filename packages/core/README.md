@@ -1,6 +1,6 @@
-# codewatch-installer
+# codewatch-core
 
-Installer for codewatch
+Core module for codewatch
 
 ![Screenshot of the issues list page](../../screenshots/issues.png)
 
