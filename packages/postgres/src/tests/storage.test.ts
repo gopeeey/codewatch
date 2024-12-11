@@ -119,6 +119,7 @@ describe("addOccurrence", () => {
       stdoutLogs: [
         { timestamp: 534564567, message: "something was logged here too" },
       ],
+      stack: "error location",
       extraData: { foo: "bar" },
       systemInfo: {
         appMemoryUsage: 1234,
@@ -162,13 +163,11 @@ describe("updateLastOccurrenceOnIssue", () => {
       {
         message: "Error 1",
         timestamp: now,
-        stack: "Something",
         resolved: false,
       },
       {
         message: "Error 2",
         timestamp: now,
-        stack: "Something new",
         resolved: true,
       },
     ];
@@ -188,7 +187,6 @@ describe("updateLastOccurrenceOnIssue", () => {
           Issue,
           | "totalOccurrences"
           | "lastOccurrenceTimestamp"
-          | "stack"
           | "lastOccurrenceMessage"
           | "resolved"
         >
@@ -196,8 +194,7 @@ describe("updateLastOccurrenceOnIssue", () => {
         SQL`
         SELECT 
         "totalOccurrences", 
-        "lastOccurrenceTimestamp", 
-        "stack", 
+        "lastOccurrenceTimestamp",
         "lastOccurrenceMessage",
         "resolved" 
         FROM codewatch_pg_issues 
@@ -208,7 +205,6 @@ describe("updateLastOccurrenceOnIssue", () => {
 
       expect(rows[0].totalOccurrences).toBe(i + 2);
       expect(rows[0].lastOccurrenceTimestamp).toBe(update.timestamp);
-      expect(rows[0].stack).toBe(update.stack);
       expect(rows[0].resolved).toBe(update.resolved);
       expect(rows[0].lastOccurrenceMessage).toBe(update.message);
     }

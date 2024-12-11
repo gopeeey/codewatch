@@ -8,7 +8,6 @@ export const testIssue: Issue = {
   lastOccurrenceTimestamp: "2020-01-01T00:00:0",
   archived: false,
   name: "Something",
-  stack: "\n Somewhere (index.js:123)",
   totalOccurrences: 20,
   unhandled: false,
   resolved: false,

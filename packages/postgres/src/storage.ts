@@ -175,7 +175,8 @@ export class CodewatchPgStorage implements Storage {
         "stderrLogs",
         "extraData",
         "systemInfo",
-        "context"
+        context,
+        stack
       )
       VALUES (
         ${data.issueId}, 
@@ -185,7 +186,8 @@ export class CodewatchPgStorage implements Storage {
         ${data.stderrLogs},
         ${data.extraData},
         ${data.systemInfo},
-        ${data.context}
+        ${data.context},
+        ${data.stack}
       );
     `,
       transaction
@@ -196,7 +198,6 @@ export class CodewatchPgStorage implements Storage {
     const query = SQL`INSERT INTO codewatch_pg_issues (
       fingerprint, 
       name, 
-      stack, 
       "totalOccurrences", 
       "lastOccurrenceTimestamp",
       "lastOccurrenceMessage",
@@ -207,7 +208,6 @@ export class CodewatchPgStorage implements Storage {
       VALUES (
         ${data.fingerprint}, 
         ${data.name}, 
-        ${data.stack}, 
         ${data.totalOccurrences},
         ${data.lastOccurrenceTimestamp},
         ${data.lastOccurrenceMessage},
@@ -246,7 +246,6 @@ export class CodewatchPgStorage implements Storage {
       "lastOccurrenceTimestamp" = ${data.timestamp},
       "lastOccurrenceMessage" = ${data.message},
       "totalOccurrences" = "totalOccurrences" + 1,
-      "stack" = ${data.stack},
       "resolved" = ${data.resolved}
       WHERE id = ${data.issueId};
     `,

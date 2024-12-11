@@ -654,6 +654,7 @@ describe("Seed required CRUD", () => {
         stderrLogs: [],
         stdoutLogs: [],
         timestamp: isoFromNow(i * 1000),
+        stack: i.toString(),
       });
     }
 
@@ -667,11 +668,11 @@ describe("Seed required CRUD", () => {
 
       const issueId = issues[0].id;
 
-      const query = SQL`INSERT INTO codewatch_pg_occurrences ("issueId", message, "stderrLogs", "stdoutLogs", timestamp) VALUES `;
+      const query = SQL`INSERT INTO codewatch_pg_occurrences ("issueId", message, "stderrLogs", "stdoutLogs", timestamp, stack) VALUES `;
       for (let i = 0; i < occurrenceData.length; i++) {
         const occurrence = occurrenceData[i];
         query.append(
-          SQL`(${issueId}, ${occurrence.message}, ${occurrence.stderrLogs}, ${occurrence.stdoutLogs}, ${occurrence.timestamp})`
+          SQL`(${issueId}, ${occurrence.message}, ${occurrence.stderrLogs}, ${occurrence.stdoutLogs}, ${occurrence.timestamp}, ${occurrence.stack})`
         );
         if (i < occurrenceData.length - 1) query.append(", ");
       }

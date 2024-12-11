@@ -64,8 +64,13 @@ init({
 
 // Add a middleware on the specified base path to access the dashboard
 const router = adapter.getRouter();
-
 app.use("/code", router);
+
+// ... your routes
+
+// (Optional) Add an error handler middleware (after all your routes and before any other error handling middleware) to capture errors that bubble up to express.js default error handler
+const middleware = adapter.getMiddleware();
+app.use(middleware);
 
 // ...the rest of your server setup
 

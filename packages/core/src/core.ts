@@ -70,9 +70,7 @@ export class Core {
       if (typeof extraData === "object" && !Array.isArray(extraData)) {
         extraData = JSON.parse(JSON.stringify(extraData));
       } else {
-        console.warn(
-          "Invalid extraData passed to captureError. extraData must be an object"
-        );
+        console.warn("Invalid extraData passed. extraData must be an object");
         extraData = {};
       }
     }
@@ -95,7 +93,6 @@ export class Core {
           {
             fingerprint: fingerPrint,
             name: err.name,
-            stack,
             totalOccurrences: 0,
             lastOccurrenceTimestamp: currentTimestamp,
             lastOccurrenceMessage: err.message,
@@ -128,6 +125,7 @@ export class Core {
           timestamp: currentTimestamp,
           stderrLogs,
           stdoutLogs,
+          stack,
           extraData,
           systemInfo: instance._getSysInfo(),
           context,
@@ -140,7 +138,6 @@ export class Core {
           issueId,
           timestamp: currentTimestamp,
           message: err.message,
-          stack,
           resolved: false,
         },
         transaction

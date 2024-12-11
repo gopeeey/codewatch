@@ -27,8 +27,6 @@ const testIssues: Issue[] = [
       "It went terribly wrong, I don't even know what happened.",
     archived: false,
     name: "Something went wrong",
-    stack:
-      "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
     totalOccurrences: 3245,
     unhandled: false,
     createdAt: "2024-04-10T13:59:33.021Z",
@@ -42,8 +40,6 @@ const testIssues: Issue[] = [
     lastOccurrenceMessage: "That's why this dashboard exists",
     archived: false,
     name: "It has crashed oooo!!!",
-    stack:
-      "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
     totalOccurrences: 230,
     unhandled: true,
     createdAt: "2024-04-10T13:59:33.021Z",
@@ -57,8 +53,6 @@ const testIssues: Issue[] = [
     lastOccurrenceMessage: "You'll find what it is though",
     archived: false,
     name: "Something went really wrong",
-    stack:
-      "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)",
     totalOccurrences: 234,
     unhandled: false,
     createdAt: "2024-04-10T13:59:33.021Z",
@@ -99,8 +93,6 @@ export async function getIssue(id: Issue["id"]) {
       lastOccurrenceMessage: "That's why this dashboard exists",
       archived: false,
       name: "It has crashed oooo!!!",
-      stack:
-        "Error: Something went wrong\n    at Object.<anonymous> (/home/codewatch)\n at main (c:\\Users\\Me\\Documents\\MyApp\\app.js:9:15)\n at Object. (c:\\Users\\Me\\Documents\\MyApp\\app.js:17:1)\n at Module._compile (module.js:460:26)\n at Object.Module._extensions..js (module.js:478:10)\n at Module.load (module.js:355:32)\n at Function.Module._load (module.js:310:12)\n at Function.Module.runMain (module.js:501:10)\n at startup (node.js:129:16)\n at node.js:814:3",
       totalOccurrences: 2300,
       unhandled: true,
       createdAt: "2024-04-10T13:59:33.021Z",

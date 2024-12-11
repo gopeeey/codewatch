@@ -1,7 +1,6 @@
 export interface Issue {
   id: string;
   fingerprint: string;
-  stack: string;
   name: string;
   totalOccurrences: number;
   lastOccurrenceTimestamp: string;
@@ -31,6 +30,7 @@ export interface Occurrence {
   timestamp: string;
   stdoutLogs: StdChannelLog[];
   stderrLogs: StdChannelLog[];
+  stack: string;
   extraData?: Record<any, any>;
   systemInfo?: SystemInfo;
   context?: Context;

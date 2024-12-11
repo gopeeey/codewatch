@@ -60,7 +60,6 @@ export const createCreateIssueData = (
     totalOccurrences: 1,
     unhandled: false,
     name: "Error 1",
-    stack: "Error 1",
     isLog: false,
     ...overrides,
   };
@@ -91,7 +90,7 @@ export const insertTestIssue = async (pool: pg.Pool, data: CreateIssueData) => {
   for (let i = 0; i < data.totalOccurrences; i++) {
     const occurrenceQuery = SQL`
     INSERT INTO codewatch_pg_occurrences (
-      "issueId", "message", "stderrLogs", "stdoutLogs", "timestamp"
+      "issueId", "message", "stderrLogs", "stdoutLogs", "timestamp", "stack"
     ) VALUES (
       ${rows[0].id},
       ${`Occurrence for ${data.name}`},
@@ -101,7 +100,8 @@ export const insertTestIssue = async (pool: pg.Pool, data: CreateIssueData) => {
         i + 1 === data.totalOccurrences
           ? data.lastOccurrenceTimestamp
           : data.createdAt
-      )}
+      )},
+      ${`Occurrence stack for ${data.name}`}
     );`;
 
     await pool.query(occurrenceQuery);

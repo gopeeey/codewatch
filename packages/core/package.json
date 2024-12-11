@@ -1,6 +1,6 @@
 {
   "name": "codewatch-core",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Core for codewatch",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -20,7 +20,13 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./dist/types": {
+      "import": "./dist/types/index.js",
+      "require": "./dist/types/index.cjs",
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    }
   },
   "type": "module",
   "author": "Samuel Gopeh",

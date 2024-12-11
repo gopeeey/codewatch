@@ -53,7 +53,6 @@ async function seedIssues(pool: Pool, amount: number) {
     const data: SeedIssueData = {
       fingerprint: nanoid(30),
       name: generate({ exactly: randNumBtw(1, 10), join: " " }),
-      stack: generate({ exactly: randNumBtw(1, 20), join: "\n" }),
       totalOccurrences: Math.floor(randNumBtw(2, 2000)),
       lastOccurrenceTimestamp: timestamp,
       lastOccurrenceMessage: generate({
@@ -68,7 +67,7 @@ async function seedIssues(pool: Pool, amount: number) {
     };
 
     query.append(
-      SQL`(${data.fingerprint}, ${data.name}, ${data.stack}, ${data.totalOccurrences}, ${data.lastOccurrenceTimestamp}, ${data.lastOccurrenceMessage}, ${data.archived}, ${data.unhandled}, ${data.createdAt}, ${data.resolved}, ${data.isLog})`
+      SQL`(${data.fingerprint}, ${data.name}, ${data.totalOccurrences}, ${data.lastOccurrenceTimestamp}, ${data.lastOccurrenceMessage}, ${data.archived}, ${data.unhandled}, ${data.createdAt}, ${data.resolved}, ${data.isLog})`
     );
     if (count === amount - 1) {
       query.append(";");
@@ -141,7 +140,8 @@ async function seedOccurrences(pool: Pool) {
         message,
         timestamp,
         "stdoutLogs",
-        "stderrLogs"
+        "stderrLogs",
+        "stack"
       ) VALUES 
     `;
 
@@ -166,6 +166,7 @@ async function seedOccurrences(pool: Pool) {
         timestamp: timestamp.toISOString(),
         stdoutLogs: [],
         stderrLogs: [],
+        stack: generate({ exactly: randNumBtw(1, 20), join: "\n" }),
       };
 
       if (run) {
@@ -179,7 +180,8 @@ async function seedOccurrences(pool: Pool) {
           ${occurrenceData.message}, 
           ${occurrenceData.timestamp},
           ${occurrenceData.stdoutLogs}, 
-          ${occurrenceData.stderrLogs}
+          ${occurrenceData.stderrLogs},
+          ${occurrenceData.stack}
           )`
       );
 

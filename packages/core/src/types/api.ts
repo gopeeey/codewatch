@@ -78,7 +78,8 @@ export interface ServerAdapter {
     captureErrorFn: (
       err: unknown,
       unhandled?: boolean,
-      extraData?: Occurrence["extraData"]
+      extraData?: Occurrence["extraData"],
+      context?: Occurrence["context"]
     ) => Promise<void>
   ) => ServerAdapter;
 }
