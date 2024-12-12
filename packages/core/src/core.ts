@@ -61,7 +61,8 @@ export class Core {
     err: unknown,
     unhandled?: boolean,
     extraData?: Occurrence["extraData"],
-    context?: Occurrence["context"]
+    context?: Occurrence["context"],
+    isLog: boolean = false
   ): Promise<void> {
     const instance = Core.getCore();
     if (!instance._storage.ready) return;
@@ -72,6 +73,23 @@ export class Core {
       } else {
         console.warn("Invalid extraData passed. extraData must be an object");
         extraData = {};
+      }
+    }
+
+    const customErrorProps = JSON.parse(JSON.stringify(err));
+    const standardErrorProps = ["message", "stack", "name"];
+
+    for (const prop of standardErrorProps) {
+      delete customErrorProps[prop];
+    }
+
+    if (Object.keys(customErrorProps).length) {
+      if (extraData) {
+        if (extraData.customErrorProps == undefined) {
+          extraData.customErrorProps = customErrorProps;
+        }
+      } else {
+        extraData = { customErrorProps };
       }
     }
 
@@ -98,7 +116,7 @@ export class Core {
             lastOccurrenceMessage: err.message,
             archived: false,
             unhandled: Boolean(unhandled),
-            isLog: !unhandled && Boolean(extraData),
+            isLog,
           },
           transaction
         );
@@ -164,7 +182,7 @@ export class Core {
       lines.splice(1, 2);
       error.stack = lines.join("\n");
     }
-    await Core.captureError(error, false, data);
+    await Core.captureError(error, false, data, undefined, true);
   }
 
   static async close() {
