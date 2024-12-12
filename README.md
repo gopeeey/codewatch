@@ -64,7 +64,7 @@ init({
 
 // Add a middleware on the specified base path to access the dashboard
 const router = adapter.getRouter();
-app.use("/code", router);
+app.use(basePath, router);
 
 // ... your routes
 
