@@ -260,7 +260,6 @@ export async function getStats(filter: GetStats) {
 
     while (current.isSameOrBefore(end)) {
       const dateString = current.format("YYYY-MM-DD");
-      console.log(dateString);
       if (occurrences[index] && occurrences[index].date === dateString) {
         newOccurrences.push(occurrences[index]);
         index++;
