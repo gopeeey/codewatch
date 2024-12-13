@@ -26,11 +26,7 @@ export class Core {
   private static _instance: Core | null = null;
 
   private constructor(private _storage: Storage, options?: CoreOptions) {
-    try {
-      this._storage.init();
-    } catch (err) {
-      console.error("Failed to initialize core:", err);
-    }
+    this._storage.init();
 
     if (options) {
       const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
@@ -46,6 +42,7 @@ export class Core {
     if (!this._options.disableConsoleLogs) this._hookStdouterr();
 
     this._hookUncaughtException();
+    this._scheduleLogsCleanup();
   }
 
   static init(storage: Storage, options?: CoreOptions) {
@@ -246,6 +243,31 @@ export class Core {
         if (index > -1) target.logs.splice(0, index + 1);
       }
     }
+  }
+
+  private _scheduleLogsCleanup() {
+    let cleaningStdoutLogs = false;
+    let cleaningStderrLogs = false;
+
+    setInterval(() => {
+      if (!cleaningStdoutLogs) {
+        cleaningStdoutLogs = true;
+        this._cleanUpLogs(
+          this._stdoutRecentLogs,
+          Date.now() - this._stdoutRecentLogs.retentionTime
+        );
+        cleaningStdoutLogs = false;
+      }
+
+      if (!cleaningStderrLogs) {
+        cleaningStderrLogs = true;
+        this._cleanUpLogs(
+          this._stderrRecentLogs,
+          Date.now() - this._stderrRecentLogs.retentionTime
+        );
+        cleaningStderrLogs = false;
+      }
+    }, 1000);
   }
 
   private _findLastExpiredLogIndexLinear(
