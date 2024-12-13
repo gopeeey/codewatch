@@ -104,18 +104,39 @@ export class ExpressAdapter implements ServerAdapter {
   }
 
   /**
-   * Returns a middleware for capturing errors within routes.
-   * The middleware should be added before any other error handler middlewares.
+   * Returns an error handler middleware for capturing errors within routes.
+   * @param handler
+   *
+   * When the `handler` argument is provided, this function acts as a wrapper for
+   * the provided error handler, capturing and logging the error to the backend
+   * before passing it on to the provided error handler. If not provided, the returned
+   * error handler still logs the error, but then just passes it on to the next middleware in
+   * the chain.
    */
-  getMiddleware() {
-    function middleware(
+  createErrorHandler(
+    handler?: (
+      error: unknown,
+      req: Request,
+      res: Response,
+      next: NextFunction
+    ) => any
+  ) {
+    function wrapper(
       this: ExpressAdapter,
       error: unknown,
       req: Request,
       res: Response,
       next: NextFunction
     ) {
-      if (!this._captureErrorFn) return next(error);
+      function done() {
+        if (handler) {
+          return handler(error, req, res, next);
+        } else {
+          return next(error);
+        }
+      }
+
+      if (!this._captureErrorFn) return done();
 
       const context: Context = [
         ["req.method", req.method],
@@ -127,9 +148,10 @@ export class ExpressAdapter implements ServerAdapter {
       if (req.ip) context.push(["req.ip", req.ip]);
 
       this._captureErrorFn(error, false, undefined, context);
-      next(error);
+
+      done();
     }
 
-    return middleware.bind(this);
+    return wrapper.bind(this);
   }
 }

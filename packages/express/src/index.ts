@@ -1,1 +1,1 @@
-export * from "./express_adapter";
+export * from "./adapter";
