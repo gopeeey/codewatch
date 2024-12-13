@@ -32,17 +32,14 @@ This example assumes a project that uses Express.js and a PostgreSQL database.
 ### Initialization
 
 ```javascript
-import { init } from "codewatch-core";
+import { captureError, init } from "codewatch-core";
 import { ExpressAdapter } from "codewatch-express";
 import { CodewatchPgStorage } from "codewatch-postgres";
-import dotenv from "dotenv";
 import express from "express";
-
-dotenv.config();
 
 const app = express();
 
-// Initialize the storage plugin with your database credentials
+// Initialize the storage plugin with the database credentials
 const storage = new CodewatchPgStorage({
   user: "USER_NAME",
   host: "HOST",
@@ -51,7 +48,7 @@ const storage = new CodewatchPgStorage({
   port: 5432, // Please replace all these details with your actual details.
 });
 
-// Initialize the webframework adapter and set the base path
+// Initialize the web framework adapter and set a base path
 const basePath = "/code";
 const adapter = new ExpressAdapter();
 adapter.setBasePath(basePath);
@@ -66,21 +63,18 @@ init({
 const router = adapter.getRouter();
 app.use(basePath, router);
 
-// ... your routes
-
-// (Optional) Add an error handler middleware (after all your routes and before any other error handling middleware) to capture errors that bubble up to express.js default error handler
-const middleware = adapter.getMiddleware();
-app.use(middleware);
-
 // ...the rest of your server setup
 
-app.listen(3000, () => {
-  console.log("Server listening on port 3000");
-  console.log("For the dashboard, open http://localhost:3000/code");
+const port = 3000;
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+  console.log(`Dashboard available at http://localhost:${port}${basePath}`);
 });
 ```
 
 That's it! Now you can visit http://localhost:3000/code to access the dashboard.
+
+For more examples, please check the [examples](./examples/) folder.
 
 ### Capturing Errors
 

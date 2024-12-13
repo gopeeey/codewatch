@@ -1,0 +1,21 @@
+{
+  "name": "codewatch-with-express",
+  "version": "1.0.0",
+  "description": "Codewatch example using express.js as the server framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "gopeeey",
+  "license": "ISC",
+  "dependencies": {
+    "codewatch-core": "^0.3.0",
+    "codewatch-express": "^0.2.0",
+    "codewatch-postgres": "^0.2.4",
+    "codewatch-ui": "^0.2.3",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0"
+  }
+}
