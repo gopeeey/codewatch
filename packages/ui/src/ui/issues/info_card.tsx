@@ -9,7 +9,7 @@ type Props = {
 const normalPadding = "px-5 py-2";
 export function InfoCard({ children, title, className }: Props) {
   return (
-    <div className={clsx("bg-background rounded-xl", className)}>
+    <div className={clsx("bg-background rounded-xl text-wrap", className)}>
       <div
         className={clsx(
           normalPadding,

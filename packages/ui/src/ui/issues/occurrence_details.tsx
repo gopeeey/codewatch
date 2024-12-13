@@ -3,7 +3,7 @@ import ClockIcon from "@assets/clock.svg";
 import { OccurrenceWithId } from "@lib/data";
 import { displayDuration, displayMemory } from "@lib/utils";
 import clsx from "clsx";
-import { Occurrence } from "codewatch-core/dist/types";
+import { Context, Occurrence } from "codewatch-core/dist/types";
 import moment from "moment";
 import { useState } from "react";
 import JsonView from "react18-json-view";
@@ -53,6 +53,24 @@ export function OccurrenceDetails({ occurrence }: Props) {
         })}
       >
         <div className="p-5">
+          {occurrence.context ? (
+            <InfoCard title="Context" className="mb-12">
+              <div className="flex flex-wrap mt-2">
+                {occurrence.context.map((context) => (
+                  <ContextChip key={context[0]} context={context} />
+                ))}
+              </div>
+            </InfoCard>
+          ) : null}
+
+          <InfoCard title="Stack Trace" className="mb-12">
+            {occurrence.stack.split("\n").map((line, index) => (
+              <div key={index} className="mb-2 text-grey-600 w-full break-all">
+                {line.replace(/\s/g, "\u00A0")}
+              </div>
+            ))}
+          </InfoCard>
+
           {occurrence.extraData ? (
             <InfoCard title="Manually Captured Data" className="mb-12">
               <JsonView src={occurrence.extraData} />
@@ -60,7 +78,7 @@ export function OccurrenceDetails({ occurrence }: Props) {
           ) : null}
 
           {occurrence.stdoutLogs.length > 0 ? (
-            <InfoCard title="Stdout logs" className="mb-12">
+            <InfoCard title="Stdout Logs" className="mb-12">
               <div className="mt-2">
                 {occurrence.stdoutLogs.map((log) => (
                   <div key={log.id} className="mb-8">
@@ -72,7 +90,7 @@ export function OccurrenceDetails({ occurrence }: Props) {
           ) : null}
 
           {occurrence.stderrLogs.length > 0 ? (
-            <InfoCard title="Stderr logs" className="mb-12">
+            <InfoCard title="Stderr Logs" className="mb-12">
               <div className="mt-2">
                 {occurrence.stderrLogs.map((log) => (
                   <div key={log.id} className="mb-8">
@@ -126,7 +144,7 @@ function LogBlock({ log }: { log: Occurrence["stderrLogs"][number] }) {
   const lines = log.message.split("\n");
   return (
     <>
-      <div>
+      <div className="max-w-full break-all">
         <span className="text-primary-400">
           [{moment(log.timestamp).format("ddd MMM DD, YYYY. hh:mm:ss:SSS A")}]
         </span>
@@ -135,10 +153,23 @@ function LogBlock({ log }: { log: Occurrence["stderrLogs"][number] }) {
       </div>
 
       {lines.slice(1).map((line, index) => (
-        <div key={index} className="mt-2 text-grey-600">
+        <div key={index} className="mt-2 text-grey-600 w-full break-all">
           {stripAnsi(line.replace(/\s/g, "\u00A0\u00A0"))}
         </div>
       ))}
     </>
+  );
+}
+
+function ContextChip({ context }: { context: Context[number] }) {
+  return (
+    <div className="flex border-solid border-pane-background border-[1.5px] max-w-max h-fit rounded-lg mr-3 mb-3 overflow-hidden text-sm">
+      <span className="py-1 px-3 block border-r-solid border-r-[0.75px] border-pane-background text-grey-600 break-all">
+        {context[0]}
+      </span>
+      <span className="py-1 px-3 bg-pane-background block border-l-solid border-l-[0.75px] border-pane-background text-white break-all">
+        {context[1]}
+      </span>
+    </div>
   );
 }

@@ -29,7 +29,9 @@ export function AppPage({
   }, [title]);
 
   return (
-    <main className={clsx("sm:px-12 w-full", className)}>
+    <main
+      className={clsx("sm:px-12 w-full max-w-full flex-shrink-3", className)}
+    >
       <AppBar
         title={title}
         className={clsx(header ? "mb-4" : "mb-7", appBarClassName)}

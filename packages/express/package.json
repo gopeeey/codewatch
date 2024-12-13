@@ -1,6 +1,6 @@
 {
   "name": "codewatch-express",
-  "version": "0.1.5",
+  "version": "1.0.0",
   "description": "Express.js adapter for codewatch",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -24,7 +24,7 @@
     "directory": "packages/express"
   },
   "dependencies": {
-    "codewatch-core": "^0.1.1",
+    "codewatch-core": "^1.0.0",
     "ejs": "^3.1.10",
     "express": "^4.19.2"
   },

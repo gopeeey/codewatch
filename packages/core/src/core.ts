@@ -26,11 +26,7 @@ export class Core {
   private static _instance: Core | null = null;
 
   private constructor(private _storage: Storage, options?: CoreOptions) {
-    try {
-      this._storage.init();
-    } catch (err) {
-      console.error("Failed to initialize core:", err);
-    }
+    this._storage.init();
 
     if (options) {
       const { stdoutLogRetentionTime, stderrLogRetentionTime, ...theRest } =
@@ -46,6 +42,7 @@ export class Core {
     if (!this._options.disableConsoleLogs) this._hookStdouterr();
 
     this._hookUncaughtException();
+    this._scheduleLogsCleanup();
   }
 
   static init(storage: Storage, options?: CoreOptions) {
@@ -60,7 +57,9 @@ export class Core {
   static async captureError(
     err: unknown,
     unhandled?: boolean,
-    extraData?: Occurrence["extraData"]
+    extraData?: Occurrence["extraData"],
+    context?: Occurrence["context"],
+    isLog: boolean = false
   ): Promise<void> {
     const instance = Core.getCore();
     if (!instance._storage.ready) return;
@@ -69,10 +68,25 @@ export class Core {
       if (typeof extraData === "object" && !Array.isArray(extraData)) {
         extraData = JSON.parse(JSON.stringify(extraData));
       } else {
-        console.warn(
-          "Invalid extraData passed to captureError. extraData must be an object"
-        );
+        console.warn("Invalid extraData passed. extraData must be an object");
         extraData = {};
+      }
+    }
+
+    const customErrorProps = JSON.parse(JSON.stringify(err));
+    const standardErrorProps = ["message", "stack", "name"];
+
+    for (const prop of standardErrorProps) {
+      delete customErrorProps[prop];
+    }
+
+    if (Object.keys(customErrorProps).length) {
+      if (extraData) {
+        if (extraData.customErrorProps == undefined) {
+          extraData.customErrorProps = customErrorProps;
+        }
+      } else {
+        extraData = { customErrorProps };
       }
     }
 
@@ -94,13 +108,12 @@ export class Core {
           {
             fingerprint: fingerPrint,
             name: err.name,
-            stack,
             totalOccurrences: 0,
             lastOccurrenceTimestamp: currentTimestamp,
             lastOccurrenceMessage: err.message,
             archived: false,
             unhandled: Boolean(unhandled),
-            isLog: !unhandled && Boolean(extraData),
+            isLog,
           },
           transaction
         );
@@ -127,8 +140,10 @@ export class Core {
           timestamp: currentTimestamp,
           stderrLogs,
           stdoutLogs,
+          stack,
           extraData,
           systemInfo: instance._getSysInfo(),
+          context,
         },
         transaction
       );
@@ -138,7 +153,6 @@ export class Core {
           issueId,
           timestamp: currentTimestamp,
           message: err.message,
-          stack,
           resolved: false,
         },
         transaction
@@ -165,7 +179,7 @@ export class Core {
       lines.splice(1, 2);
       error.stack = lines.join("\n");
     }
-    await Core.captureError(error, false, data);
+    await Core.captureError(error, false, data, undefined, true);
   }
 
   static async close() {
@@ -229,6 +243,31 @@ export class Core {
         if (index > -1) target.logs.splice(0, index + 1);
       }
     }
+  }
+
+  private _scheduleLogsCleanup() {
+    let cleaningStdoutLogs = false;
+    let cleaningStderrLogs = false;
+
+    setInterval(() => {
+      if (!cleaningStdoutLogs) {
+        cleaningStdoutLogs = true;
+        this._cleanUpLogs(
+          this._stdoutRecentLogs,
+          Date.now() - this._stdoutRecentLogs.retentionTime
+        );
+        cleaningStdoutLogs = false;
+      }
+
+      if (!cleaningStderrLogs) {
+        cleaningStderrLogs = true;
+        this._cleanUpLogs(
+          this._stderrRecentLogs,
+          Date.now() - this._stderrRecentLogs.retentionTime
+        );
+        cleaningStderrLogs = false;
+      }
+    }, 1000);
   }
 
   private _findLastExpiredLogIndexLinear(

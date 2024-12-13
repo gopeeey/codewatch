@@ -1,3 +1,4 @@
+import { Occurrence } from "./base";
 import { Storage } from "./storage";
 
 type ReqBody = Record<any, any>;
@@ -57,6 +58,12 @@ export interface AppRoutes {
   api: ApiRoute[];
 }
 
+type errorHandler = (
+  err: unknown,
+  unhandled?: boolean,
+  extraData?: Occurrence["extraData"]
+) => Promise<void>;
+
 export interface ServerAdapter {
   setBasePath: (basePath: string) => ServerAdapter;
   setViewsPath: (viewsPath: string) => ServerAdapter;
@@ -66,5 +73,13 @@ export interface ServerAdapter {
   setApiRoutes: (
     routes: ApiRoute[],
     deps: ControllerDependencies
+  ) => ServerAdapter;
+  setCaptureErrorFn: (
+    captureErrorFn: (
+      err: unknown,
+      unhandled?: boolean,
+      extraData?: Occurrence["extraData"],
+      context?: Occurrence["context"]
+    ) => Promise<void>
   ) => ServerAdapter;
 }

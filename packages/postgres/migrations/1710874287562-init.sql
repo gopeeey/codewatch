@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS codewatch_pg_issues (
     id SERIAL PRIMARY KEY,
     fingerprint VARCHAR UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    stack TEXT NOT NULL,
     "totalOccurrences" INTEGER NOT NULL DEFAULT 0,
     "lastOccurrenceTimestamp" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "lastOccurrenceMessage" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -25,8 +24,10 @@ CREATE TABLE IF NOT EXISTS codewatch_pg_occurrences (
     timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "stdoutLogs" JSONB[] NOT NULL DEFAULT ARRAY[]::JSONB[],
     "stderrLogs" JSONB[] NOT NULL DEFAULT ARRAY[]::JSONB[],
+    stack TEXT NOT NULL,
     "extraData" JSONB,
     "systemInfo" JSONB,
+    "context" TEXT[][],
     FOREIGN KEY("issueId") REFERENCES codewatch_pg_issues("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 

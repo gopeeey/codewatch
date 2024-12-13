@@ -1,5 +1,4 @@
 import ArchiveIcon from "@assets/archive-tiny.svg";
-import ChevronDownIcon from "@assets/chevron-down.svg";
 import ClockIcon from "@assets/clock.svg";
 import DeleteIcon from "@assets/delete-tiny.svg";
 import ErrorRedIcon from "@assets/error-red.svg";
@@ -60,7 +59,6 @@ export default function IssueDetails() {
   const [perPage] = useState(
     Number(searchParams.get("perPage") ?? DEFAULT_PAGE_SIZE)
   );
-  const [stackOpen, setStackOpen] = useState(false);
   const [issue, setIssue] = useState<Issue | null>(null);
   const [occurrences, setOccurrences] = useState<OccurrenceWithId[]>([]);
   const [loadingIssue, setLoadingIssue] = useState(false);
@@ -330,36 +328,6 @@ export default function IssueDetails() {
                     {action.name}
                   </ActionButton>
                 ))}
-              </div>
-
-              <div className="mt-4">
-                <ButtonBase onClick={() => setStackOpen((prev) => !prev)}>
-                  <span className="flex items-center">
-                    Stack Trace{" "}
-                    <img
-                      src={ChevronDownIcon}
-                      alt="chevron-down"
-                      className={clsx("ml-2 transition-everything", {
-                        "rotate-180": stackOpen,
-                      })}
-                    />
-                  </span>
-                </ButtonBase>
-
-                <div
-                  className={clsx(
-                    "scale-y-0 max-h-0 origin-top transition-everything text-grey-700 text-[0.9rem] border-l-2 pl-5",
-                    {
-                      ["scale-y-100 max-h-[50rem] overflow-auto"]: stackOpen,
-                    }
-                  )}
-                >
-                  {issue.stack.split("\n").map((line, index) => (
-                    <div key={index} className="mb-1">
-                      {line.replace(/\s/g, "\u00A0")}
-                    </div>
-                  ))}
-                </div>
               </div>
             </>
           ) : null}

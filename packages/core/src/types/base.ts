@@ -1,7 +1,6 @@
 export interface Issue {
   id: string;
   fingerprint: string;
-  stack: string;
   name: string;
   totalOccurrences: number;
   lastOccurrenceTimestamp: string;
@@ -23,14 +22,18 @@ export type SystemInfo = {
   appUptime: number;
 };
 
+export type Context = [string, string][];
+
 export interface Occurrence {
   issueId: Issue["id"];
   message: string;
   timestamp: string;
   stdoutLogs: StdChannelLog[];
   stderrLogs: StdChannelLog[];
+  stack: string;
   extraData?: Record<any, any>;
   systemInfo?: SystemInfo;
+  context?: Context;
 }
 type DailyOccurrenceCount = { date: string; count: number };
 

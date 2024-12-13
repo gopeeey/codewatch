@@ -18,7 +18,7 @@ export default function Layout() {
     if (onRoot) navigate("/issues");
   }, [onRoot, navigate]);
   return (
-    <div className="flex bg-background min-h-full text-grey-100">
+    <div className="flex w-full max-w-full bg-background min-h-full text-grey-100">
       <ToastContainer
         position="top-right"
         autoClose={4000}

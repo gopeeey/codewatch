@@ -8,7 +8,6 @@ import {
 
 export interface UpdateLastOccurrenceOnIssueType
   extends Pick<Occurrence, "issueId" | "timestamp" | "message"> {
-  stack: Issue["stack"];
   resolved: boolean;
 }
 

@@ -1,4 +1,4 @@
-import { ApiRequest, ServerAdapter } from "codewatch-core/dist/types";
+import { ApiRequest, Context, ServerAdapter } from "codewatch-core/dist/types";
 import ejs from "ejs";
 import express, { NextFunction, Request, Response } from "express";
 
@@ -6,6 +6,9 @@ export class ExpressAdapter implements ServerAdapter {
   private _express: express.Express;
   private _basePath = "";
   private _errorHandler?: Parameters<ServerAdapter["setErrorHandler"]>[number];
+  private _captureErrorFn?: Parameters<
+    ServerAdapter["setCaptureErrorFn"]
+  >[number];
 
   constructor() {
     this._express = express();
@@ -86,10 +89,69 @@ export class ExpressAdapter implements ServerAdapter {
     return this;
   };
 
+  setCaptureErrorFn(
+    captureErrorFn: Exclude<typeof this._captureErrorFn, undefined>
+  ): ServerAdapter {
+    this._captureErrorFn = captureErrorFn;
+    return this;
+  }
+
   /**
-   * Gets a middleware you can add to your express routes in order to access the dashboard.
+   * Returns a middleware you can add to your express routes in order to access the dashboard.
    */
   getRouter() {
     return this._express;
+  }
+
+  /**
+   * Returns an error handler middleware for capturing errors within routes.
+   * @param handler
+   *
+   * When the `handler` argument is provided, this function acts as a wrapper for
+   * the provided error handler, capturing and logging the error to the backend
+   * before passing it on to the provided error handler. If not provided, the returned
+   * error handler still logs the error, but then just passes it on to the next middleware in
+   * the chain.
+   */
+  createErrorHandler(
+    handler?: (
+      error: unknown,
+      req: Request,
+      res: Response,
+      next: NextFunction
+    ) => any
+  ) {
+    function wrapper(
+      this: ExpressAdapter,
+      error: unknown,
+      req: Request,
+      res: Response,
+      next: NextFunction
+    ) {
+      function done() {
+        if (handler) {
+          return handler(error, req, res, next);
+        } else {
+          return next(error);
+        }
+      }
+
+      if (!this._captureErrorFn) return done();
+
+      const context: Context = [
+        ["req.method", req.method],
+        ["req.originalUrl", req.originalUrl],
+        ["req.hostname", req.hostname],
+        ["req.path", req.path],
+        ["req.protocol", req.protocol],
+      ];
+      if (req.ip) context.push(["req.ip", req.ip]);
+
+      this._captureErrorFn(error, false, undefined, context);
+
+      done();
+    }
+
+    return wrapper.bind(this);
   }
 }
