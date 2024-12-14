@@ -1,6 +1,6 @@
 {
   "name": "codewatch-installer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Installer for codewatch packages",
   "main": "dist/index.js",
   "scripts": {
