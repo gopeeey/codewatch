@@ -278,8 +278,8 @@ class Main {
             if (gt(a[0], b[0])) return -1;
             return 0;
           } else {
-            if (maxA > maxB) return 1;
-            return -1;
+            if (maxA > maxB) return -1;
+            return 1;
           }
         }),
       };
