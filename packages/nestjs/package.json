@@ -1,0 +1,36 @@
+{
+  "name": "codewatch-nestjs",
+  "version": "1.0.0",
+  "description": "NestJS adapter for codewatch",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "build-pd": "tsup && yalc publish --push",
+    "prepublishOnly": "tsup"
+  },
+  "author": "Samuel Gopeh",
+  "license": "MIT",
+  "keywords": [
+    "error logging",
+    "monitoring",
+    "adapter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gopeeey/codewatch.git",
+    "directory": "packages/nestjs"
+  },
+  "dependencies": {
+    "codewatch-core": "^1.0.0",
+    "codewatch-express": "^1.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^10.4.15",
+    "@types/node": "^20.12.7",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5"
+  }
+}

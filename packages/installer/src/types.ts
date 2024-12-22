@@ -3,7 +3,7 @@ const supportedServerFrameworks = [
   // "fastify",
   // "koa",
   // "hapi",
-  // "nestjs",
+  "nestjs",
 ] as const;
 export type ServerFramework = (typeof supportedServerFrameworks)[number];
 
@@ -25,6 +25,7 @@ export const pluginLib: { [name in PluginName]: string } = {
   express: "codewatch-express",
   postgresql: "codewatch-postgres",
   ui: "codewatch-ui",
+  nestjs: "codewatch-nestjs",
 };
 
 export const availableCommands = ["install", "uninstall", "help"] as const;
