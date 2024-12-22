@@ -74,7 +74,12 @@ app.listen(port, () => {
 
 That's it! Now you can visit http://localhost:3000/code to access the dashboard.
 
-For more examples, please check the [examples](./examples/) folder.
+You can find more examples such as:
+
+- [with-express](./examples/with-express/)
+- [with-nestjs](./examples/with-nestjs/)
+
+in the [examples](./examples/) folder.
 
 ### Capturing Errors
 
