@@ -1,4 +1,11 @@
-import { MiddlewareConsumer, Module, NestModule, Type } from "@nestjs/common";
+import {
+  DynamicModule,
+  ForwardReference,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  Type,
+} from "@nestjs/common";
 import { InitConfig } from "codewatch-core/dist/types";
 import { ExpressAdapter } from "codewatch-express";
 import { ADAPTER_PROVIDER, CONFIG_PROVIDER } from "./constants";
@@ -9,6 +16,11 @@ export type Config = Omit<InitConfig, "serverAdapter">;
 interface ModuleOptions {
   route: string;
   config?: Config;
+  configModule?:
+    | Type
+    | Promise<DynamicModule>
+    | DynamicModule
+    | ForwardReference;
   configProvider?: Type<{
     getCodewatchConfig: () => Config;
   }>;
@@ -21,7 +33,7 @@ export class CodewatchModule implements NestModule {
   private static _adapter: ExpressAdapter | null = null;
   private static _route: string = "";
 
-  static forRoot(options: ModuleOptions) {
+  static forRoot(options: ModuleOptions): DynamicModule {
     const adapter = new ExpressAdapter();
     adapter.setBasePath(options.route);
 
@@ -34,8 +46,12 @@ export class CodewatchModule implements NestModule {
       }
     };
 
+    const imports = [];
+    if (options.configModule) imports.push(options.configModule);
+
     return {
       module: CodewatchModule,
+      imports,
       providers: [
         { provide: ADAPTER_PROVIDER, useValue: adapter },
         {
