@@ -31,7 +31,7 @@ const serverFrameworkChoices: { name: string; value: ServerFramework }[] = [
   // { name: "Fastify", value: "fastify" },
   // { name: "Koa", value: "koa" },
   // { name: "Hapi", value: "hapi" },
-  // { name: "NestJS", value: "nestjs" },
+  { name: "NestJS", value: "nestjs" },
 ];
 
 const storageChoices: { name: string; value: Storage }[] = [
