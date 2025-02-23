@@ -15,17 +15,15 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./package.json": "./package.json",
     "./dist/types": {
-      "import": "./dist/types/index.js",
-      "require": "./dist/types/index.cjs",
       "types": "./dist/types/index.d.ts",
-      "default": "./dist/types/index.js"
+      "import": "./dist/types/index.js",
+      "require": "./dist/types/index.cjs"
     }
   },
   "type": "module",

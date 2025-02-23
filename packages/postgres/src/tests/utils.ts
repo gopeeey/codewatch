@@ -1,3 +1,4 @@
+import { StorageTester } from "codewatch-core/dist/dev/storage/test/StorageTester";
 import { Issue } from "codewatch-core/dist/types";
 import { config } from "dotenv";
 import Levenshtein from "levenshtein";
@@ -39,6 +40,51 @@ export const dbSetup = () => {
     COMMENT ON SCHEMA public IS 'standard public schema';
     `);
     pool.end();
+  }, 5000);
+
+  return pool;
+};
+
+export const setup = (tester: StorageTester) => {
+  // Connect to the database
+  const pool = new pg.Pool({
+    user: process.env.POSTGRES_DB_USERNAME,
+    host: process.env.POSTGRES_DB_HOST,
+    database: process.env.POSTGRES_DB_NAME,
+    password: process.env.POSTGRES_DB_PASSWORD,
+    port: Number(process.env.POSTGRES_DB_PORT),
+  });
+
+  tester.setAfterEach(async () => {
+    console.log("\n\n\nFROM AFTER EACH");
+    // Truncate each table except migrations
+    await pool.query(SQL`TRUNCATE codewatch_pg_issues CASCADE;`);
+    console.log("\n\n\nFROM AFTER EACH 2");
+    await pool.query(
+      SQL`ALTER SEQUENCE codewatch_pg_issues_id_seq RESTART WITH 1;`
+    );
+    await pool.query(
+      SQL`ALTER SEQUENCE codewatch_pg_occurrences_id_seq RESTART WITH 1;`
+    );
+    await pool.query(SQL`TRUNCATE codewatch_pg_occurrences CASCADE;`);
+  }, 5000);
+
+  tester.setAfterAll(async () => {
+    try {
+      console.log("\n\n\nFROM AFTER ALL 1", pool.totalCount, pool.idleCount);
+
+      await pool.query(`
+      DROP SCHEMA public CASCADE;
+      CREATE SCHEMA public;
+      GRANT ALL ON SCHEMA public TO postgres;
+      GRANT ALL ON SCHEMA public TO public;
+      COMMENT ON SCHEMA public IS 'standard public schema';
+      `);
+      console.log("\n\n\nFROM AFTER ALL 4");
+      await pool.end();
+    } catch (err) {
+      console.error("Failed to clean up database connection", err);
+    }
   }, 5000);
 
   return pool;

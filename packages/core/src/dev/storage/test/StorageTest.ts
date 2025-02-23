@@ -1,0 +1,26 @@
+import { Test } from "dev/Test";
+import { GetStorageFunc } from "dev/types";
+import { Storage } from "src/types";
+
+export class StorageTest<
+  SeedData = void,
+  SeedReturnType = void,
+  PostProcessingData = undefined,
+  PostProcessingReturnType = void
+> extends Test<
+  Storage,
+  SeedData,
+  SeedReturnType,
+  PostProcessingData,
+  PostProcessingReturnType
+> {
+  constructor(getStorage: GetStorageFunc) {
+    super(getStorage);
+  }
+
+  protected async getStorage(init = true) {
+    const storage = this.getTestObject();
+    if (init) await storage.init();
+    return storage;
+  }
+}

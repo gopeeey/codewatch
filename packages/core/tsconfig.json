@@ -25,7 +25,8 @@
       }
     ],
     "paths": {
-      "@types/*": ["./src/types/*"],
+      "src/*": ["./src/*"],
+      "dev/*": ["./src/dev/*"],
       "@types": ["./src/types/index"]
     }
   },

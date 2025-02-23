@@ -43,7 +43,7 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "codewatch-core": "^1.0.0",
+    "codewatch-core": "file:.yalc/codewatch-core",
     "pg": "^8.11.3",
     "sql-template-strings": "^2.2.2"
   }
