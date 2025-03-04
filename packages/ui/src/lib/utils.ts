@@ -82,7 +82,6 @@ export function displayDuration(seconds: number) {
 }
 
 export function getIsDev() {
-  console.log("VITE_MODE", import.meta.env.VITE_MODE);
   return (
     import.meta.env.VITE_MODE === "development" ||
     import.meta.env.MODE === "development"
