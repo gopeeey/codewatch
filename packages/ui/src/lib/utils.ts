@@ -83,7 +83,7 @@ export function displayDuration(seconds: number) {
 
 export function getIsDev() {
   return (
-    import.meta.env.VERCEL_TARGET_ENV === "production" ||
+    Boolean(import.meta.env.VERCEL_BRANCH_URL) ||
     import.meta.env.MODE === "development"
   );
 }
