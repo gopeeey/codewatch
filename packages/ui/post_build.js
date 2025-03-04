@@ -8,5 +8,5 @@ const html = fs.readFileSync(targetPath, "utf-8").split("\n");
 html.splice(4, 0, `<base href="<%= basePath %>" />`);
 
 fs.writeFileSync(path.join(__dirname, "dist/index.ejs"), html.join("\n"));
-fs.unlinkSync(targetPath);
-console.log("Transforming: index.html -> index.ejs");
+// fs.unlinkSync(targetPath);
+console.log("Created index.ejs");
