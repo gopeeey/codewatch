@@ -80,3 +80,10 @@ export function displayDuration(seconds: number) {
     mins ? `${mins} minute${mins === 1 ? "" : "s"}` : ""
   }`;
 }
+
+export function getIsDev() {
+  return (
+    import.meta.env.VERCEL_TARGET_ENV === "production" ||
+    import.meta.env.MODE === "development"
+  );
+}
