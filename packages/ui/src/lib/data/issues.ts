@@ -1,4 +1,5 @@
 import { HttpClient } from "@lib/http_client";
+import { getIsDev } from "@lib/utils";
 import {
   ArchiveIssues,
   DeleteIssues,
@@ -16,7 +17,7 @@ import {
 import moment from "moment";
 
 const client = new HttpClient({ baseUrl: "/issues" });
-const isDev = import.meta.env.MODE === "development";
+const isDev = getIsDev();
 
 const testIssues: Issue[] = [
   {

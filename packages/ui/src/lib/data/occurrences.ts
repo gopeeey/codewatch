@@ -1,4 +1,5 @@
 import { HttpClient } from "@lib/http_client";
+import { getIsDev } from "@lib/utils";
 import {
   GetPaginatedOccurrencesFilters,
   GetPaginatedOccurrencesResponse,
@@ -8,7 +9,7 @@ import { nanoid } from "nanoid";
 import { OccurrenceWithId, StdChannelLogWithId } from "./types";
 
 const client = new HttpClient({ baseUrl: "/occurrences" });
-const isDev = import.meta.env.MODE === "development";
+const isDev = getIsDev();
 
 export async function getOccurrences(filters: GetPaginatedOccurrencesFilters) {
   if (isDev) {
