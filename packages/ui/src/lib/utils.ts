@@ -82,9 +82,9 @@ export function displayDuration(seconds: number) {
 }
 
 export function getIsDev() {
-  console.log("VERCEL_BRANCH_URL", import.meta.env.VERCEL_BRANCH_URL);
+  console.log("VITE_MODE", import.meta.env.VITE_MODE);
   return (
-    Boolean(import.meta.env.VERCEL_BRANCH_URL) ||
+    import.meta.env.VITE_MODE === "development" ||
     import.meta.env.MODE === "development"
   );
 }
