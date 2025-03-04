@@ -1,4 +1,6 @@
 import { Issue, Occurrence } from "codewatch-core/dist/types";
+import { nanoid } from "nanoid";
+import { OccurrenceWithId } from "./types";
 
 export const issues: Issue[] = [
   {
@@ -169,10 +171,11 @@ const superWeirdText = `┌─────────────────�
 │ if-none-match             │ [32m'W/"12-howcZO2GSVRL1FSAZM9fSlQ6ZB0"'[39m                                                                                                      │
 └───────────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘`;
 
-export const occurrences: { [key: string]: Occurrence[] } = {
+const tOccurrences: { [key: string]: Occurrence[] } = {
   10: [
     {
       issueId: "10",
+
       message: "Something went terribly wrong",
       timestamp: "2025-03-04T20:44:47.703Z",
       stdoutLogs: [
@@ -219,6 +222,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   11: [
     {
       issueId: "11",
+
       message: "This is just some normal error",
       timestamp: "2025-03-04T20:46:20.424Z",
       stdoutLogs: [
@@ -272,6 +276,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "11",
+
       message: "This is just some normal error",
       timestamp: "2025-03-04T20:46:20.009Z",
       stdoutLogs: [
@@ -320,6 +325,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "11",
+
       message: "This is just some normal error",
       timestamp: "2025-03-04T20:46:18.234Z",
       stdoutLogs: [
@@ -373,6 +379,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "11",
+
       message: "This is just some normal error",
       timestamp: "2025-03-04T20:46:13.821Z",
       stdoutLogs: [
@@ -423,6 +430,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   12: [
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:29.262Z",
       stdoutLogs: [
@@ -509,6 +517,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:28.114Z",
       stdoutLogs: [
@@ -590,6 +599,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:27.944Z",
       stdoutLogs: [
@@ -666,6 +676,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:27.772Z",
       stdoutLogs: [
@@ -737,6 +748,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:27.613Z",
       stdoutLogs: [
@@ -803,6 +815,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:27.378Z",
       stdoutLogs: [
@@ -860,6 +873,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:27.062Z",
       stdoutLogs: [
@@ -916,6 +930,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:26.394Z",
       stdoutLogs: [
@@ -963,6 +978,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "12",
+
       message: "This is an error with extra data",
       timestamp: "2025-03-04T20:46:24.731Z",
       stdoutLogs: [
@@ -1021,6 +1037,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   13: [
     {
       issueId: "13",
+
       message:
         "This one is not inside a try-catch block but is captured by custom middleware",
       timestamp: "2025-03-04T21:27:34.566Z",
@@ -1053,6 +1070,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "13",
+
       message: "This one is not inside a try-catch block",
       timestamp: "2025-03-04T20:54:48.524Z",
       stdoutLogs: [
@@ -1093,6 +1111,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "13",
+
       message: "This one is not inside a try-catch block",
       timestamp: "2025-03-04T20:54:46.023Z",
       stdoutLogs: [
@@ -1128,6 +1147,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "13",
+
       message: "This one is not inside a try-catch block",
       timestamp: "2025-03-04T20:46:43.504Z",
       stdoutLogs: [
@@ -1179,6 +1199,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "13",
+
       message: "This one is not inside a try-catch block",
       timestamp: "2025-03-04T20:46:36.403Z",
       stdoutLogs: [
@@ -1236,6 +1257,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   14: [
     {
       issueId: "14",
+
       message: "This custom error has a code",
       timestamp: "2025-03-04T20:46:57.157Z",
       stdoutLogs: [
@@ -1293,6 +1315,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   15: [
     {
       issueId: "15",
+
       message: "Another custom error that has a code",
       timestamp: "2025-03-04T20:47:07.424Z",
       stdoutLogs: [
@@ -1343,6 +1366,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   16: [
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:31.530Z",
       stdoutLogs: [
@@ -1421,6 +1445,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:31.352Z",
       stdoutLogs: [
@@ -1495,6 +1520,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:31.201Z",
       stdoutLogs: [
@@ -1565,6 +1591,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:30.360Z",
       stdoutLogs: [
@@ -1631,6 +1658,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:30.204Z",
       stdoutLogs: [
@@ -1693,6 +1721,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:30.029Z",
       stdoutLogs: [
@@ -1751,6 +1780,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:29.832Z",
       stdoutLogs: [
@@ -1805,6 +1835,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:29.260Z",
       stdoutLogs: [
@@ -1855,6 +1886,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "16",
+
       message: "Unexpected token 'H', \"Hello world\" is not valid JSON",
       timestamp: "2025-03-04T20:47:20.343Z",
       stdoutLogs: [
@@ -1907,6 +1939,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   17: [
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:45.623Z",
       stdoutLogs: [
@@ -2005,6 +2038,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:44.985Z",
       stdoutLogs: [
@@ -2095,6 +2129,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:44.799Z",
       stdoutLogs: [
@@ -2185,6 +2220,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:44.614Z",
       stdoutLogs: [
@@ -2271,6 +2307,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:43.632Z",
       stdoutLogs: [
@@ -2357,6 +2394,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:42.554Z",
       stdoutLogs: [
@@ -2439,6 +2477,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:42.356Z",
       stdoutLogs: [
@@ -2517,6 +2556,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:42.192Z",
       stdoutLogs: [
@@ -2591,6 +2631,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:42.045Z",
       stdoutLogs: [
@@ -2661,6 +2702,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:41.190Z",
       stdoutLogs: [
@@ -2727,6 +2769,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "17",
+
       message: "Some request headers I captured",
       timestamp: "2025-03-04T20:47:39.518Z",
       stdoutLogs: [
@@ -2793,6 +2836,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   18: [
     {
       issueId: "18",
+
       message: 'relation "books" does not exist',
       timestamp: "2025-03-04T20:48:01.390Z",
       stdoutLogs: [
@@ -2865,6 +2909,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "18",
+
       message: 'relation "books" does not exist',
       timestamp: "2025-03-04T20:48:01.199Z",
       stdoutLogs: [
@@ -2933,6 +2978,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "18",
+
       message: 'relation "books" does not exist',
       timestamp: "2025-03-04T20:48:00.839Z",
       stdoutLogs: [
@@ -2997,6 +3043,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "18",
+
       message: 'relation "books" does not exist',
       timestamp: "2025-03-04T20:47:59.496Z",
       stdoutLogs: [
@@ -3059,6 +3106,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
   19: [
     {
       issueId: "19",
+
       message: "something.somefunctionthatdoesntexist is not a function",
       timestamp: "2025-03-04T21:45:44.436Z",
       stdoutLogs: [
@@ -3087,6 +3135,7 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
     {
       issueId: "19",
+
       message: "something.log is not a function",
       timestamp: "2025-03-04T21:44:16.069Z",
       stdoutLogs: [
@@ -3115,3 +3164,23 @@ export const occurrences: { [key: string]: Occurrence[] } = {
     },
   ],
 };
+
+type TestOccurrences = { [key: string]: OccurrenceWithId[] };
+export const occurrences: TestOccurrences = Object.keys(tOccurrences).reduce(
+  (acc, curr) => ({
+    ...acc,
+    [curr]: tOccurrences[curr].map((occurrence) => ({
+      ...occurrence,
+      id: nanoid(),
+      stderrLogs: occurrence.stderrLogs.map((log) => ({
+        ...log,
+        id: nanoid(),
+      })),
+      stdoutLogs: occurrence.stdoutLogs.map((log) => ({
+        ...log,
+        id: nanoid(),
+      })),
+    })),
+  }),
+  {} as TestOccurrences
+);
