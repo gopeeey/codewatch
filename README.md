@@ -6,6 +6,8 @@ Codewatch is an error monitoring and log management system that captures errors,
 
 ![Screenshot of the issues list page](./screenshots/issue-detail.png)
 
+[Here's a demo of the UI](https://codewatch-demo.gopeh.com)
+
 ## Features
 
 - **Error Capture:** Monitors and captures errors, including unhandled exceptions and promise rejections.
