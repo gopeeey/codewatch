@@ -15,52 +15,10 @@ import {
   UnresolveIssues,
 } from "codewatch-core/dist/types";
 import moment from "moment";
+import { issues as testIssues } from "./examples";
 
 const client = new HttpClient({ baseUrl: "/issues" });
 const isDev = getIsDev();
-
-const testIssues: Issue[] = [
-  {
-    fingerprint: "123456789",
-    id: "123456789",
-    lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
-    lastOccurrenceMessage:
-      "It went terribly wrong, I don't even know what happened.",
-    archived: false,
-    name: "Something went wrong",
-    totalOccurrences: 3245,
-    unhandled: false,
-    createdAt: "2024-04-10T13:59:33.021Z",
-    resolved: false,
-    isLog: false,
-  },
-  {
-    fingerprint: "2345678",
-    id: "2345678",
-    lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
-    lastOccurrenceMessage: "That's why this dashboard exists",
-    archived: false,
-    name: "It has crashed oooo!!!",
-    totalOccurrences: 230,
-    unhandled: true,
-    createdAt: "2024-04-10T13:59:33.021Z",
-    resolved: false,
-    isLog: false,
-  },
-  {
-    fingerprint: "34567890",
-    id: "34567890",
-    lastOccurrenceTimestamp: "2024-04-10T13:59:33.021Z",
-    lastOccurrenceMessage: "You'll find what it is though",
-    archived: false,
-    name: "Something went really wrong",
-    totalOccurrences: 234,
-    unhandled: false,
-    createdAt: "2024-04-10T13:59:33.021Z",
-    resolved: false,
-    isLog: false,
-  },
-];
 
 export async function getIssues(filters: GetPaginatedIssuesFilters) {
   if (isDev) {
@@ -85,22 +43,8 @@ export async function getIssues(filters: GetPaginatedIssuesFilters) {
 
 export async function getIssue(id: Issue["id"]) {
   if (isDev) {
-    console.log("Fetching issue", id);
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    const testIssue: Issue = {
-      fingerprint: "2345678",
-      id: "2345678",
-      lastOccurrenceTimestamp: "2024-05-10T13:59:33.021Z",
-      lastOccurrenceMessage: "That's why this dashboard exists",
-      archived: false,
-      name: "It has crashed oooo!!!",
-      totalOccurrences: 2300,
-      unhandled: true,
-      createdAt: "2024-04-10T13:59:33.021Z",
-      resolved: false,
-      isLog: false,
-    };
-    return testIssue;
+    return testIssues.filter((issue) => issue.id === id)[0];
   } else {
     const res = await client.get<GetIssueByIdResponse["data"]>(`/${id}`);
     if (res.error) return null;
@@ -109,10 +53,7 @@ export async function getIssue(id: Issue["id"]) {
 }
 
 export async function getIssuesTotal(filters: GetIssuesFilters) {
-  if (isDev) {
-    if (filters.tab === "resolved") return 1230;
-    return 140 as number | null;
-  }
+  if (isDev) return testIssues.length;
 
   const res = await client.post<
     GetIssuesTotalResponse["data"],
@@ -224,7 +165,7 @@ export async function getStats(filter: GetStats) {
       totalManuallyCapturedOccurrences: 76,
       totalUnhandledOccurrences: 24,
       totalLoggedData: 34,
-      mostRecurringIssues: testIssues,
+      mostRecurringIssues: testIssues.slice(0, 5),
     };
     return defaultData;
   }
