@@ -82,6 +82,7 @@ export function displayDuration(seconds: number) {
 }
 
 export function getIsDev() {
+  console.log("VERCEL_BRANCH_URL", import.meta.env.VERCEL_BRANCH_URL);
   return (
     Boolean(import.meta.env.VERCEL_BRANCH_URL) ||
     import.meta.env.MODE === "development"
