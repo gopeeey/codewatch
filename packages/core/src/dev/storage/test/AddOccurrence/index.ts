@@ -9,6 +9,7 @@ export class AddOccurrence extends StorageScenario {
 
   /**
    * Seeder: None
+   *
    * Post-processor: should return an occurrence with the given issueId
    */
   create_new_occurrence = new CreateNewOccurrence(this.getTestObject);

@@ -56,10 +56,8 @@ export const setup = (tester: StorageTester) => {
   });
 
   tester.setAfterEach(async () => {
-    console.log("\n\n\nFROM AFTER EACH");
     // Truncate each table except migrations
     await pool.query(SQL`TRUNCATE codewatch_pg_issues CASCADE;`);
-    console.log("\n\n\nFROM AFTER EACH 2");
     await pool.query(
       SQL`ALTER SEQUENCE codewatch_pg_issues_id_seq RESTART WITH 1;`
     );
@@ -71,8 +69,6 @@ export const setup = (tester: StorageTester) => {
 
   tester.setAfterAll(async () => {
     try {
-      console.log("\n\n\nFROM AFTER ALL 1", pool.totalCount, pool.idleCount);
-
       await pool.query(`
       DROP SCHEMA public CASCADE;
       CREATE SCHEMA public;
@@ -80,7 +76,6 @@ export const setup = (tester: StorageTester) => {
       GRANT ALL ON SCHEMA public TO public;
       COMMENT ON SCHEMA public IS 'standard public schema';
       `);
-      console.log("\n\n\nFROM AFTER ALL 4");
       await pool.end();
     } catch (err) {
       console.error("Failed to clean up database connection", err);

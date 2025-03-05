@@ -25,7 +25,7 @@ export class PersistIssue extends StorageTest<
         const testEnd = Date.now();
 
         const issue = await this.postProcessingFunc({ id, transaction });
-        await transaction.rollbackAndEnd();
+        await transaction.rollback();
 
         expect(issue.id.toString()).toBe(id);
         expect(issue.fingerprint).toBe(issueData.fingerprint);
@@ -41,6 +41,7 @@ export class PersistIssue extends StorageTest<
         throw err;
       }
 
+      await transaction.end();
       await storage.close();
     });
   }

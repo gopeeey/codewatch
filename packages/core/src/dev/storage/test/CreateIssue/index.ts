@@ -9,6 +9,7 @@ export class CreateIssue extends StorageScenario {
 
   /**
    * Seeder: None
+   *
    * Post-processor: should return the issue with the specified ID
    */
   persist_issue = new PersistIssue(this.getTestObject);

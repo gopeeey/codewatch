@@ -1,5 +1,5 @@
 import { StorageTester } from "codewatch-core/dist/dev/storage/test/StorageTester";
-import { Occurrence } from "codewatch-core/dist/types";
+import { Issue, Occurrence } from "codewatch-core/dist/types";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage, PgTransaction } from "../storage";
 import { DbIssue } from "../types";
@@ -45,6 +45,31 @@ storageTester.addOccurrence.create_new_occurrence.setPostProcessingFunc(
         WHERE "issueId" = ${issueId} 
         ORDER BY timestamp DESC;
       `
+    );
+
+    return rows[0];
+  }
+);
+
+storageTester.updateLastOccurrenceOnIssue.update_issue.setPostProcessingFunc(
+  async ({ issueId, transaction }) => {
+    const { rows } = await (transaction as PgTransaction)._client.query<
+      Pick<
+        Issue,
+        | "totalOccurrences"
+        | "lastOccurrenceTimestamp"
+        | "lastOccurrenceMessage"
+        | "resolved"
+      >
+    >(
+      SQL`
+        SELECT 
+        "totalOccurrences", 
+        "lastOccurrenceTimestamp",
+        "lastOccurrenceMessage",
+        "resolved" 
+        FROM codewatch_pg_issues 
+        WHERE id = ${issueId};`
     );
 
     return rows[0];
