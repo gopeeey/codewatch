@@ -5,8 +5,8 @@ export default defineConfig({
   entry: [
     "./src/index.ts",
     "./src/types/index.ts",
-    "./src/dev/types.ts",
-    "./src/dev/storage/test/StorageTester.ts",
+    "./src/tests/storage/StorageTester.ts",
+    "./src/storage/index.ts",
   ],
   dts: true,
   shims: false,

@@ -1,4 +1,4 @@
-import { StorageTester } from "codewatch-core/dist/dev/storage/test/StorageTester";
+import { StorageTester } from "codewatch-core/dist/tests/storage/StorageTester";
 import { Issue } from "codewatch-core/dist/types";
 import { config } from "dotenv";
 import Levenshtein from "levenshtein";

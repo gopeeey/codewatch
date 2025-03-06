@@ -1,8 +1,7 @@
-import { StorageTester } from "codewatch-core/dist/dev/storage/test/StorageTester";
-import { Issue, Occurrence } from "codewatch-core/dist/types";
+import { StorageTester } from "codewatch-core/dist/tests/storage/StorageTester";
+import { Issue, Occurrence, Transaction } from "codewatch-core/dist/types";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage, PgTransaction } from "../storage";
-import { DbIssue } from "../types";
 import { setup } from "./utils";
 
 const getStorage = () => {
@@ -20,18 +19,29 @@ const storageTester = new StorageTester(getStorage);
 
 const pool = setup(storageTester);
 
+async function getIssueById(
+  issueId: Issue["id"],
+  transaction?: Transaction
+): Promise<Issue | null> {
+  let queryFunc = pool.query.bind(pool);
+  if (transaction && transaction instanceof PgTransaction) {
+    queryFunc = transaction._client.query.bind(transaction._client);
+  }
+  const { rows } = await queryFunc<Issue>(
+    SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${issueId};`
+  );
+  if (rows[0]) {
+    return {
+      ...rows[0],
+      id: rows[0].id.toString(),
+    };
+  }
+  return null;
+}
+
 storageTester.createIssue.persist_issue.setPostProcessingFunc(
   async ({ id, transaction }) => {
-    const { rows } = await (transaction as PgTransaction)._client.query<
-      Pick<DbIssue, "fingerprint" | "id" | "createdAt">
-    >(
-      SQL`--sql
-      SELECT fingerprint, id, "createdAt" 
-      FROM codewatch_pg_issues 
-      WHERE "id" = ${id};`
-    );
-
-    return { ...rows[0], id: rows[0].id.toString() };
+    return getIssueById(id, transaction);
   }
 );
 
@@ -73,6 +83,22 @@ storageTester.updateLastOccurrenceOnIssue.update_issue.setPostProcessingFunc(
     );
 
     return rows[0];
+  }
+);
+
+storageTester.runInTransaction.call_back_throws_error.rollback_transaction.setPostProcessingFunc(
+  async ({ fingerprint }) => {
+    const { rows } = await pool.query<Issue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE "fingerprint" = ${fingerprint};`
+    );
+
+    return rows[0] || null;
+  }
+);
+
+storageTester.runInTransaction.call_back_doesnt_throw_error.commit_transaction.setPostProcessingFunc(
+  async ({ issueId }) => {
+    return getIssueById(issueId);
   }
 );
 
