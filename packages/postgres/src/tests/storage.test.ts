@@ -143,4 +143,29 @@ storageTester.seededCrud.setInsertTestOccurrenceFn(async (data) => {
   await pool.query(occurrenceQuery);
 });
 
+storageTester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setSeedFunc(
+  async () => {
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues LIMIT 2;`
+    );
+    return issues.map((issue) => ({
+      ...issue,
+      id: issue.id.toString(),
+    }));
+  }
+);
+
+storageTester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setPostProcessingFunc(
+  async (issueIds) => {
+    const { rows: deletedIssues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issueIds});`
+    );
+
+    return deletedIssues.map((issue) => ({
+      ...issue,
+      id: issue.id.toString(),
+    }));
+  }
+);
+
 storageTester.run();
