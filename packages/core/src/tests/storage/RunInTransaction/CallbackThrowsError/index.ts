@@ -5,31 +5,35 @@ import { RollbackTransaction } from "./RollbackTransaction";
 import { ThrowError } from "./ThrowError";
 
 export class CallbackThrowsError extends StorageScenario {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
-  }
-
   /**
    * Seeder: None
    *
    * Post-processor: Should return an issue with the given fingerprint.
    * The issue is expected to be null since the transaction should have been rolled back.
    */
-  rollback_transaction = new RollbackTransaction(this.getTestObject);
+  rollback_transaction: RollbackTransaction;
 
   /**
    * Seeder: None
    *
    * Post-processor: None
    */
-  end_transaction = new EndTransaction(this.getTestObject);
+  end_transaction: EndTransaction;
 
   /**
    * Seeder: None
    *
    * Post-processor: None
    */
-  throw_error = new ThrowError(this.getTestObject);
+  throw_error: ThrowError;
+
+  constructor(getStorage: GetStorageFunc) {
+    super(getStorage);
+
+    this.rollback_transaction = new RollbackTransaction(getStorage);
+    this.end_transaction = new EndTransaction(getStorage);
+    this.throw_error = new ThrowError(getStorage);
+  }
 
   run() {
     describe("given the callback throws an error", () => {

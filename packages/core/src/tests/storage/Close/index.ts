@@ -3,11 +3,18 @@ import { StorageScenario } from "../StorageScenario";
 import { ChangeReadyStateToFalse } from "./ChangeReadyStateToFalse";
 
 export class Close extends StorageScenario {
+  /**
+   * Seeder: None
+   *
+   * Post-processor: None
+   */
+  change_ready_state_to_false: ChangeReadyStateToFalse;
+
   constructor(getStorage: GetStorageFunc) {
     super(getStorage);
-  }
 
-  change_ready_state_to_false = new ChangeReadyStateToFalse(this.getTestObject);
+    this.change_ready_state_to_false = new ChangeReadyStateToFalse(getStorage);
+  }
 
   run() {
     describe("close", () => {

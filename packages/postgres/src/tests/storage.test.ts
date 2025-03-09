@@ -2,6 +2,7 @@ import { StorageTester } from "codewatch-core/dist/tests/storage/StorageTester";
 import { Issue, Occurrence, Transaction } from "codewatch-core/dist/types";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage, PgTransaction } from "../storage";
+import { DbIssue } from "../types";
 import { setup } from "./utils";
 
 const getStorage = () => {
@@ -101,5 +102,45 @@ storageTester.runInTransaction.call_back_doesnt_throw_error.commit_transaction.s
     return getIssueById(issueId);
   }
 );
+
+storageTester.seededCrud.setInsertTestIssueFn(async (data) => {
+  const query = SQL`INSERT INTO codewatch_pg_issues ( "`;
+  const keys: string[] = [];
+  const values: string[] = [];
+  for (const entry of Object.entries(data)) {
+    keys.push(entry[0]);
+    values.push(entry[1]);
+  }
+  query.append(keys.join(`", "`)).append(`") VALUES (`);
+  values.forEach((value, index) => {
+    if (index === values.length - 1) {
+      query.append(SQL`${value}) `);
+    } else {
+      query.append(SQL`${value}, `);
+    }
+  });
+
+  query.append("RETURNING id;");
+
+  const { rows } = await pool.query<Pick<DbIssue, "id">>(query);
+  if (!rows.length) throw new Error("Failed to insert issue");
+  return rows[0].id.toString();
+});
+
+storageTester.seededCrud.setInsertTestOccurrenceFn(async (data) => {
+  const occurrenceQuery = SQL`
+      INSERT INTO codewatch_pg_occurrences (
+        "issueId", "message", "stderrLogs", "stdoutLogs", "timestamp", "stack"
+      ) VALUES (
+        ${data.issueId},
+        ${data.message},
+        ${data.stderrLogs},
+        ${data.stdoutLogs},
+        ${data.timestamp},
+        ${data.stack}
+      );`;
+
+  await pool.query(occurrenceQuery);
+});
 
 storageTester.run();

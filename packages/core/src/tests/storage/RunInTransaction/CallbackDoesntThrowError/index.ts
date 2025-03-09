@@ -5,32 +5,36 @@ import { EndTransaction } from "./EndTransaction";
 import { ReturnCallbackReturnValue } from "./ReturnCallbackReturnValue";
 
 export class CallbackDoesntThrowError extends StorageScenario {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
-  }
-
   /**
    * Seeder: None
    *
    * Post-processor: Should return an issue with the given id.
    */
-  commit_transaction = new CommitTransaction(this.getTestObject);
+  commit_transaction: CommitTransaction;
 
   /**
    * Seeder: None
    *
    * Post-processor: None
    */
-  end_transaction = new EndTransaction(this.getTestObject);
+  end_transaction: EndTransaction;
 
   /**
    * Seeder: None
    *
    * Post-processor: None
    */
-  return_callback_return_value = new ReturnCallbackReturnValue(
-    this.getTestObject
-  );
+  return_callback_return_value: ReturnCallbackReturnValue;
+
+  constructor(getStorage: GetStorageFunc) {
+    super(getStorage);
+
+    this.commit_transaction = new CommitTransaction(getStorage);
+    this.end_transaction = new EndTransaction(getStorage);
+    this.return_callback_return_value = new ReturnCallbackReturnValue(
+      getStorage
+    );
+  }
 
   run() {
     describe("given the callback doesn't throw an error", () => {

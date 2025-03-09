@@ -10,7 +10,7 @@ export class Scenario<TestObject> implements ScenarioInterface {
   private _beforeAllTimeout?: number;
   private _afterAllTimeout?: number;
 
-  constructor(protected getTestObject: GetTestObjectFunc<TestObject>) {}
+  constructor(getTestObject: GetTestObjectFunc<TestObject>) {}
 
   protected callHooks() {
     if (this._beforeAll) beforeAll(this._beforeAll, this._beforeAllTimeout);

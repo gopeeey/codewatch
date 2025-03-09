@@ -3,10 +3,6 @@ import { StorageScenario } from "../StorageScenario";
 import { UpdateIssue } from "./UpdateIssue";
 
 export class UpdateLastOccurrenceOnIssue extends StorageScenario {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
-  }
-
   /**
    * Seeder: None
    *
@@ -17,7 +13,13 @@ export class UpdateLastOccurrenceOnIssue extends StorageScenario {
    * - lastOccurrenceMessage
    * - resolved
    */
-  update_issue = new UpdateIssue(this.getTestObject);
+  update_issue: UpdateIssue;
+
+  constructor(getStorage: GetStorageFunc) {
+    super(getStorage);
+
+    this.update_issue = new UpdateIssue(getStorage);
+  }
 
   run() {
     describe("updateLastOccurrenceOnIssue", () => {

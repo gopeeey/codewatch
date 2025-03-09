@@ -5,6 +5,7 @@ import { CreateIssue } from "./CreateIssue";
 import { FindIssueIdxArchiveStatusByFingerprint } from "./FindIssueIdxArchiveStatusByFingerprint";
 import { Init } from "./Init";
 import { RunInTransaction } from "./RunInTransaction";
+import { SeededCrud } from "./SeededCrud";
 import { StorageScenario } from "./StorageScenario";
 import { UpdateLastOccurrenceOnIssue } from "./UpdateLastOccurrenceOnIssue";
 
@@ -16,6 +17,7 @@ export class StorageTester extends StorageScenario {
   updateLastOccurrenceOnIssue: UpdateLastOccurrenceOnIssue;
   findIssueIdxArchiveStatusByFingerprint: FindIssueIdxArchiveStatusByFingerprint;
   runInTransaction: RunInTransaction;
+  seededCrud: SeededCrud;
 
   constructor(getStorage: GetStorageFunc) {
     super(getStorage);
@@ -29,6 +31,7 @@ export class StorageTester extends StorageScenario {
     this.findIssueIdxArchiveStatusByFingerprint =
       new FindIssueIdxArchiveStatusByFingerprint(getStorage);
     this.runInTransaction = new RunInTransaction(getStorage);
+    this.seededCrud = new SeededCrud(getStorage);
   }
 
   run() {
@@ -42,6 +45,7 @@ export class StorageTester extends StorageScenario {
       this.updateLastOccurrenceOnIssue.run();
       this.findIssueIdxArchiveStatusByFingerprint.run();
       this.runInTransaction.run();
+      this.seededCrud.run();
     });
   }
 }

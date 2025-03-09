@@ -4,17 +4,15 @@ import { IssueDoesntExist } from "./IssueDoesntExist";
 import { IssueExists } from "./IssueExists";
 
 export class FindIssueIdxArchiveStatusByFingerprint extends StorageScenario {
+  issue_exists: IssueExists;
+  issue_doesnt_exist: IssueDoesntExist;
+
   constructor(getStorage: GetStorageFunc) {
     super(getStorage);
-  }
 
-  /**
-   * Seeder: None
-   *
-   * Post-processor: None
-   */
-  issue_exists = new IssueExists(this.getTestObject);
-  issue_doesnt_exist = new IssueDoesntExist(this.getTestObject);
+    this.issue_exists = new IssueExists(getStorage);
+    this.issue_doesnt_exist = new IssueDoesntExist(getStorage);
+  }
 
   run() {
     describe("findIssueIdxArchiveStatusByFingerprint", () => {

@@ -3,16 +3,18 @@ import { StorageScenario } from "../StorageScenario";
 import { PersistIssue } from "./PersistIssue";
 
 export class CreateIssue extends StorageScenario {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
-  }
-
   /**
    * Seeder: None
    *
    * Post-processor: should return the issue with the specified ID
    */
-  persist_issue = new PersistIssue(this.getTestObject);
+  persist_issue: PersistIssue;
+
+  constructor(getStorage: GetStorageFunc) {
+    super(getStorage);
+
+    this.persist_issue = new PersistIssue(getStorage);
+  }
 
   run() {
     describe("createIssue", () => {
