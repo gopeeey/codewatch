@@ -8,6 +8,8 @@ import {
   TestIssueData,
 } from "../types";
 import { createCreateIssueData } from "../utils";
+import { DeleteIssues } from "./DeleteIssues";
+import { GetIssuesTotal } from "./GetIssuesTotal";
 import { GetPaginatedIssues } from "./GetPaginatedIssues";
 
 export class SeededCrud extends StorageScenario {
@@ -17,6 +19,8 @@ export class SeededCrud extends StorageScenario {
   private getStorage: GetStorageFunc;
 
   get_paginated_issues: GetPaginatedIssues;
+  get_issues_total: GetIssuesTotal;
+  delete_issues: DeleteIssues;
 
   constructor(getStorage: GetStorageFunc) {
     super(getStorage);
@@ -27,6 +31,14 @@ export class SeededCrud extends StorageScenario {
       this.issuesData,
       this.isoFromNow.bind(this)
     );
+
+    this.get_issues_total = new GetIssuesTotal(
+      getStorage,
+      this.issuesData,
+      this.isoFromNow.bind(this)
+    );
+
+    this.delete_issues = new DeleteIssues(getStorage);
   }
 
   private isoFromNow = (offset: number) => {
@@ -159,6 +171,8 @@ export class SeededCrud extends StorageScenario {
     describe("Seeded CRUD", () => {
       this.callHooks();
       this.get_paginated_issues.run();
+      this.get_issues_total.run();
+      this.delete_issues.run();
     });
   }
 }
