@@ -35,15 +35,10 @@ async function getIssueById(
   if (transaction && transaction instanceof PgTransaction) {
     queryFunc = transaction._client.query.bind(transaction._client);
   }
-  const { rows } = await queryFunc<Issue>(
+  const { rows } = await queryFunc<DbIssue>(
     SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${issueId};`
   );
-  if (rows[0]) {
-    return {
-      ...rows[0],
-      id: rows[0].id.toString(),
-    };
-  }
+  if (rows[0]) return dbIssueToIssue(rows[0]);
   return null;
 }
 
@@ -227,6 +222,12 @@ storageTester.seededCrud.unarchive_issues.update_archived_to_false.setSeedFunc(
 
 storageTester.seededCrud.unarchive_issues.update_archived_to_false.setPostProcessingFunc(
   getMultipleIssuesByIds
+);
+
+storageTester.seededCrud.find_issue_by_id.issue_exists.return_issue.setSeedFunc(
+  async (data) => {
+    return getIssueById(data.issueId, data.transaction);
+  }
 );
 
 storageTester.run();

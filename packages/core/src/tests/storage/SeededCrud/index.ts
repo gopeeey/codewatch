@@ -10,6 +10,7 @@ import {
 import { createCreateIssueData } from "../utils";
 import { ArchiveIssues } from "./ArchiveIssues";
 import { DeleteIssues } from "./DeleteIssues";
+import { FindIssueById } from "./FindIssueById";
 import { GetIssuesTotal } from "./GetIssuesTotal";
 import { GetPaginatedIssues } from "./GetPaginatedIssues";
 import { ResolveIssues } from "./ResolveIssues";
@@ -29,6 +30,7 @@ export class SeededCrud extends StorageScenario {
   unresolve_issues: UnresolveIssues;
   archive_issues: ArchiveIssues;
   unarchive_issues: UnarchiveIssues;
+  find_issue_by_id: FindIssueById;
 
   constructor(getStorage: GetStorageFunc) {
     super(getStorage);
@@ -51,6 +53,7 @@ export class SeededCrud extends StorageScenario {
     this.unresolve_issues = new UnresolveIssues(getStorage);
     this.archive_issues = new ArchiveIssues(getStorage);
     this.unarchive_issues = new UnarchiveIssues(getStorage);
+    this.find_issue_by_id = new FindIssueById(getStorage);
   }
 
   private isoFromNow = (offset: number) => {
@@ -189,6 +192,7 @@ export class SeededCrud extends StorageScenario {
       this.unresolve_issues.run();
       this.archive_issues.run();
       this.unarchive_issues.run();
+      this.find_issue_by_id.run();
     });
   }
 }
