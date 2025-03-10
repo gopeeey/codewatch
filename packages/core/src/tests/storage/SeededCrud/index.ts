@@ -14,6 +14,7 @@ import { FindIssueById } from "./FindIssueById";
 import { GetIssuesTotal } from "./GetIssuesTotal";
 import { GetPaginatedIssues } from "./GetPaginatedIssues";
 import { GetPaginatedOccurrences } from "./GetPaginatedOccurrences";
+import { GetStatsData } from "./GetStatsData";
 import { ResolveIssues } from "./ResolveIssues";
 import { UnarchiveIssues } from "./UnarchiveIssues";
 import { UnresolveIssues } from "./UnresolveIssues";
@@ -33,6 +34,7 @@ export class SeededCrud extends StorageScenario {
   unarchive_issues: UnarchiveIssues;
   find_issue_by_id: FindIssueById;
   get_paginated_occurrences: GetPaginatedOccurrences;
+  get_stats_data: GetStatsData;
 
   constructor(getStorage: GetStorageFunc) {
     super(getStorage);
@@ -60,6 +62,11 @@ export class SeededCrud extends StorageScenario {
       getStorage,
       this.insertOccurrence.bind(this),
       this.insertIssue.bind(this),
+      this.isoFromNow.bind(this)
+    );
+    this.get_stats_data = new GetStatsData(
+      getStorage,
+      this.issuesData,
       this.isoFromNow.bind(this)
     );
   }
@@ -171,7 +178,7 @@ export class SeededCrud extends StorageScenario {
               stderrLogs: [],
               stdoutLogs: [],
               timestamp: new Date(
-                index + 1 === issueData.totalOccurrences
+                i + 1 === issueData.totalOccurrences
                   ? issueData.lastOccurrenceTimestamp
                   : issueData.createdAt
               ).toISOString(),
@@ -202,6 +209,7 @@ export class SeededCrud extends StorageScenario {
       this.unarchive_issues.run();
       this.find_issue_by_id.run();
       this.get_paginated_occurrences.run();
+      this.get_stats_data.run();
     });
   }
 }

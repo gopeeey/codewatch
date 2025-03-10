@@ -1,4 +1,4 @@
-import { Issue, Occurrence, Storage } from "src/types";
+import { GetStats, Issue, Occurrence, StatsData, Storage } from "src/types";
 import { GetTestObjectFunc } from "../types";
 
 export interface CreateIssueData extends Omit<Issue, "id" | "resolved"> {
@@ -27,3 +27,10 @@ export type InsertOccurrenceFunc = (
   data: CreateOccurrenceData
 ) => Promise<void>;
 export type InsertIssueFunc = (data: CreateIssueData) => Promise<Issue["id"]>;
+
+export interface ModdedStatsData
+  extends Omit<StatsData, "mostRecurringIssues"> {
+  mostRecurringIssuesFprints: string[];
+}
+
+export type TestCase = { filter: GetStats; expectedStats: ModdedStatsData };
