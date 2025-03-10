@@ -16,6 +16,13 @@ const getStorage = () => {
   return storage;
 };
 
+const dbIssueToIssue = (dbIssue: DbIssue) => {
+  return {
+    ...dbIssue,
+    id: dbIssue.id.toString(),
+  };
+};
+
 const storageTester = new StorageTester(getStorage);
 
 const pool = setup(storageTester);
@@ -148,10 +155,7 @@ storageTester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setSeedFu
     const { rows: issues } = await pool.query<DbIssue>(
       SQL`SELECT * FROM codewatch_pg_issues LIMIT 2;`
     );
-    return issues.map((issue) => ({
-      ...issue,
-      id: issue.id.toString(),
-    }));
+    return issues.map(dbIssueToIssue);
   }
 );
 
@@ -161,10 +165,27 @@ storageTester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setPostPr
       SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issueIds});`
     );
 
-    return deletedIssues.map((issue) => ({
-      ...issue,
-      id: issue.id.toString(),
-    }));
+    return deletedIssues.map(dbIssueToIssue);
+  }
+);
+
+storageTester.seededCrud.resolve_issues.update_resolved_to_true.setSeedFunc(
+  async () => {
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE resolved = false LIMIT 2;`
+    );
+
+    return issues.map(dbIssueToIssue);
+  }
+);
+
+storageTester.seededCrud.resolve_issues.update_resolved_to_true.setPostProcessingFunc(
+  async (ids) => {
+    const { rows: resolvedIssues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${ids});`
+    );
+
+    return resolvedIssues.map(dbIssueToIssue);
   }
 );
 

@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "jest --runInBand --detectOpenHandles",
+    "test": "jest --runInBand",
     "make-migration": "ts-node-dev src/make-migration.ts",
     "build": "tsup",
     "build-pd": "tsup && yalc publish --push",
