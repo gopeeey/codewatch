@@ -200,4 +200,18 @@ storageTester.seededCrud.unresolve_issues.update_resolved_to_false.setPostProces
   getMultipleIssuesByIds
 );
 
+storageTester.seededCrud.archive_issues.update_archived_to_true.setSeedFunc(
+  async () => {
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE archived = false LIMIT 2;`
+    );
+
+    return issues.map(dbIssueToIssue);
+  }
+);
+
+storageTester.seededCrud.archive_issues.update_archived_to_true.setPostProcessingFunc(
+  getMultipleIssuesByIds
+);
+
 storageTester.run();
