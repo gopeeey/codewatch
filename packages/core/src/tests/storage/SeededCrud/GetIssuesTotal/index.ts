@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/tests/storage/StorageScenario";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { IsoFromNow, TestIssueData } from "../../types";
 import { ReturnTotalForAppliedFilters } from "./ReturnTotalForAppliedFilters";
 

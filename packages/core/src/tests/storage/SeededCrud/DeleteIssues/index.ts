@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/tests/storage/StorageScenario";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { DeleteIssuesWithSuppliedIds } from "./DeleteIssuesWithSuppliedIds";
 
 export class DeleteIssues extends StorageScenario {

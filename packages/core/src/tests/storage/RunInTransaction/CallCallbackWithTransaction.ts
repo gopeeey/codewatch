@@ -1,5 +1,5 @@
 import { StorageTransaction } from "src/storage/transaction";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { StorageTest } from "../StorageTest";
 
 export class CallCallbackWithTransaction extends StorageTest {

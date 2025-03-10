@@ -1,4 +1,4 @@
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { StorageTest } from "../StorageTest";
 
 export class ChangeReadyStateToFalse extends StorageTest {

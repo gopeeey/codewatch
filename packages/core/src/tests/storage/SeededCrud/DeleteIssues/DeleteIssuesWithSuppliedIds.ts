@@ -1,5 +1,5 @@
 import { StorageTest } from "src/tests/storage/StorageTest";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { Issue } from "src/types";
 
 export class DeleteIssuesWithSuppliedIds extends StorageTest<

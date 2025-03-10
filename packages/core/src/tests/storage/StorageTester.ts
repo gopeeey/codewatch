@@ -1,4 +1,4 @@
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { AddOccurrence } from "./AddOccurrence";
 import { Close } from "./Close";
 import { CreateIssue } from "./CreateIssue";

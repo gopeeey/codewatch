@@ -1,5 +1,9 @@
 import { StorageTest } from "src/tests/storage/StorageTest";
-import { IsoFromNow, TestIssueData } from "src/tests/storage/types";
+import {
+  GetStorageFunc,
+  IsoFromNow,
+  TestIssueData,
+} from "src/tests/storage/types";
 import {
   archivedFilter,
   fPrintSortFn,
@@ -8,7 +12,6 @@ import {
   timeFilter,
   unresolvedFilter,
 } from "src/tests/storage/utils";
-import { GetStorageFunc } from "src/tests/types";
 import { GetIssuesFilters, Issue } from "src/types";
 
 export class ApplyFilters extends StorageTest {

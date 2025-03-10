@@ -1,8 +1,8 @@
 import { StorageScenario } from "src/tests/storage/StorageScenario";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import {
-  CraeteOccurrenceData,
   CreateIssueData,
+  CreateOccurrenceData,
   InsertTestIssueFn,
   InsertTestOccurrenceFn,
   TestIssueData,
@@ -13,6 +13,7 @@ import { DeleteIssues } from "./DeleteIssues";
 import { FindIssueById } from "./FindIssueById";
 import { GetIssuesTotal } from "./GetIssuesTotal";
 import { GetPaginatedIssues } from "./GetPaginatedIssues";
+import { GetPaginatedOccurrences } from "./GetPaginatedOccurrences";
 import { ResolveIssues } from "./ResolveIssues";
 import { UnarchiveIssues } from "./UnarchiveIssues";
 import { UnresolveIssues } from "./UnresolveIssues";
@@ -31,6 +32,7 @@ export class SeededCrud extends StorageScenario {
   archive_issues: ArchiveIssues;
   unarchive_issues: UnarchiveIssues;
   find_issue_by_id: FindIssueById;
+  get_paginated_occurrences: GetPaginatedOccurrences;
 
   constructor(getStorage: GetStorageFunc) {
     super(getStorage);
@@ -54,6 +56,12 @@ export class SeededCrud extends StorageScenario {
     this.archive_issues = new ArchiveIssues(getStorage);
     this.unarchive_issues = new UnarchiveIssues(getStorage);
     this.find_issue_by_id = new FindIssueById(getStorage);
+    this.get_paginated_occurrences = new GetPaginatedOccurrences(
+      getStorage,
+      this.insertOccurrence.bind(this),
+      this.insertIssue.bind(this),
+      this.isoFromNow.bind(this)
+    );
   }
 
   private isoFromNow = (offset: number) => {
@@ -140,7 +148,7 @@ export class SeededCrud extends StorageScenario {
     return this.insertTestIssue(data);
   }
 
-  private async insertOccurrence(data: CraeteOccurrenceData) {
+  private async insertOccurrence(data: CreateOccurrenceData) {
     if (!this.insertTestOccurrence) {
       throw new Error("No insertTestOccurrence function set");
     }
@@ -193,6 +201,7 @@ export class SeededCrud extends StorageScenario {
       this.archive_issues.run();
       this.unarchive_issues.run();
       this.find_issue_by_id.run();
+      this.get_paginated_occurrences.run();
     });
   }
 }

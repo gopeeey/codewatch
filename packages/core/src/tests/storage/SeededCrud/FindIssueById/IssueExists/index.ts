@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/tests/storage/StorageScenario";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { ReturnIssue } from "./ReturnIssue";
 
 export class IssueExists extends StorageScenario {

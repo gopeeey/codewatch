@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/tests/storage/StorageScenario";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { CommitTransaction } from "./CommitTransaction";
 import { EndTransaction } from "./EndTransaction";
 import { ReturnCallbackReturnValue } from "./ReturnCallbackReturnValue";

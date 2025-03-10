@@ -1,5 +1,5 @@
 import { Test } from "src/tests/Test";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { Storage } from "src/types";
 
 export class StorageTest<

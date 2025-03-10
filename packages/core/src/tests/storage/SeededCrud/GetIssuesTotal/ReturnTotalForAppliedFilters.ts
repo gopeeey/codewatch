@@ -1,11 +1,11 @@
 import { StorageTest } from "src/tests/storage/StorageTest";
+import { GetStorageFunc } from "src/tests/storage/types";
 import {
   archivedFilter,
   resolvedFilter,
   timeFilter,
   unresolvedFilter,
 } from "src/tests/storage/utils";
-import { GetStorageFunc } from "src/tests/types";
 import { GetIssuesFilters } from "src/types";
 import { IsoFromNow, TestIssueData } from "../../types";
 

@@ -1,6 +1,9 @@
 import { StorageScenario } from "src/tests/storage/StorageScenario";
-import { IsoFromNow, TestIssueData } from "src/tests/storage/types";
-import { GetStorageFunc } from "src/tests/types";
+import {
+  GetStorageFunc,
+  IsoFromNow,
+  TestIssueData,
+} from "src/tests/storage/types";
 import { ApplyFilters } from "./ApplyFilters";
 import { PaginateIssues } from "./PaginateIssues";
 import { SortByParam } from "./SortByParam";

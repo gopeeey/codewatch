@@ -1,5 +1,5 @@
 import { Scenario } from "src/tests/Scenario";
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { Storage } from "src/types";
 
 export class StorageScenario extends Scenario<Storage> {

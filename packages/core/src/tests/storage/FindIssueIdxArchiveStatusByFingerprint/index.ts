@@ -1,4 +1,4 @@
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { StorageScenario } from "../StorageScenario";
 import { IssueDoesntExist } from "./IssueDoesntExist";
 import { IssueExists } from "./IssueExists";

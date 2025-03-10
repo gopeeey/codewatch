@@ -1,5 +1,3 @@
-import { Storage } from "@types";
-
 export type Hook<Data = never, ReturnType = void> = (
   data: Data
 ) => Promise<ReturnType>;
@@ -24,7 +22,6 @@ export interface Scenario {
 }
 
 export type GetTestObjectFunc<TestObject> = () => TestObject;
-export type GetStorageFunc = GetTestObjectFunc<Storage>;
 
 export interface StorageTester {
   run: () => Promise<void>;

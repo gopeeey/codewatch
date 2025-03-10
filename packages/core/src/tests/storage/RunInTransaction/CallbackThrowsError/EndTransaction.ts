@@ -1,6 +1,6 @@
 import { StorageTest } from "src/tests/storage/StorageTest";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { createCreateIssueData } from "src/tests/storage/utils";
-import { GetStorageFunc } from "src/tests/types";
 import { Transaction } from "src/types";
 
 export class EndTransaction extends StorageTest {

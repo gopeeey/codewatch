@@ -1,4 +1,4 @@
-import { GetStorageFunc } from "src/tests/types";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { Occurrence, Transaction } from "src/types";
 import { StorageTest } from "../StorageTest";
 import { createCreateIssueData } from "../utils";

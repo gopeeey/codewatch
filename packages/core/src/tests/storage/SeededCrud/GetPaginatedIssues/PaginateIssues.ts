@@ -1,6 +1,6 @@
 import { StorageTest } from "src/tests/storage/StorageTest";
+import { GetStorageFunc } from "src/tests/storage/types";
 import { fPrintSortFn } from "src/tests/storage/utils";
-import { GetStorageFunc } from "src/tests/types";
 
 export class PaginateIssues extends StorageTest {
   constructor(getStorage: GetStorageFunc) {
