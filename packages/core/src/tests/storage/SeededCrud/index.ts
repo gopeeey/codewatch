@@ -12,6 +12,7 @@ import { DeleteIssues } from "./DeleteIssues";
 import { GetIssuesTotal } from "./GetIssuesTotal";
 import { GetPaginatedIssues } from "./GetPaginatedIssues";
 import { ResolveIssues } from "./ResolveIssues";
+import { UnresolveIssues } from "./UnresolveIssues";
 
 export class SeededCrud extends StorageScenario {
   crudNow = Date.now();
@@ -23,6 +24,7 @@ export class SeededCrud extends StorageScenario {
   get_issues_total: GetIssuesTotal;
   delete_issues: DeleteIssues;
   resolve_issues: ResolveIssues;
+  unresolve_issues: UnresolveIssues;
 
   constructor(getStorage: GetStorageFunc) {
     super(getStorage);
@@ -42,6 +44,7 @@ export class SeededCrud extends StorageScenario {
 
     this.delete_issues = new DeleteIssues(getStorage);
     this.resolve_issues = new ResolveIssues(getStorage);
+    this.unresolve_issues = new UnresolveIssues(getStorage);
   }
 
   private isoFromNow = (offset: number) => {
@@ -177,6 +180,7 @@ export class SeededCrud extends StorageScenario {
       this.get_issues_total.run();
       this.delete_issues.run();
       this.resolve_issues.run();
+      this.unresolve_issues.run();
     });
   }
 }

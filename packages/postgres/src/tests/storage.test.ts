@@ -47,6 +47,14 @@ async function getIssueById(
   return null;
 }
 
+async function getMultipleIssuesByIds(ids: Issue["id"][]): Promise<Issue[]> {
+  const { rows: resolvedIssues } = await pool.query<DbIssue>(
+    SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${ids});`
+  );
+
+  return resolvedIssues.map(dbIssueToIssue);
+}
+
 storageTester.createIssue.persist_issue.setPostProcessingFunc(
   async ({ id, transaction }) => {
     return getIssueById(id, transaction);
@@ -160,13 +168,7 @@ storageTester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setSeedFu
 );
 
 storageTester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setPostProcessingFunc(
-  async (issueIds) => {
-    const { rows: deletedIssues } = await pool.query<DbIssue>(
-      SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${issueIds});`
-    );
-
-    return deletedIssues.map(dbIssueToIssue);
-  }
+  getMultipleIssuesByIds
 );
 
 storageTester.seededCrud.resolve_issues.update_resolved_to_true.setSeedFunc(
@@ -180,13 +182,22 @@ storageTester.seededCrud.resolve_issues.update_resolved_to_true.setSeedFunc(
 );
 
 storageTester.seededCrud.resolve_issues.update_resolved_to_true.setPostProcessingFunc(
-  async (ids) => {
-    const { rows: resolvedIssues } = await pool.query<DbIssue>(
-      SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${ids});`
+  getMultipleIssuesByIds
+);
+
+storageTester.seededCrud.unresolve_issues.update_resolved_to_false.setSeedFunc(
+  async () => {
+    await pool.query(SQL`UPDATE codewatch_pg_issues SET resolved = true;`);
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE resolved = true LIMIT 2;`
     );
 
-    return resolvedIssues.map(dbIssueToIssue);
+    return issues.map(dbIssueToIssue);
   }
+);
+
+storageTester.seededCrud.unresolve_issues.update_resolved_to_false.setPostProcessingFunc(
+  getMultipleIssuesByIds
 );
 
 storageTester.run();

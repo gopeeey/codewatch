@@ -2,7 +2,7 @@ import { StorageTest } from "src/tests/storage/StorageTest";
 import { GetStorageFunc } from "src/tests/types";
 import { Issue } from "src/types";
 
-export class UpdateResolvedToTrue extends StorageTest<
+export class UpdateResolvedToFalse extends StorageTest<
   void,
   Issue[],
   Issue["id"][],
@@ -13,7 +13,7 @@ export class UpdateResolvedToTrue extends StorageTest<
   }
 
   run(): void {
-    it("should update resolved to true on the issues with the supplied ids", async () => {
+    it("should update resolved to false on the issues with the supplied ids", async () => {
       const issues = await this.seedFunc();
       if (issues.length < 2)
         throw new Error(
@@ -26,9 +26,9 @@ export class UpdateResolvedToTrue extends StorageTest<
           );
         }
 
-        if (issue.resolved) {
+        if (!issue.resolved) {
           throw new Error(
-            "The value of 'resolved' in the issues returned by the seed function must be false"
+            "The value of 'resolved' in the issues returned by the seed function must be true"
           );
         }
       });
@@ -37,21 +37,21 @@ export class UpdateResolvedToTrue extends StorageTest<
 
       try {
         const ids = issues.map(({ id }) => id);
-        await storage.resolveIssues(ids);
-        const resolvedIssues = await this.postProcessingFunc(ids);
+        await storage.unresolveIssues(ids);
+        const unresolvedIssues = await this.postProcessingFunc(ids);
 
-        expect(resolvedIssues.length).toBe(issues.length);
+        expect(unresolvedIssues.length).toBe(issues.length);
         for (const id of ids) {
-          const issue = resolvedIssues.find((issue) => issue.id === id);
+          const issue = unresolvedIssues.find((issue) => issue.id === id);
           if (!issue) {
             throw new Error(
               "Issue with id " +
                 id +
-                " not found in resolved issues returned by postProcessingFunc"
+                " not found in unresolved issues returned by postProcessingFunc"
             );
           }
 
-          expect(issue.resolved).toBe(true);
+          expect(issue.resolved).toBe(false);
         }
       } catch (err) {
         await storage.close();
