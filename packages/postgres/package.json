@@ -1,6 +1,6 @@
 {
   "name": "codewatch-postgres",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Postgresql adapter for codewatch",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -43,7 +43,7 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "codewatch-core": "^1.0.3",
+    "codewatch-core": "^1.0.4",
     "pg": "^8.11.3",
     "sql-template-strings": "^2.2.2"
   }
