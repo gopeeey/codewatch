@@ -5,7 +5,7 @@ import { errorHandler } from "./controllers";
 import { Core } from "./core";
 import { appRoutes } from "./routes";
 
-const require = createRequire(import.meta.url);
+const require = createRequire(import.meta.url || __filename);
 
 /**
  * Initializes the codewatch core and plugins

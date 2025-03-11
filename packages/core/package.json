@@ -1,6 +1,6 @@
 {
   "name": "codewatch-core",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Core for codewatch",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
