@@ -1,4 +1,4 @@
-import { StorageTester } from "codewatch-core/dist/tests/storage/StorageTester";
+import { StorageTester } from "codewatch-core/dist/storage";
 import { Issue } from "codewatch-core/dist/types";
 import { config } from "dotenv";
 import Levenshtein from "levenshtein";
@@ -55,7 +55,7 @@ export const setup = (tester: StorageTester) => {
     port: Number(process.env.POSTGRES_DB_PORT),
   });
 
-  tester.setAfterEach(async () => {
+  tester.setCleanupTablesFunc(async () => {
     // Truncate each table except migrations
     await pool.query(SQL`TRUNCATE codewatch_pg_issues CASCADE;`);
     await pool.query(
@@ -67,7 +67,7 @@ export const setup = (tester: StorageTester) => {
     await pool.query(SQL`TRUNCATE codewatch_pg_occurrences CASCADE;`);
   }, 5000);
 
-  tester.setAfterAll(async () => {
+  tester.setCleanupDbFunc(async () => {
     try {
       await pool.query(`
       DROP SCHEMA public CASCADE;

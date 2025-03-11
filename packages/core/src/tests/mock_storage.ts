@@ -28,6 +28,7 @@ export class MockStorage implements Storage {
     end: async () => {},
     commitAndEnd: async () => {},
     rollbackAndEnd: async () => {},
+    ended: false,
   });
 
   runInTransaction: Storage["runInTransaction"] = async (fn) => {

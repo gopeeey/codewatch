@@ -1,4 +1,4 @@
-import { StorageTester } from "codewatch-core/dist/tests/storage/StorageTester";
+import { StorageTester } from "codewatch-core/dist/storage";
 import { Issue, Occurrence, Transaction } from "codewatch-core/dist/types";
 import SQL from "sql-template-strings";
 import { CodewatchPgStorage, PgTransaction } from "../storage";
