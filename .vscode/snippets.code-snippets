@@ -10,9 +10,9 @@
     "scope": "javascript,typescript",
     "prefix": "storageTestCase",
     "body": [
-      "import { GetStorageFunc } from \"src/tests/storage/types\";",
-      "import { StorageTest } from \"src/tests/storage/StorageTest\";",
-      "import { createCreateIssueData } from \"src/tests/storage/utils\";",
+      "import { GetStorageFunc } from \"src/storage/tester/types\";",
+      "import { StorageTest } from \"src/storage/tester/storage_test\";",
+      "import { createCreateIssueData } from \"src/storage/tester/utils\";",
       "",
       "export class ${1:TestCaseName} extends StorageTest {",
       "  constructor(getStorage: GetStorageFunc) {",
@@ -49,8 +49,8 @@
     "scope": "javascript,typescript",
     "prefix": "storageScenario",
     "body": [
-      "import { StorageScenario } from \"src/tests/storage/StorageScenario\";",
-      "import { GetStorageFunc } from \"src/tests/storage/types\";",
+      "import { StorageScenario } from \"src/storage/tester/storage_scenario\";",
+      "import { GetStorageFunc } from \"src/storage/tester/types\";",
       "import { ${3:TestCaseClass} } from \"./${3:TestCaseClass}\";",
       "",
       "export class ${1:ScenarioName} extends StorageScenario {",
