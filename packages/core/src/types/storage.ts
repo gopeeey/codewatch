@@ -12,6 +12,7 @@ export interface UpdateLastOccurrenceOnIssueType
 }
 
 export interface Transaction {
+  ended: boolean;
   commit: () => Promise<void>;
   rollback: () => Promise<void>;
   end: () => Promise<void>;

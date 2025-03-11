@@ -1,3 +1,4 @@
+import { StorageTransaction } from "codewatch-core/dist/storage";
 import {
   Issue,
   Occurrence,
@@ -154,13 +155,11 @@ export class CodewatchPgStorage implements Storage {
     const transaction = await this.createTransaction();
     try {
       const val = await fn(transaction);
-      await transaction.commit();
+      await transaction.commitAndEnd();
       return val;
     } catch (err) {
-      await transaction.rollback();
+      await transaction.rollbackAndEnd();
       throw err;
-    } finally {
-      await transaction.end();
     }
   };
 
@@ -559,10 +558,11 @@ export class CodewatchPgStorage implements Storage {
   };
 }
 
-export class PgTransaction implements Transaction {
+export class PgTransaction extends StorageTransaction {
   _client: pg.PoolClient;
 
   private constructor(client: pg.PoolClient) {
+    super();
     this._client = client;
   }
 
@@ -582,15 +582,16 @@ export class PgTransaction implements Transaction {
 
   async end() {
     this._client.release();
+    this.ended = true;
   }
 
   async commitAndEnd() {
     await this._client.query("COMMIT");
-    this._client.release();
+    await this.end();
   }
 
   async rollbackAndEnd() {
     await this._client.query("ROLLBACK");
-    this._client.release();
+    await this.end();
   }
 }

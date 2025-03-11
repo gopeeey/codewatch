@@ -1,137 +1,63 @@
-import {
-  Issue,
-  Occurrence,
-  UpdateLastOccurrenceOnIssueType,
-} from "codewatch-core/dist/types";
+import { StorageTester } from "codewatch-core/dist/storage";
+import { Issue, Occurrence, Transaction } from "codewatch-core/dist/types";
 import SQL from "sql-template-strings";
-import { PgTransaction } from "../storage";
+import { CodewatchPgStorage, PgTransaction } from "../storage";
 import { DbIssue } from "../types";
-import { createCreateIssueData, dbSetup, getStorage } from "./utils";
+import { setup } from "./utils";
 
-const pool = dbSetup();
-
-describe("init", () => {
-  describe("given the migrations table does not exist", () => {
-    it("should create the migrations table", async () => {
-      await pool.query(
-        SQL`DROP TABLE IF EXISTS codewatch_pg_migrations CASCADE;`
-      );
-
-      const storage = await getStorage(false);
-      await storage.init();
-
-      const { rows } = await pool.query(
-        SQL`SELECT EXISTS (
-                SELECT FROM pg_tables
-                WHERE schemaname = 'public'
-                AND tablename ='codewatch_pg_migrations'
-            );`
-      );
-
-      expect(rows[0].exists).toBe(true);
-      await storage.close();
-    });
+const getStorage = () => {
+  const storage = new CodewatchPgStorage({
+    user: process.env.POSTGRES_DB_USERNAME,
+    host: process.env.POSTGRES_DB_HOST,
+    database: process.env.POSTGRES_DB_NAME,
+    password: process.env.POSTGRES_DB_PASSWORD,
+    port: Number(process.env.POSTGRES_DB_PORT),
   });
+  return storage;
+};
 
-  it("should run all migrations up", async () => {
-    await pool.query(
-      SQL`
-      DROP TABLE IF EXISTS codewatch_pg_migrations CASCADE;
-      DROP TABLE IF EXISTS codewatch_pg_issues CASCADE;`
-    );
-    const storage = await getStorage(false);
-    await storage.init();
+const dbIssueToIssue = (dbIssue: DbIssue) => {
+  return {
+    ...dbIssue,
+    id: dbIssue.id.toString(),
+  };
+};
 
-    const { rows } = await pool.query(
-      SQL`SELECT tablename FROM pg_tables
-        WHERE schemaname = 'public'
-        AND tablename = ANY(${[
-          "codewatch_pg_issues",
-          "codewatch_pg_migrations",
-        ]});`
-    );
+const storageTester = new StorageTester(getStorage);
 
-    const tablenames = rows.map(({ tablename }) => tablename as string);
-    expect(tablenames).toContain("codewatch_pg_issues");
-    await storage.close();
-  });
+const pool = setup(storageTester);
 
-  it("should change the storage ready state to true", async () => {
-    const storage = await getStorage(false);
-    expect(storage.ready).toBe(false);
-    await storage.init();
+async function getIssueById(
+  issueId: Issue["id"],
+  transaction?: Transaction
+): Promise<Issue | null> {
+  let queryFunc = pool.query.bind(pool);
+  if (transaction && transaction instanceof PgTransaction) {
+    queryFunc = transaction._client.query.bind(transaction._client);
+  }
+  const { rows } = await queryFunc<DbIssue>(
+    SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${issueId};`
+  );
+  if (rows[0]) return dbIssueToIssue(rows[0]);
+  return null;
+}
 
-    expect(storage.ready).toBe(true);
-    await storage.close();
-  });
-});
+async function getMultipleIssuesByIds(ids: Issue["id"][]): Promise<Issue[]> {
+  const { rows: resolvedIssues } = await pool.query<DbIssue>(
+    SQL`SELECT * FROM codewatch_pg_issues WHERE id = ANY(${ids});`
+  );
 
-describe("close", () => {
-  it("should change the storage ready state to false", async () => {
-    const storage = await getStorage();
-    expect(storage.ready).toBe(true);
-    await storage.close();
-    expect(storage.ready).toBe(false);
-  });
-});
+  return resolvedIssues.map(dbIssueToIssue);
+}
 
-describe("createIssue", () => {
-  it("should create a new issue row", async () => {
-    const now = new Date().toISOString();
-    const issueData = createCreateIssueData(now);
-    const storage = await getStorage();
-    const transaction = await storage.createTransaction();
-    const testStart = Date.now();
-    const id = await storage.createIssue(issueData, transaction);
-    const testEnd = Date.now();
+storageTester.createIssue.persist_issue.setPostProcessingFunc(
+  async ({ id, transaction }) => {
+    return getIssueById(id, transaction);
+  }
+);
 
-    const { rows } = await (transaction as PgTransaction)._client.query<
-      Pick<DbIssue, "fingerprint" | "id" | "createdAt">
-    >(SQL`SELECT fingerprint, id, "createdAt" FROM codewatch_pg_issues;`);
-
-    await transaction.rollbackAndEnd(); // Or commit and end, doesn't matter.
-
-    expect(rows[0].id.toString()).toBe(id);
-    expect(rows[0].fingerprint).toBe(issueData.fingerprint);
-    expect(new Date(rows[0].createdAt).getTime()).toBeGreaterThanOrEqual(
-      testStart
-    );
-    expect(new Date(rows[0].createdAt).getTime()).toBeLessThanOrEqual(testEnd);
-    await storage.close();
-  });
-});
-
-describe("addOccurrence", () => {
-  it("should create a new occurrence record", async () => {
-    const now = new Date().toISOString();
-    const issueData = createCreateIssueData(now);
-    const storage = await getStorage();
-    const transaction = await storage.createTransaction();
-    const issueId = await storage.createIssue(issueData, transaction);
-
-    const data: Occurrence = {
-      issueId,
-      message: "Error 1",
-      timestamp: now,
-      stderrLogs: [
-        { timestamp: 1234567, message: "something was logged here" },
-      ],
-      stdoutLogs: [
-        { timestamp: 534564567, message: "something was logged here too" },
-      ],
-      stack: "error location",
-      extraData: { foo: "bar" },
-      systemInfo: {
-        appMemoryUsage: 1234,
-        appUptime: 1234,
-        deviceMemory: 1234,
-        deviceUptime: 1234,
-        freeMemory: 1234,
-      },
-      context: [["foo", "bar"]],
-    };
-    await storage.addOccurrence(data, transaction);
-
+storageTester.addOccurrence.create_new_occurrence.setPostProcessingFunc(
+  async ({ issueId, transaction }) => {
     const { rows } = await (
       transaction as PgTransaction
     )._client.query<Occurrence>(
@@ -142,56 +68,22 @@ describe("addOccurrence", () => {
       `
     );
 
-    await transaction.rollbackAndEnd();
+    return rows[0];
+  }
+);
 
-    expect(rows).toHaveLength(1);
-    rows[0].issueId = rows[0].issueId.toString();
-    expect(rows[0]).toMatchObject(data);
-    await storage.close();
-  });
-});
-
-describe("updateLastOccurrenceOnIssue", () => {
-  it("should update the last occurrence timestamp, increment total occurrences and update resolved", async () => {
-    const now = new Date().toISOString();
-    const issueData = createCreateIssueData(now);
-    const storage = await getStorage();
-    const transaction = await storage.createTransaction();
-    const issueId = await storage.createIssue(issueData, transaction);
-
-    const updates: Omit<UpdateLastOccurrenceOnIssueType, "issueId">[] = [
-      {
-        message: "Error 1",
-        timestamp: now,
-        resolved: false,
-      },
-      {
-        message: "Error 2",
-        timestamp: now,
-        resolved: true,
-      },
-    ];
-
-    for (let i = 0; i < updates.length; i++) {
-      const update = updates[i];
-      await storage.updateLastOccurrenceOnIssue(
-        {
-          issueId,
-          ...update,
-        },
-        transaction
-      );
-
-      const { rows } = await (transaction as PgTransaction)._client.query<
-        Pick<
-          Issue,
-          | "totalOccurrences"
-          | "lastOccurrenceTimestamp"
-          | "lastOccurrenceMessage"
-          | "resolved"
-        >
-      >(
-        SQL`
+storageTester.updateLastOccurrenceOnIssue.update_issue.setPostProcessingFunc(
+  async ({ issueId, transaction }) => {
+    const { rows } = await (transaction as PgTransaction)._client.query<
+      Pick<
+        Issue,
+        | "totalOccurrences"
+        | "lastOccurrenceTimestamp"
+        | "lastOccurrenceMessage"
+        | "resolved"
+      >
+    >(
+      SQL`
         SELECT 
         "totalOccurrences", 
         "lastOccurrenceTimestamp",
@@ -199,106 +91,143 @@ describe("updateLastOccurrenceOnIssue", () => {
         "resolved" 
         FROM codewatch_pg_issues 
         WHERE id = ${issueId};`
-      );
+    );
 
-      await transaction.commit();
+    return rows[0];
+  }
+);
 
-      expect(rows[0].totalOccurrences).toBe(i + 2);
-      expect(rows[0].lastOccurrenceTimestamp).toBe(update.timestamp);
-      expect(rows[0].resolved).toBe(update.resolved);
-      expect(rows[0].lastOccurrenceMessage).toBe(update.message);
+storageTester.runInTransaction.call_back_throws_error.rollback_transaction.setPostProcessingFunc(
+  async ({ fingerprint }) => {
+    const { rows } = await pool.query<Issue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE "fingerprint" = ${fingerprint};`
+    );
+
+    return rows[0] || null;
+  }
+);
+
+storageTester.runInTransaction.call_back_doesnt_throw_error.commit_transaction.setPostProcessingFunc(
+  async ({ issueId }) => {
+    return getIssueById(issueId);
+  }
+);
+
+storageTester.seededCrud.setInsertTestIssueFn(async (data) => {
+  const query = SQL`INSERT INTO codewatch_pg_issues ( "`;
+  const keys: string[] = [];
+  const values: string[] = [];
+  for (const entry of Object.entries(data)) {
+    keys.push(entry[0]);
+    values.push(entry[1]);
+  }
+  query.append(keys.join(`", "`)).append(`") VALUES (`);
+  values.forEach((value, index) => {
+    if (index === values.length - 1) {
+      query.append(SQL`${value}) `);
+    } else {
+      query.append(SQL`${value}, `);
     }
-    await transaction.end();
-    await storage.close();
   });
+
+  query.append("RETURNING id;");
+
+  const { rows } = await pool.query<Pick<DbIssue, "id">>(query);
+  if (!rows.length) throw new Error("Failed to insert issue");
+  return rows[0].id.toString();
 });
 
-describe("findIssueIdxArchiveStatusByFingerprint", () => {
-  describe("given an existing error record", () => {
-    it("should return the id of the record", async () => {
-      const now = new Date().toISOString();
-      const issueData = createCreateIssueData(now);
-      const storage = await getStorage();
-      const transaction = await storage.createTransaction();
-      const issueId = await storage.createIssue(issueData, transaction);
+storageTester.seededCrud.setInsertTestOccurrenceFn(async (data) => {
+  const occurrenceQuery = SQL`
+      INSERT INTO codewatch_pg_occurrences (
+        "issueId", "message", "stderrLogs", "stdoutLogs", "timestamp", "stack"
+      ) VALUES (
+        ${data.issueId},
+        ${data.message},
+        ${data.stderrLogs},
+        ${data.stdoutLogs},
+        ${data.timestamp},
+        ${data.stack}
+      );`;
 
-      const foundIssue = await storage.findIssueIdxArchiveStatusByFingerprint(
-        issueData.fingerprint,
-        transaction
-      );
-      await transaction.commitAndEnd();
-
-      if (!foundIssue) throw new Error("Issue not found");
-      expect(foundIssue.id).toBe(issueId);
-      expect(foundIssue.archived).toBe(false);
-      await storage.close();
-    });
-  });
-
-  describe("given a non-existing error record", () => {
-    it("should return null", async () => {
-      const fingerprint = "123456789012345678";
-
-      const storage = await getStorage();
-      const foundIssue = await storage.findIssueIdxArchiveStatusByFingerprint(
-        fingerprint
-      );
-
-      expect(foundIssue).toBeNull();
-      await storage.close();
-    });
-  });
+  await pool.query(occurrenceQuery);
 });
 
-describe("runInTransaction", () => {
-  it("should call it's callback with a transaction", async () => {
-    const callback = jest.fn();
-    const storage = await getStorage();
-    await storage.runInTransaction(callback);
-    expect(callback).toHaveBeenCalledWith(expect.any(PgTransaction));
-    await storage.close();
-  });
+storageTester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setSeedFunc(
+  async () => {
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues LIMIT 2;`
+    );
+    return issues.map(dbIssueToIssue);
+  }
+);
 
-  describe("given the callback throws an error", () => {
-    it("should rollback the transaction and throw the error", async () => {
-      const err = new Error("Hello there");
-      const fingerprint = "somethingspecial";
-      const storage = await getStorage();
+storageTester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setPostProcessingFunc(
+  getMultipleIssuesByIds
+);
 
-      expect(async () => {
-        await storage.runInTransaction(async (transaction) => {
-          const issueData = createCreateIssueData(new Date().toISOString(), {
-            fingerprint,
-          });
-          await storage.createIssue(issueData, transaction);
-          throw err;
-        });
-      }).rejects.toThrow(err);
+storageTester.seededCrud.resolve_issues.update_resolved_to_true.setSeedFunc(
+  async () => {
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE resolved = false LIMIT 2;`
+    );
 
-      const { rows } = await pool.query<Issue>(
-        SQL`SELECT * FROM codewatch_pg_issues WHERE "fingerprint" = ${fingerprint};`
-      );
-      expect(rows).toHaveLength(0);
+    return issues.map(dbIssueToIssue);
+  }
+);
 
-      await storage.close();
-    });
-  });
+storageTester.seededCrud.resolve_issues.update_resolved_to_true.setPostProcessingFunc(
+  getMultipleIssuesByIds
+);
 
-  describe("given the callback doesn't throw an error", () => {
-    it("should commit the transaction and return the return value of the callback", async () => {
-      const storage = await getStorage();
-      const id = await storage.runInTransaction(async (transaction) => {
-        const issueData = createCreateIssueData(new Date().toISOString());
-        return await storage.createIssue(issueData, transaction);
-      });
+storageTester.seededCrud.unresolve_issues.update_resolved_to_false.setSeedFunc(
+  async () => {
+    await pool.query(SQL`UPDATE codewatch_pg_issues SET resolved = true;`);
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE resolved = true LIMIT 2;`
+    );
 
-      expect(id).not.toBeUndefined();
-      expect(Number(id)).toBeGreaterThan(0);
-      const { rows } = await pool.query<Issue>(
-        SQL`SELECT * FROM codewatch_pg_issues WHERE id = ${id};`
-      );
-      expect(rows).toHaveLength(1);
-      await storage.close();
-    });
-  });
-});
+    return issues.map(dbIssueToIssue);
+  }
+);
+
+storageTester.seededCrud.unresolve_issues.update_resolved_to_false.setPostProcessingFunc(
+  getMultipleIssuesByIds
+);
+
+storageTester.seededCrud.archive_issues.update_archived_to_true.setSeedFunc(
+  async () => {
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE archived = false LIMIT 2;`
+    );
+
+    return issues.map(dbIssueToIssue);
+  }
+);
+
+storageTester.seededCrud.archive_issues.update_archived_to_true.setPostProcessingFunc(
+  getMultipleIssuesByIds
+);
+
+storageTester.seededCrud.unarchive_issues.update_archived_to_false.setSeedFunc(
+  async () => {
+    await pool.query(SQL`UPDATE codewatch_pg_issues SET archived = true;`);
+    const { rows: issues } = await pool.query<DbIssue>(
+      SQL`SELECT * FROM codewatch_pg_issues WHERE archived = true LIMIT 2;`
+    );
+
+    return issues.map(dbIssueToIssue);
+  }
+);
+
+storageTester.seededCrud.unarchive_issues.update_archived_to_false.setPostProcessingFunc(
+  getMultipleIssuesByIds
+);
+
+storageTester.seededCrud.find_issue_by_id.issue_exists.return_issue.setSeedFunc(
+  async (data) => {
+    return getIssueById(data.issueId, data.transaction);
+  }
+);
+
+storageTester.run();
