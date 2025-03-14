@@ -1,0 +1,25 @@
+{
+  "name": "codewatch-mongodb",
+  "version": "0.0.1",
+  "description": "MongoDB storage plugin for codewatch",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest --runInBand"
+  },
+  "author": "Samuel Gopeh",
+  "license": "MIT",
+  "dependencies": {
+    "codewatch-core": "^1.0.4",
+    "mongodb": "^6.14.2",
+    "nanoid": "^3.3.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.10",
+    "dotenv": "^16.4.7",
+    "ts-jest": "^29.2.6",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2"
+  }
+}
