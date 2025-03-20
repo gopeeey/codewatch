@@ -1,36 +1,56 @@
 import { StorageTester } from "codewatch-core/dist/storage";
-import { Issue } from "codewatch-core/dist/types";
-import dotenv from "dotenv";
-import { ClientSession } from "mongoose";
-import { IssueModel } from "../IssueModel";
-import { MongoDbStorage } from "../storage";
 import { MongoDbTransaction } from "../transaction";
-import { dbIssueToIssue } from "../utils";
+import { getStorage, Helper, makeInitSd } from "./helpers";
 
-dotenv.config();
+const storage = getStorage();
+const tester = new StorageTester(storage);
+const helper = new Helper(storage.connection);
 
-function getStorage() {
-  const storage = new MongoDbStorage(
-    process.env.MONGODB_CONNECTION_STRING as string
-  );
-  return storage;
-}
+tester.setCleanupTablesFunc(async () => {
+  await storage.issues.deleteMany();
+  await storage.occurrences.deleteMany();
+});
 
-const tester = new StorageTester(getStorage);
+tester.init.change_ready_state_to_true.setSeedFunc(makeInitSd());
+tester.init.change_ready_state_to_true.setTimeout(10000);
 
-async function getIssueById(
-  id: Issue["id"],
-  session: ClientSession
-): Promise<Issue | null> {
-  const issue = await IssueModel.findOne({ id }, null, { session });
-  if (!issue) return null;
-  return dbIssueToIssue(issue);
-}
+tester.close.change_ready_state_to_false.setSeedFunc(makeInitSd());
+tester.close.change_ready_state_to_false.setTimeout(10000);
 
 tester.createIssue.persist_issue.setPostProcessingFunc(
   async ({ id, transaction }) => {
-    return getIssueById(id, (transaction as MongoDbTransaction).session);
+    return helper.getIssueById(id, (transaction as MongoDbTransaction).session);
   }
 );
 
-tester.run();
+tester.runInTransaction.call_back_throws_error.rollback_transaction.setPostProcessingFunc(
+  helper.getIssueByFingerprint.bind(helper)
+);
+
+tester.runInTransaction.call_back_doesnt_throw_error.commit_transaction.setPostProcessingFunc(
+  async ({ issueId }) => {
+    return helper.getIssueById(issueId);
+  }
+);
+
+tester.addOccurrence.create_new_occurrence.setPostProcessingFunc(
+  async ({ issueId, transaction }) => {
+    return helper.getOccurrenceWithIssueId(
+      issueId,
+      (transaction as MongoDbTransaction).session
+    );
+  }
+);
+
+describe("Storage with transactions", () => {
+  beforeAll(async () => {
+    await new Promise((res, rej) => {
+      console.log("Connection ready state: " + storage.connection.readyState);
+      if (storage.connection.readyState === 1) return res("");
+      storage.connection.on("connected", res);
+      storage.connection.on("error", rej);
+    });
+  }, 20000);
+
+  tester.run();
+});

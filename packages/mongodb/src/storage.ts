@@ -1,3 +1,4 @@
+import { StorageTransaction } from "codewatch-core/dist/storage";
 import { T } from "codewatch-core/dist/storage-DglIu0ty";
 import {
   GetIssuesFilters,
@@ -11,26 +12,52 @@ import {
   Transaction,
   UpdateLastOccurrenceOnIssueType,
 } from "codewatch-core/dist/types";
-import mongoose from "mongoose";
-import { IssueModel } from "./IssueModel";
+import mongoose, { Connection, Model } from "mongoose";
+import { issueSchema, issuesCollectionName } from "./models/Issue";
+import {
+  occurrenceSchema,
+  occurrencesCollectionName,
+} from "./models/Occurrence";
 import { MongoDbTransaction } from "./transaction";
+import { DbIssue, DbOccurrence } from "./types";
 
 export class MongoDbStorage implements Storage {
   connectionString: string;
+  useTransactions: boolean;
+  connection: Connection;
 
-  constructor(connectionString: string) {
-    this.connectionString = connectionString;
-  }
+  issues: Model<DbIssue>;
+  occurrences: Model<DbOccurrence>;
 
   ready = false;
 
+  constructor(connectionString: string, useTransactions = true) {
+    this.connectionString = connectionString;
+    this.useTransactions = useTransactions;
+
+    this.connection = mongoose.createConnection(connectionString);
+    this.issues = this.connection.model<DbIssue>(
+      issuesCollectionName,
+      issueSchema
+    );
+    this.occurrences = this.connection.model<DbOccurrence>(
+      occurrencesCollectionName,
+      occurrenceSchema
+    );
+  }
+
   async init() {
-    await mongoose.connect(this.connectionString);
+    if (this.connection.readyState !== 1) {
+      await new Promise((resolve, reject) => {
+        this.connection.on("connected", resolve);
+        this.connection.on("error", reject);
+      });
+    }
     this.ready = true;
   }
 
   async close() {
-    await mongoose.connection.close();
+    await this.connection.close();
     this.ready = false;
   }
 
@@ -38,18 +65,23 @@ export class MongoDbStorage implements Storage {
     data: Omit<Issue, "id" | "resolved" | "createdAt">,
     transaction: Transaction
   ) {
-    const [issue] = await IssueModel.create([data], {
+    const [issue] = await this.issues.create([data], {
       session: (transaction as MongoDbTransaction).session,
     });
     return issue.id;
   }
 
-  async addOccurrence(data: Occurrence, transaction: Transaction) {}
+  async addOccurrence(data: Occurrence, transaction: Transaction) {
+    const [occurrence] = await this.occurrences.create([data], {
+      session: (transaction as MongoDbTransaction).session,
+    });
+  }
 
   async archiveIssues(ids: Issue["id"][]) {}
 
   async createTransaction() {
-    return MongoDbTransaction.start();
+    if (this.useTransactions) return MongoDbTransaction.start(this.issues);
+    return new StorageTransaction();
   }
 
   async deleteIssues(ids: Issue["id"][]) {}

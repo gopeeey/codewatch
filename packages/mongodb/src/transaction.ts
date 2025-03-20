@@ -1,6 +1,6 @@
 import { StorageTransaction } from "codewatch-core/dist/storage";
-import { ClientSession } from "mongoose";
-import { IssueModel } from "./IssueModel";
+import { ClientSession, Model } from "mongoose";
+import { DbIssue } from "./types";
 
 export class MongoDbTransaction extends StorageTransaction {
   session: ClientSession;
@@ -11,8 +11,8 @@ export class MongoDbTransaction extends StorageTransaction {
     this.ended = false;
   }
 
-  static async start() {
-    const session = await IssueModel.startSession();
+  static async start(model: Model<DbIssue>) {
+    const session = await model.startSession();
     session.startTransaction();
     return new MongoDbTransaction(session);
   }

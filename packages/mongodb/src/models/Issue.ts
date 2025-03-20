@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
-import { DbIssue } from "./types";
+import { DbIssue } from "../types";
 
-const issueSchema = new mongoose.Schema<DbIssue>(
+export const issueSchema = new mongoose.Schema<DbIssue>(
   {
     id: { type: String, default: () => nanoid(30), required: true },
     archived: { type: Boolean, default: false, required: true },
@@ -22,4 +22,4 @@ const issueSchema = new mongoose.Schema<DbIssue>(
   { timestamps: true }
 );
 
-export const IssueModel = mongoose.model("codewatchIssues", issueSchema);
+export const issuesCollectionName = "codewatchIssues";
