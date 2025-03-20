@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { EndTransaction } from "./end_transaction";
 import { RollbackTransaction } from "./rollback_transaction";
 import { ThrowError } from "./throw_error";
@@ -27,15 +27,15 @@ export class CallbackThrowsError extends StorageScenario {
    */
   throw_error: ThrowError;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
-    this.rollback_transaction = new RollbackTransaction(getStorage);
-    this.end_transaction = new EndTransaction(getStorage);
-    this.throw_error = new ThrowError(getStorage);
+    this.rollback_transaction = new RollbackTransaction(storage);
+    this.end_transaction = new EndTransaction(storage);
+    this.throw_error = new ThrowError(storage);
   }
 
-  run() {
+  protected runScenario() {
     describe("given the callback throws an error", () => {
       this.callHooks();
       this.rollback_transaction.run();

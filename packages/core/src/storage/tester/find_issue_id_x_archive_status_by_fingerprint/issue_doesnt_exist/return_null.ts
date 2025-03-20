@@ -1,18 +1,17 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 
 export class ReturnNull extends StorageTest {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should return null", async () => {
+  protected runTest(): void {
+    this.runJestTest("should return null", async () => {
       const storage = await this.getStorage();
       const foundIssue = await storage.findIssueIdxArchiveStatusByFingerprint(
         "123456789012345678"
       );
-      await storage.close();
 
       expect(foundIssue).toBeNull();
     });

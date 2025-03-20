@@ -1,14 +1,14 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc } from "src/storage/tester/types";
 import { createCreateIssueData } from "src/storage/tester/utils";
+import { Storage } from "src/types";
 
 export class ReturnCallbackReturnValue extends StorageTest {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should return the callback return value", async () => {
+  protected runTest(): void {
+    this.runJestTest("should return the callback return value", async () => {
       const storage = await this.getStorage();
       const issueData = createCreateIssueData(new Date().toISOString(), {
         resolved: false,
@@ -17,7 +17,6 @@ export class ReturnCallbackReturnValue extends StorageTest {
       const id = await storage.runInTransaction(async (transaction) => {
         return await storage.createIssue(issueData, transaction);
       });
-      await storage.close();
 
       expect(id).not.toBeUndefined();
       expect(id.length > 0).toBe(true);

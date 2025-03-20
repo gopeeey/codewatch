@@ -1,18 +1,18 @@
-import { GetStorageFunc, IsoFromNow } from "src/storage/tester/types";
-import { GetPaginatedOccurrencesFilters, Occurrence } from "src/types";
+import { IsoFromNow } from "src/storage/tester/types";
+import { GetPaginatedOccurrencesFilters, Occurrence, Storage } from "src/types";
 import { BaseOccurrencePaginationTest } from "./base_occurrence_pagination_test";
 
 export class ApplySuppliedFilters extends BaseOccurrencePaginationTest {
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     occurrenceCount: number,
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage, occurrenceCount, isoFromNow);
+    super(storage, occurrenceCount, isoFromNow);
   }
 
-  run(): void {
-    it("should apply the supplied filters", async () => {
+  protected runTest(): void {
+    this.runJestTest("should apply the supplied filters", async () => {
       const testData: {
         filters: Omit<GetPaginatedOccurrencesFilters, "page" | "perPage">;
         expectedMsgs: Occurrence["message"][];
@@ -60,24 +60,15 @@ export class ApplySuppliedFilters extends BaseOccurrencePaginationTest {
 
       const storage = await this.getStorage();
 
-      try {
-        for (const { filters, expectedMsgs } of testData) {
-          const occurrences = await storage.getPaginatedOccurrences({
-            ...filters,
-            page: 1,
-            perPage: this.occurrenceCount,
-          });
+      for (const { filters, expectedMsgs } of testData) {
+        const occurrences = await storage.getPaginatedOccurrences({
+          ...filters,
+          page: 1,
+          perPage: this.occurrenceCount,
+        });
 
-          expect(occurrences.map(({ message }) => message)).toEqual(
-            expectedMsgs
-          );
-        }
-      } catch (err) {
-        await storage.close();
-        throw err;
+        expect(occurrences.map(({ message }) => message)).toEqual(expectedMsgs);
       }
-
-      await storage.close();
     });
   }
 }

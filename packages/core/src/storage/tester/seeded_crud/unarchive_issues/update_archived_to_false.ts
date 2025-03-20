@@ -1,6 +1,5 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc } from "src/storage/tester/types";
-import { Issue } from "src/types";
+import { Issue, Storage } from "src/types";
 
 export class UpdateArchivedToFalse extends StorageTest<
   void,
@@ -8,34 +7,35 @@ export class UpdateArchivedToFalse extends StorageTest<
   Issue["id"][],
   Issue[]
 > {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should update archived to false on the issues with the supplied ids", async () => {
-      const issues = await this.seedFunc();
-      if (issues.length < 2)
-        throw new Error(
-          "Seed function should return two issues from the database"
-        );
-      issues.forEach((issue) => {
-        if (typeof issue.archived !== "boolean") {
+  protected runTest(): void {
+    this.runJestTest(
+      "should update archived to false on the issues with the supplied ids",
+      async () => {
+        const issues = await this.seedFunc();
+        if (issues.length < 2)
           throw new Error(
-            "The value of 'archived' in the issues returned by the seed function must be a boolean"
+            "Seed function should return two issues from the database"
           );
-        }
+        issues.forEach((issue) => {
+          if (typeof issue.archived !== "boolean") {
+            throw new Error(
+              "The value of 'archived' in the issues returned by the seed function must be a boolean"
+            );
+          }
 
-        if (!issue.archived) {
-          throw new Error(
-            "The value of 'archived' in the issues returned by the seed function must be true"
-          );
-        }
-      });
+          if (!issue.archived) {
+            throw new Error(
+              "The value of 'archived' in the issues returned by the seed function must be true"
+            );
+          }
+        });
 
-      const storage = await this.getStorage();
+        const storage = await this.getStorage();
 
-      try {
         const ids = issues.map(({ id }) => id);
         await storage.unarchiveIssues(ids);
         const unarchivedIssues = await this.postProcessingFunc(ids);
@@ -53,12 +53,7 @@ export class UpdateArchivedToFalse extends StorageTest<
 
           expect(issue.archived).toBe(false);
         }
-      } catch (err) {
-        await storage.close();
-        throw err;
       }
-
-      await storage.close();
-    });
+    );
   }
 }

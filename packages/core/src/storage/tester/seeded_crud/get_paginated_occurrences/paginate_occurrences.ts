@@ -1,18 +1,18 @@
-import { GetStorageFunc, IsoFromNow } from "src/storage/tester/types";
-import { Occurrence } from "src/types";
+import { IsoFromNow } from "src/storage/tester/types";
+import { Occurrence, Storage } from "src/types";
 import { BaseOccurrencePaginationTest } from "./base_occurrence_pagination_test";
 
 export class PaginateOccurrences extends BaseOccurrencePaginationTest {
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     occurrenceCount: number,
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage, occurrenceCount, isoFromNow);
+    super(storage, occurrenceCount, isoFromNow);
   }
 
-  run(): void {
-    it("should paginate the occurrences", async () => {
+  protected runTest(): void {
+    this.runJestTest("should paginate the occurrences", async () => {
       const testData: {
         page: number;
         perPage: number;
@@ -26,26 +26,18 @@ export class PaginateOccurrences extends BaseOccurrencePaginationTest {
       ];
 
       const storage = await this.getStorage();
-      try {
-        for (const { page, perPage, expectedMsgs } of testData) {
-          const occurrences = await storage.getPaginatedOccurrences({
-            issueId: this.issueId,
-            page,
-            perPage,
-            startDate: this.isoFromNow((this.occurrenceCount + 1) * 1000),
-            endDate: this.isoFromNow(0),
-          });
 
-          expect(occurrences.map(({ message }) => message)).toEqual(
-            expectedMsgs
-          );
-        }
-      } catch (err) {
-        await storage.close();
-        throw err;
+      for (const { page, perPage, expectedMsgs } of testData) {
+        const occurrences = await storage.getPaginatedOccurrences({
+          issueId: this.issueId,
+          page,
+          perPage,
+          startDate: this.isoFromNow((this.occurrenceCount + 1) * 1000),
+          endDate: this.isoFromNow(0),
+        });
+
+        expect(occurrences.map(({ message }) => message)).toEqual(expectedMsgs);
       }
-
-      await storage.close();
     });
   }
 }

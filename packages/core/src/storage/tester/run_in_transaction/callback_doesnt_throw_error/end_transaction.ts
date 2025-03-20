@@ -1,34 +1,27 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc } from "src/storage/tester/types";
 import { createCreateIssueData } from "src/storage/tester/utils";
-import { Transaction } from "src/types";
+import { Storage, Transaction } from "src/types";
 
 export class EndTransaction extends StorageTest {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should end the transaction", async () => {
+  protected runTest(): void {
+    this.runJestTest("should end the transaction", async () => {
       const storage = await this.getStorage();
       const issueData = createCreateIssueData(new Date().toISOString(), {
         resolved: false,
       });
       let trx: Transaction | undefined = undefined;
 
-      try {
-        await storage.runInTransaction(async (transaction) => {
-          trx = transaction;
-          return storage.createIssue(issueData, transaction);
-        });
-        await storage.close();
+      await storage.runInTransaction(async (transaction) => {
+        trx = transaction;
+        return storage.createIssue(issueData, transaction);
+      });
 
-        if (!trx) throw new Error("No transaction passed");
-        expect((trx as Transaction).ended).toBe(true);
-      } catch (err) {
-        await storage.close();
-        throw err;
-      }
+      if (!trx) throw new Error("No transaction passed");
+      expect((trx as Transaction).ended).toBe(true);
     });
   }
 }

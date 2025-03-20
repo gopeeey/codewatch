@@ -1,14 +1,14 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc } from "src/storage/tester/types";
 import { fPrintSortFn } from "src/storage/tester/utils";
+import { Storage } from "src/types";
 
 export class PaginateIssues extends StorageTest {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should paginate the issues", async () => {
+  protected runTest(): void {
+    this.runJestTest("should paginate the issues", async () => {
       const testData: {
         page: number;
         perPage: number;
@@ -23,27 +23,20 @@ export class PaginateIssues extends StorageTest {
 
       const storage = await this.getStorage();
 
-      try {
-        for (const { page, perPage, expectedFPrint } of testData) {
-          const issues = await storage.getPaginatedIssues({
-            searchString: "",
-            page,
-            perPage,
-            tab: "unresolved",
-            sort: "created-at",
-            order: "desc",
-          });
+      for (const { page, perPage, expectedFPrint } of testData) {
+        const issues = await storage.getPaginatedIssues({
+          searchString: "",
+          page,
+          perPage,
+          tab: "unresolved",
+          sort: "created-at",
+          order: "desc",
+        });
 
-          expect(
-            issues.map(({ fingerprint }) => fingerprint).sort(fPrintSortFn)
-          ).toEqual(expectedFPrint.sort(fPrintSortFn));
-        }
-      } catch (err) {
-        await storage.close();
-        throw err;
+        expect(
+          issues.map(({ fingerprint }) => fingerprint).sort(fPrintSortFn)
+        ).toEqual(expectedFPrint.sort(fPrintSortFn));
       }
-
-      await storage.close();
     });
   }
 }

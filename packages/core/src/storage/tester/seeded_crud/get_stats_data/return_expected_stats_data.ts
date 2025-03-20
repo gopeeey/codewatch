@@ -1,24 +1,23 @@
 import { StorageTest } from "src/storage/tester/storage_test";
 import {
-  GetStorageFunc,
   IsoFromNow,
   ModdedStatsData,
   TestCase,
   TestIssueData,
 } from "src/storage/tester/types";
 import { withinDateRange } from "src/storage/tester/utils";
-import { StatsData } from "src/types";
+import { StatsData, Storage } from "src/types";
 
 export class ReturnExpectedStatsData extends StorageTest {
   isoFromNow: IsoFromNow;
   issuesData: TestIssueData[];
 
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     issuesData: TestIssueData[],
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage);
+    super(storage);
     this.isoFromNow = isoFromNow;
     this.issuesData = issuesData;
   }
@@ -174,27 +173,28 @@ export class ReturnExpectedStatsData extends StorageTest {
     };
   }
 
-  run(): void {
-    it("should return the expected stats data for the supplied filters", async () => {
-      let otherTimezone = new Date().getTimezoneOffset() + 120;
-      if (otherTimezone > 60 * 13) otherTimezone = 0;
+  protected runTest(): void {
+    this.runJestTest(
+      "should return the expected stats data for the supplied filters",
+      async () => {
+        let otherTimezone = new Date().getTimezoneOffset() + 120;
+        if (otherTimezone > 60 * 13) otherTimezone = 0;
 
-      const dataSet: TestCase[] = [
-        this.createTestCase(10000, 0),
-        // this.createTestCase(25000, 5000),
-        // this.createTestCase(35000, 2000),
-        // this.createTestCase(15000, 10000),
-        // this.createTestCase(35000, 20000),
+        const dataSet: TestCase[] = [
+          this.createTestCase(10000, 0),
+          // this.createTestCase(25000, 5000),
+          // this.createTestCase(35000, 2000),
+          // this.createTestCase(15000, 10000),
+          // this.createTestCase(35000, 20000),
 
-        // this.createTestCase(10000, 0, otherTimezone),
-        // this.createTestCase(25000, 5000, otherTimezone),
-        // this.createTestCase(35000, 2000, otherTimezone),
-        // this.createTestCase(15000, 10000, otherTimezone),
-        // this.createTestCase(35000, 20000, otherTimezone),
-      ];
-      const storage = await this.getStorage();
+          // this.createTestCase(10000, 0, otherTimezone),
+          // this.createTestCase(25000, 5000, otherTimezone),
+          // this.createTestCase(35000, 2000, otherTimezone),
+          // this.createTestCase(15000, 10000, otherTimezone),
+          // this.createTestCase(35000, 20000, otherTimezone),
+        ];
+        const storage = await this.getStorage();
 
-      try {
         for (const testCase of dataSet) {
           const result = await storage.getStatsData(testCase.filter);
           const moddedResult: ModdedStatsData = {
@@ -205,12 +205,7 @@ export class ReturnExpectedStatsData extends StorageTest {
           };
           expect(moddedResult).toMatchObject(testCase.expectedStats);
         }
-      } catch (err) {
-        await storage.close();
-        throw err;
       }
-
-      await storage.close();
-    });
+    );
   }
 }

@@ -1,84 +1,84 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc } from "src/storage/tester/types";
 import { getStringDistance } from "src/storage/tester/utils";
-import { GetPaginatedIssuesFilters } from "src/types";
+import { GetPaginatedIssuesFilters, Storage } from "src/types";
 
 export class SortByParam extends StorageTest {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should sort the issues by the provided sort param in the specified order", async () => {
-      const storage = await this.getStorage();
-      const filters: GetPaginatedIssuesFilters[] = [
-        {
-          searchString: "",
-          page: 1,
-          perPage: 10,
-          tab: "unresolved",
-          sort: "created-at",
-          order: "desc",
-        },
-        {
-          searchString: "",
-          page: 1,
-          perPage: 10,
-          tab: "unresolved",
-          sort: "created-at",
-          order: "asc",
-        },
-        {
-          searchString: "",
-          page: 1,
-          perPage: 10,
-          tab: "unresolved",
-          sort: "last-seen",
-          order: "desc",
-        },
-        {
-          searchString: "",
-          page: 1,
-          perPage: 10,
-          tab: "unresolved",
-          sort: "last-seen",
-          order: "asc",
-        },
-        {
-          searchString: "",
-          page: 1,
-          perPage: 10,
-          tab: "unresolved",
-          sort: "total-occurrences",
-          order: "desc",
-        },
-        {
-          searchString: "",
-          page: 1,
-          perPage: 10,
-          tab: "unresolved",
-          sort: "total-occurrences",
-          order: "asc",
-        },
-        {
-          searchString: "Error",
-          page: 1,
-          perPage: 10,
-          tab: "unresolved",
-          sort: "relevance",
-          order: "desc",
-        },
-        {
-          searchString: "nothing like",
-          page: 1,
-          perPage: 10,
-          tab: "unresolved",
-          sort: "relevance",
-          order: "asc",
-        },
-      ];
+  protected runTest(): void {
+    this.runJestTest(
+      "should sort the issues by the provided sort param in the specified order",
+      async () => {
+        const storage = await this.getStorage();
+        const filters: GetPaginatedIssuesFilters[] = [
+          {
+            searchString: "",
+            page: 1,
+            perPage: 10,
+            tab: "unresolved",
+            sort: "created-at",
+            order: "desc",
+          },
+          {
+            searchString: "",
+            page: 1,
+            perPage: 10,
+            tab: "unresolved",
+            sort: "created-at",
+            order: "asc",
+          },
+          {
+            searchString: "",
+            page: 1,
+            perPage: 10,
+            tab: "unresolved",
+            sort: "last-seen",
+            order: "desc",
+          },
+          {
+            searchString: "",
+            page: 1,
+            perPage: 10,
+            tab: "unresolved",
+            sort: "last-seen",
+            order: "asc",
+          },
+          {
+            searchString: "",
+            page: 1,
+            perPage: 10,
+            tab: "unresolved",
+            sort: "total-occurrences",
+            order: "desc",
+          },
+          {
+            searchString: "",
+            page: 1,
+            perPage: 10,
+            tab: "unresolved",
+            sort: "total-occurrences",
+            order: "asc",
+          },
+          {
+            searchString: "Error",
+            page: 1,
+            perPage: 10,
+            tab: "unresolved",
+            sort: "relevance",
+            order: "desc",
+          },
+          {
+            searchString: "nothing like",
+            page: 1,
+            perPage: 10,
+            tab: "unresolved",
+            sort: "relevance",
+            order: "asc",
+          },
+        ];
 
-      try {
         for (const filter of filters) {
           const issues = await storage.getPaginatedIssues(filter);
 
@@ -127,12 +127,7 @@ export class SortByParam extends StorageTest {
             }
           }
         }
-      } catch (err) {
-        await storage.close();
-        throw err;
       }
-
-      await storage.close();
-    });
+    );
   }
 }

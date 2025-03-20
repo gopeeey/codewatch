@@ -1,6 +1,6 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc, IsoFromNow } from "src/storage/tester/types";
-import { Issue } from "src/types";
+import { IsoFromNow } from "src/storage/tester/types";
+import { Issue, Storage } from "src/types";
 
 export class BaseOccurrencePaginationTest extends StorageTest {
   occurrenceCount: number;
@@ -8,14 +8,14 @@ export class BaseOccurrencePaginationTest extends StorageTest {
   issueId: Issue["id"] = "isSetByTheScenario";
 
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     occurrenceCount: number,
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage);
+    super(storage);
     this.occurrenceCount = occurrenceCount;
     this.isoFromNow = isoFromNow;
   }
 
-  run(): void {}
+  protected runTest(): void {}
 }

@@ -1,7 +1,6 @@
-import { GetTestObjectFunc, Hook, Test as TestInterface } from "src/types/test";
+import { Hook, Test as TestInterface } from "src/types/test";
 
 export class Test<
-  TestObject,
   SeedData = void,
   SeedReturnType = void,
   PostProcessingData = undefined,
@@ -14,7 +13,8 @@ export class Test<
       PostProcessingReturnType
     >
 {
-  constructor(protected getTestObject: GetTestObjectFunc<TestObject>) {}
+  private _muted = false;
+  protected _timeout?: number = undefined;
 
   protected async seedFunc(data: SeedData): Promise<SeedReturnType> {
     throw new Error("Seed function not set");
@@ -23,6 +23,10 @@ export class Test<
     data: PostProcessingData
   ): Promise<PostProcessingReturnType> {
     throw new Error("Post-processing function not set");
+  }
+
+  mute() {
+    this._muted = true;
   }
 
   setSeedFunc(func: Hook<SeedData, SeedReturnType>) {
@@ -34,5 +38,19 @@ export class Test<
   ) {
     if (func) this.postProcessingFunc = func;
   }
-  run() {}
+
+  setTimeout(timeout: number) {
+    this._timeout = timeout;
+  }
+
+  protected runTest() {} // To be implemented in subclasses
+
+  run() {
+    if (this._muted) return;
+    this.runTest();
+  }
+
+  protected runJestTest(name: string, test: () => Promise<void>) {
+    it(name, test, this._timeout);
+  }
 }

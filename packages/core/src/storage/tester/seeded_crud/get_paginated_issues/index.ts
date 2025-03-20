@@ -1,9 +1,6 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import {
-  GetStorageFunc,
-  IsoFromNow,
-  TestIssueData,
-} from "src/storage/tester/types";
+import { IsoFromNow, TestIssueData } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { ApplyFilters } from "./apply_filters";
 import { PaginateIssues } from "./paginate_issues";
 import { SortByParam } from "./sort_by_param";
@@ -31,18 +28,18 @@ export class GetPaginatedIssues extends StorageScenario {
   apply_filters: ApplyFilters;
 
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     issuesData: TestIssueData[],
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage);
+    super(storage);
 
-    this.sort_by_param = new SortByParam(getStorage);
-    this.paginate_issues = new PaginateIssues(getStorage);
-    this.apply_filters = new ApplyFilters(getStorage, issuesData, isoFromNow);
+    this.sort_by_param = new SortByParam(storage);
+    this.paginate_issues = new PaginateIssues(storage);
+    this.apply_filters = new ApplyFilters(storage, issuesData, isoFromNow);
   }
 
-  run() {
+  protected runScenario() {
     describe("getPaginatedIssues", () => {
       this.callHooks();
       this.sort_by_param.run();

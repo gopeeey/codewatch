@@ -1,14 +1,14 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc } from "src/storage/tester/types";
 import { createCreateIssueData } from "src/storage/tester/utils";
+import { Storage } from "src/types";
 
 export class ThrowError extends StorageTest {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should throw the error", async () => {
+  protected runTest(): void {
+    this.runJestTest("should throw the error", async () => {
       const err = new Error("Hello there");
       const fingerprint = "somethingspecial";
       const storage = await this.getStorage();
@@ -23,8 +23,6 @@ export class ThrowError extends StorageTest {
           throw err;
         });
       }).rejects.toThrow(err);
-
-      await storage.close();
     });
   }
 }

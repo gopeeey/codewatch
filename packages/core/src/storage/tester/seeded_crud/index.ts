@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import {
   CreateIssueData,
   CreateOccurrenceData,
@@ -23,7 +23,6 @@ export class SeededCrud extends StorageScenario {
   crudNow = Date.now();
   private insertTestIssue?: InsertTestIssueFn;
   private insertTestOccurrence?: InsertTestOccurrenceFn;
-  private getStorage: GetStorageFunc;
 
   get_paginated_issues: GetPaginatedIssues;
   get_issues_total: GetIssuesTotal;
@@ -36,36 +35,35 @@ export class SeededCrud extends StorageScenario {
   get_paginated_occurrences: GetPaginatedOccurrences;
   get_stats_data: GetStatsData;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
-    this.getStorage = getStorage;
+  constructor(storage: Storage) {
+    super(storage);
 
     this.get_paginated_issues = new GetPaginatedIssues(
-      getStorage,
+      storage,
       this.issuesData,
       this.isoFromNow.bind(this)
     );
 
     this.get_issues_total = new GetIssuesTotal(
-      getStorage,
+      storage,
       this.issuesData,
       this.isoFromNow.bind(this)
     );
 
-    this.delete_issues = new DeleteIssues(getStorage);
-    this.resolve_issues = new ResolveIssues(getStorage);
-    this.unresolve_issues = new UnresolveIssues(getStorage);
-    this.archive_issues = new ArchiveIssues(getStorage);
-    this.unarchive_issues = new UnarchiveIssues(getStorage);
-    this.find_issue_by_id = new FindIssueById(getStorage);
+    this.delete_issues = new DeleteIssues(storage);
+    this.resolve_issues = new ResolveIssues(storage);
+    this.unresolve_issues = new UnresolveIssues(storage);
+    this.archive_issues = new ArchiveIssues(storage);
+    this.unarchive_issues = new UnarchiveIssues(storage);
+    this.find_issue_by_id = new FindIssueById(storage);
     this.get_paginated_occurrences = new GetPaginatedOccurrences(
-      getStorage,
+      storage,
       this.insertOccurrence.bind(this),
       this.insertIssue.bind(this),
       this.isoFromNow.bind(this)
     );
     this.get_stats_data = new GetStatsData(
-      getStorage,
+      storage,
       this.issuesData,
       this.isoFromNow.bind(this)
     );
@@ -163,42 +161,35 @@ export class SeededCrud extends StorageScenario {
   }
 
   private async seed() {
-    const storage = this.getStorage();
-    await storage.init(); // Just to initialize the storage (create tables or whatever if they don't exist)
-    try {
-      await Promise.all(
-        this.issuesData.map(async ({ timestamp, overrides }, index) => {
-          const issueData = createCreateIssueData(timestamp, overrides);
-          const issueId = await this.insertIssue(issueData);
+    if (!this._storage.ready) await this._storage.init(); // Just to initialize the storage (create tables or whatever if they don't exist)
 
-          for (let i = 0; i < issueData.totalOccurrences; i++) {
-            await this.insertOccurrence({
-              issueId,
-              message: `Occurrence for ${issueData.name}`,
-              stderrLogs: [],
-              stdoutLogs: [],
-              timestamp: new Date(
-                i + 1 === issueData.totalOccurrences
-                  ? issueData.lastOccurrenceTimestamp
-                  : issueData.createdAt
-              ).toISOString(),
-              stack: `Occurrence stack for ${issueData.name}`,
-            });
-          }
-        })
-      );
-    } catch (err) {
-      await storage.close();
-      throw err;
-    }
+    await Promise.all(
+      this.issuesData.map(async ({ timestamp, overrides }, index) => {
+        const issueData = createCreateIssueData(timestamp, overrides);
+        const issueId = await this.insertIssue(issueData);
 
-    await storage.close();
+        for (let i = 0; i < issueData.totalOccurrences; i++) {
+          await this.insertOccurrence({
+            issueId,
+            message: `Occurrence for ${issueData.name}`,
+            stderrLogs: [],
+            stdoutLogs: [],
+            timestamp: new Date(
+              i + 1 === issueData.totalOccurrences
+                ? issueData.lastOccurrenceTimestamp
+                : issueData.createdAt
+            ).toISOString(),
+            stack: `Occurrence stack for ${issueData.name}`,
+          });
+        }
+      })
+    );
   }
 
-  run() {
-    this.setBeforeEach(this.seed.bind(this), 5000);
-
+  protected runScenario() {
     describe("Seeded CRUD", () => {
+      beforeEach(this.seed.bind(this), 10000);
+
       this.callHooks();
       this.get_paginated_issues.run();
       this.get_issues_total.run();

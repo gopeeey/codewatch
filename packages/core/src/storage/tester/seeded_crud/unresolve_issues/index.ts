@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { UpdateResolvedToFalse } from "./updated_resolved_to_false";
 
 export class UnresolveIssues extends StorageScenario {
@@ -10,13 +10,13 @@ export class UnresolveIssues extends StorageScenario {
    */
   update_resolved_to_false: UpdateResolvedToFalse;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
-    this.update_resolved_to_false = new UpdateResolvedToFalse(getStorage);
+    this.update_resolved_to_false = new UpdateResolvedToFalse(storage);
   }
 
-  run() {
+  protected runScenario() {
     describe("unresolveIssues", () => {
       this.callHooks();
       this.update_resolved_to_false.run();

@@ -1,9 +1,6 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import {
-  GetStorageFunc,
-  IsoFromNow,
-  TestIssueData,
-} from "src/storage/tester/types";
+import { IsoFromNow, TestIssueData } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { ReturnExpectedStatsData } from "./return_expected_stats_data";
 
 export class GetStatsData extends StorageScenario {
@@ -15,20 +12,20 @@ export class GetStatsData extends StorageScenario {
   return_expected_stats_data: ReturnExpectedStatsData;
 
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     issuesData: TestIssueData[],
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage);
+    super(storage);
 
     this.return_expected_stats_data = new ReturnExpectedStatsData(
-      getStorage,
+      storage,
       issuesData,
       isoFromNow
     );
   }
 
-  run() {
+  protected runScenario() {
     describe("getStatsData", () => {
       this.callHooks();
       this.return_expected_stats_data.run();

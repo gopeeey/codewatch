@@ -1,4 +1,3 @@
-import { GetStorageFunc } from "src/storage/tester/types";
 import { Test } from "src/test";
 import { Storage } from "src/types";
 
@@ -8,19 +7,17 @@ export class StorageTest<
   PostProcessingData = undefined,
   PostProcessingReturnType = void
 > extends Test<
-  Storage,
   SeedData,
   SeedReturnType,
   PostProcessingData,
   PostProcessingReturnType
 > {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(private _storage: Storage) {
+    super();
   }
 
   protected async getStorage(init = true) {
-    const storage = this.getTestObject();
-    if (init) await storage.init();
-    return storage;
+    if (init && !this._storage.ready) await this._storage.init();
+    return this._storage;
   }
 }

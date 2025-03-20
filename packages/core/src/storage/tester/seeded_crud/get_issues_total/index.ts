@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { IsoFromNow, TestIssueData } from "../../types";
 import { ReturnTotalForAppliedFilters } from "./return_total_for_applied_filters";
 
@@ -12,19 +12,19 @@ export class GetIssuesTotal extends StorageScenario {
   return_total_for_applied_filters: ReturnTotalForAppliedFilters;
 
   constructor(
-    getStorage: GetStorageFunc,
+    private storage: Storage,
     issuesData: TestIssueData[],
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage);
+    super(storage);
     this.return_total_for_applied_filters = new ReturnTotalForAppliedFilters(
-      getStorage,
+      storage,
       issuesData,
       isoFromNow
     );
   }
 
-  run() {
+  protected runScenario() {
     describe("getIssuesTotal", () => {
       this.callHooks();
       this.return_total_for_applied_filters.run();

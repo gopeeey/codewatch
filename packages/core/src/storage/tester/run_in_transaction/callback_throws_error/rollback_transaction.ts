@@ -1,7 +1,6 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import { GetStorageFunc } from "src/storage/tester/types";
 import { createCreateIssueData } from "src/storage/tester/utils";
-import { Issue } from "src/types";
+import { Issue, Storage } from "src/types";
 
 export class RollbackTransaction extends StorageTest<
   void,
@@ -9,34 +8,28 @@ export class RollbackTransaction extends StorageTest<
   { fingerprint: Issue["fingerprint"] },
   Issue | null
 > {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should rollback the transaction", async () => {
+  protected runTest(): void {
+    this.runJestTest("should rollback the transaction", async () => {
       const err = new Error("Hello there");
       const fingerprint = "somethingspecial";
       const storage = await this.getStorage();
 
       try {
-        try {
-          await storage.runInTransaction(async (transaction) => {
-            const issueData = createCreateIssueData(new Date().toISOString(), {
-              fingerprint,
-            });
-            await storage.createIssue(issueData, transaction);
-            throw err;
+        await storage.runInTransaction(async (transaction) => {
+          const issueData = createCreateIssueData(new Date().toISOString(), {
+            fingerprint,
           });
-        } catch (err) {}
-        await storage.close();
+          await storage.createIssue(issueData, transaction);
+          throw err;
+        });
+      } catch (err) {}
 
-        const issue = await this.postProcessingFunc({ fingerprint });
-        expect(issue).toBeNull();
-      } catch (err) {
-        await storage.close();
-        throw err;
-      }
+      const issue = await this.postProcessingFunc({ fingerprint });
+      expect(issue).toBeNull();
     });
   }
 }

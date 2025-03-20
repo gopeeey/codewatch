@@ -1,5 +1,4 @@
-import { GetStorageFunc } from "src/storage/tester/types";
-import { Occurrence, Transaction } from "src/types";
+import { Occurrence, Storage, Transaction } from "src/types";
 import { StorageTest } from "../storage_test";
 import { createCreateIssueData } from "../utils";
 
@@ -9,12 +8,12 @@ export class CreateNewOccurrence extends StorageTest<
   { issueId: string; transaction: Transaction },
   Occurrence | null
 > {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should create a new occurrence record", async () => {
+  protected runTest(): void {
+    this.runJestTest("should create a new occurrence record", async () => {
       const now = new Date().toISOString();
       const issueData = createCreateIssueData(now);
       const storage = await this.getStorage();
@@ -51,7 +50,6 @@ export class CreateNewOccurrence extends StorageTest<
         });
 
         await transaction.rollbackAndEnd();
-        await storage.close();
 
         if (!occurrence) {
           throw new Error("No occurrence returned from postProcessingFunc");
@@ -60,7 +58,6 @@ export class CreateNewOccurrence extends StorageTest<
         expect(occurrence).toMatchObject(data);
       } catch (err) {
         if (!transaction.ended) await transaction.rollbackAndEnd();
-        await storage.close();
         throw err;
       }
     });

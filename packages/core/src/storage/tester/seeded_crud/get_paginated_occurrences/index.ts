@@ -1,11 +1,11 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
 import {
-  GetStorageFunc,
   InsertIssueFunc,
   InsertOccurrenceFunc,
   IsoFromNow,
 } from "src/storage/tester/types";
 import { createCreateIssueData } from "src/storage/tester/utils";
+import { Storage } from "src/types";
 import { ApplySuppliedFilters } from "./apply_supplied_filters";
 import { PaginateOccurrences } from "./paginate_occurrences";
 import { SortOccurrencesByTimestamp } from "./sort_occurrences_by_timestamp";
@@ -38,27 +38,27 @@ export class GetPaginatedOccurrences extends StorageScenario {
   private occurrenceCount = 10;
 
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     insertOccurrence: InsertOccurrenceFunc,
     insertIssue: InsertIssueFunc,
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage);
+    super(storage);
 
     this.sort_occurrences_by_timestamp = new SortOccurrencesByTimestamp(
-      getStorage,
+      storage,
       this.occurrenceCount,
       isoFromNow
     );
 
     this.paginate_occurrences = new PaginateOccurrences(
-      getStorage,
+      storage,
       this.occurrenceCount,
       isoFromNow
     );
 
     this.apply_supplied_filters = new ApplySuppliedFilters(
-      getStorage,
+      storage,
       this.occurrenceCount,
       isoFromNow
     );
@@ -89,7 +89,7 @@ export class GetPaginatedOccurrences extends StorageScenario {
     this.apply_supplied_filters.issueId = issueId;
   }
 
-  run() {
+  protected runScenario() {
     this.setBeforeEach(this.seedOccurrences.bind(this), 5000);
 
     describe("getPaginatedOccurrences", () => {

@@ -1,17 +1,20 @@
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { StorageTest } from "../storage_test";
 
-export class ChangeReadyStateToTrue extends StorageTest {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+export class ChangeReadyStateToTrue extends StorageTest<void, Storage> {
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should change the storage ready state to true", async () => {
-      const storage = await this.getStorage(false);
-      await storage.init();
-      expect(storage.ready).toBe(true);
-      await storage.close();
-    });
+  protected runTest(): void {
+    this.runJestTest(
+      "should change the storage ready state to true",
+      async () => {
+        const storage = await this.seedFunc();
+        await storage.init();
+        expect(storage.ready).toBe(true);
+        await storage.close();
+      }
+    );
   }
 }

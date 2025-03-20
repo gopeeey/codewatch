@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { UpdateArchivedToTrue } from "./update_archived_to_true";
 
 export class ArchiveIssues extends StorageScenario {
@@ -10,13 +10,13 @@ export class ArchiveIssues extends StorageScenario {
    */
   update_archived_to_true: UpdateArchivedToTrue;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
-    this.update_archived_to_true = new UpdateArchivedToTrue(getStorage);
+    this.update_archived_to_true = new UpdateArchivedToTrue(storage);
   }
 
-  run() {
+  protected runScenario() {
     describe("archiveIssues", () => {
       this.callHooks();
       this.update_archived_to_true.run();

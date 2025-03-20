@@ -1,4 +1,4 @@
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { StorageScenario } from "../storage_scenario";
 import { CreateNewOccurrence } from "./create_new_occurrence";
 
@@ -9,13 +9,13 @@ export class AddOccurrence extends StorageScenario {
    * Post-processor: should return an occurrence with the given issueId
    */
   create_new_occurrence: CreateNewOccurrence;
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
-    this.create_new_occurrence = new CreateNewOccurrence(getStorage);
+    this.create_new_occurrence = new CreateNewOccurrence(storage);
   }
 
-  run() {
+  protected runScenario() {
     describe("addOccurrence", () => {
       this.callHooks();
       this.create_new_occurrence.run();

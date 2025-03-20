@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { ReturnNull } from "./return_null";
 
 export class IssueDoesntExist extends StorageScenario {
@@ -10,13 +10,13 @@ export class IssueDoesntExist extends StorageScenario {
    */
   return_null: ReturnNull;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
-    this.return_null = new ReturnNull(getStorage);
+    this.return_null = new ReturnNull(storage);
   }
 
-  run() {
+  protected runScenario() {
     describe("given the issue doesn't exist", () => {
       this.callHooks();
       this.return_null.run();

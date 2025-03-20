@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { ReturnIssueId } from "./return_issue_id";
 
 export class IssueExists extends StorageScenario {
@@ -10,13 +10,13 @@ export class IssueExists extends StorageScenario {
    */
   return_issue_id: ReturnIssueId;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
-    this.return_issue_id = new ReturnIssueId(getStorage);
+    this.return_issue_id = new ReturnIssueId(storage);
   }
 
-  run() {
+  protected runScenario() {
     describe("given the issue exists", () => {
       this.callHooks();
       this.return_issue_id.run();

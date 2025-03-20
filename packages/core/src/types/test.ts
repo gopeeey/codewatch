@@ -12,6 +12,8 @@ export interface Test<
   setPostProcessingFunc: (
     func: Hook<PostProcessingData, PostProcessingReturnType>
   ) => void;
+  mute: () => void;
+  setTimeout: (timeout: number) => void;
 }
 
 export interface Scenario {
@@ -19,6 +21,7 @@ export interface Scenario {
   setAfterEach: (func: () => any, timeout?: number) => void;
   setBeforeAll: (func: () => any, timeout?: number) => void;
   setAfterAll: (func: () => any, timeout?: number) => void;
+  mute: () => void;
 }
 
 export type GetTestObjectFunc<TestObject> = () => TestObject;

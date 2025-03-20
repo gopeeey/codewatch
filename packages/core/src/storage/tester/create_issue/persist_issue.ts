@@ -1,5 +1,4 @@
-import { GetStorageFunc } from "src/storage/tester/types";
-import { Issue, Transaction } from "src/types";
+import { Issue, Storage, Transaction } from "src/types";
 import { StorageTest } from "../storage_test";
 import { createCreateIssueData } from "../utils";
 
@@ -9,12 +8,12 @@ export class PersistIssue extends StorageTest<
   { id: string; transaction: Transaction },
   Pick<Issue, "fingerprint" | "id" | "createdAt"> | null
 > {
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
   }
 
-  run(): void {
-    it("should persist the issue to the database", async () => {
+  protected runTest(): void {
+    this.runJestTest("should persist the issue to the database", async () => {
       const now = new Date().toISOString();
       const issueData = createCreateIssueData(now);
       const storage = await this.getStorage();
@@ -38,11 +37,8 @@ export class PersistIssue extends StorageTest<
         );
       } catch (err) {
         if (!transaction.ended) await transaction.rollbackAndEnd();
-        await storage.close();
         throw err;
       }
-
-      await storage.close();
     });
   }
 }

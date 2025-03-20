@@ -1,5 +1,5 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { DeleteIssuesWithSuppliedIds } from "./delete_issues_with_supplied_ids";
 
 export class DeleteIssues extends StorageScenario {
@@ -10,15 +10,15 @@ export class DeleteIssues extends StorageScenario {
    */
   delete_issues_with_supplied_ids: DeleteIssuesWithSuppliedIds;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
     this.delete_issues_with_supplied_ids = new DeleteIssuesWithSuppliedIds(
-      getStorage
+      storage
     );
   }
 
-  run() {
+  protected runScenario() {
     describe("deleteIssues", () => {
       this.callHooks();
       this.delete_issues_with_supplied_ids.run();

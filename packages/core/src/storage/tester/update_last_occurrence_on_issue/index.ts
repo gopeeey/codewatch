@@ -1,4 +1,4 @@
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { StorageScenario } from "../storage_scenario";
 import { UpdateIssue } from "./update_issue";
 
@@ -15,13 +15,13 @@ export class UpdateLastOccurrenceOnIssue extends StorageScenario {
    */
   update_issue: UpdateIssue;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
-    this.update_issue = new UpdateIssue(getStorage);
+    this.update_issue = new UpdateIssue(storage);
   }
 
-  run() {
+  protected runScenario() {
     describe("updateLastOccurrenceOnIssue", () => {
       this.callHooks();
       this.update_issue.run();

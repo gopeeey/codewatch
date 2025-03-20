@@ -1,20 +1,22 @@
-import { GetStorageFunc, IsoFromNow } from "src/storage/tester/types";
-import { Occurrence } from "src/types";
+import { IsoFromNow } from "src/storage/tester/types";
+import { Occurrence, Storage } from "src/types";
 import { BaseOccurrencePaginationTest } from "./base_occurrence_pagination_test";
 
 export class SortOccurrencesByTimestamp extends BaseOccurrencePaginationTest {
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     occurrenceCount: number,
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage, occurrenceCount, isoFromNow);
+    super(storage, occurrenceCount, isoFromNow);
   }
 
-  run(): void {
-    it("should sort the occurrences by timestamp in descending order", async () => {
-      const storage = await this.getStorage();
-      try {
+  protected runTest(): void {
+    this.runJestTest(
+      "should sort the occurrences by timestamp in descending order",
+      async () => {
+        const storage = await this.getStorage();
+
         const occurrences = await storage.getPaginatedOccurrences({
           issueId: this.issueId,
           page: 1,
@@ -33,12 +35,7 @@ export class SortOccurrencesByTimestamp extends BaseOccurrencePaginationTest {
           lastTimestamp = occurrence.timestamp;
         }
         expect.assertions(this.occurrenceCount - 1);
-      } catch (err) {
-        await storage.close();
-        throw err;
       }
-
-      await storage.close();
-    });
+    );
   }
 }

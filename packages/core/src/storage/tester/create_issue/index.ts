@@ -1,4 +1,4 @@
-import { GetStorageFunc } from "src/storage/tester/types";
+import { Storage } from "src/types";
 import { StorageScenario } from "../storage_scenario";
 import { PersistIssue } from "./persist_issue";
 
@@ -10,13 +10,13 @@ export class CreateIssue extends StorageScenario {
    */
   persist_issue: PersistIssue;
 
-  constructor(getStorage: GetStorageFunc) {
-    super(getStorage);
+  constructor(storage: Storage) {
+    super(storage);
 
-    this.persist_issue = new PersistIssue(getStorage);
+    this.persist_issue = new PersistIssue(storage);
   }
 
-  run() {
+  protected runScenario() {
     describe("createIssue", () => {
       this.callHooks();
       this.persist_issue.run();

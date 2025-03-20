@@ -1,9 +1,5 @@
 import { StorageTest } from "src/storage/tester/storage_test";
-import {
-  GetStorageFunc,
-  IsoFromNow,
-  TestIssueData,
-} from "src/storage/tester/types";
+import { IsoFromNow, TestIssueData } from "src/storage/tester/types";
 import {
   archivedFilter,
   fPrintSortFn,
@@ -12,24 +8,24 @@ import {
   timeFilter,
   unresolvedFilter,
 } from "src/storage/tester/utils";
-import { GetIssuesFilters, Issue } from "src/types";
+import { GetIssuesFilters, Issue, Storage } from "src/types";
 
 export class ApplyFilters extends StorageTest {
   private issuesData: TestIssueData[];
   private isoFromNow: IsoFromNow;
 
   constructor(
-    getStorage: GetStorageFunc,
+    storage: Storage,
     issuesData: TestIssueData[],
     isoFromNow: IsoFromNow
   ) {
-    super(getStorage);
+    super(storage);
     this.issuesData = issuesData;
     this.isoFromNow = isoFromNow;
   }
 
-  run(): void {
-    it("should apply the supplied filters", async () => {
+  protected runTest(): void {
+    this.runJestTest("should apply the supplied filters", async () => {
       const testData: {
         filters: GetIssuesFilters;
         expectedFPrints: Issue["fingerprint"][];
@@ -132,26 +128,19 @@ export class ApplyFilters extends StorageTest {
       ];
       const storage = await this.getStorage();
 
-      try {
-        for (const { filters, expectedFPrints } of testData) {
-          const issues = await storage.getPaginatedIssues({
-            ...filters,
-            page: 1,
-            perPage: 10,
-            sort: "created-at",
-            order: "desc",
-          });
+      for (const { filters, expectedFPrints } of testData) {
+        const issues = await storage.getPaginatedIssues({
+          ...filters,
+          page: 1,
+          perPage: 10,
+          sort: "created-at",
+          order: "desc",
+        });
 
-          expect(
-            issues.map(({ fingerprint }) => fingerprint).sort(fPrintSortFn)
-          ).toEqual(expectedFPrints.sort(fPrintSortFn));
-        }
-      } catch (err) {
-        await storage.close();
-        throw err;
+        expect(
+          issues.map(({ fingerprint }) => fingerprint).sort(fPrintSortFn)
+        ).toEqual(expectedFPrints.sort(fPrintSortFn));
       }
-
-      await storage.close();
     });
   }
 }
