@@ -17,7 +17,7 @@ export class UpdateIssue extends StorageTest<
     | "lastOccurrenceTimestamp"
     | "lastOccurrenceMessage"
     | "resolved"
-  >
+  > | null
 > {
   constructor(storage: Storage) {
     super(storage);
@@ -62,6 +62,12 @@ export class UpdateIssue extends StorageTest<
               transaction,
             });
             await transaction.commit();
+
+            if (!updatedIssue) {
+              throw new Error(
+                "No updated issue returned by postProcessingFunc"
+              );
+            }
 
             expect(updatedIssue.totalOccurrences).toBe(i + 2);
             expect(updatedIssue.lastOccurrenceTimestamp).toBe(update.timestamp);
