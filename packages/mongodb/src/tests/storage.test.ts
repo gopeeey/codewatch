@@ -19,12 +19,17 @@ tester.close.change_ready_state_to_false.setTimeout(10000);
 
 tester.createIssue.persist_issue.setPostProcessingFunc(
   async ({ id, transaction }) => {
-    return helper.getIssueById(id, (transaction as MongoDbTransaction).session);
+    return helper.getIssueById(
+      id,
+      (transaction as MongoDbTransaction)?.session
+    );
   }
 );
 
 tester.runInTransaction.call_back_throws_error.rollback_transaction.setPostProcessingFunc(
-  helper.getIssueByFingerprint.bind(helper)
+  async ({ fingerprint }) => {
+    return helper.getIssueByFingerprint(fingerprint);
+  }
 );
 
 tester.runInTransaction.call_back_doesnt_throw_error.commit_transaction.setPostProcessingFunc(
@@ -37,7 +42,16 @@ tester.addOccurrence.create_new_occurrence.setPostProcessingFunc(
   async ({ issueId, transaction }) => {
     return helper.getOccurrenceWithIssueId(
       issueId,
-      (transaction as MongoDbTransaction).session
+      (transaction as MongoDbTransaction)?.session
+    );
+  }
+);
+
+tester.updateLastOccurrenceOnIssue.update_issue.setPostProcessingFunc(
+  async ({ issueId, transaction }) => {
+    return helper.getLastOccurrenceUpdatedIssue(
+      issueId,
+      (transaction as MongoDbTransaction)?.session
     );
   }
 );

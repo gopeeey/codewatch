@@ -1,6 +1,6 @@
 import { Issue } from "codewatch-core/dist/types";
 import dotenv from "dotenv";
-import { ClientSession, Connection, Model } from "mongoose";
+import { ClientSession, Connection, Model, ProjectionType } from "mongoose";
 import { issueSchema, issuesCollectionName } from "../models/Issue";
 import {
   occurrenceSchema,
@@ -51,19 +51,22 @@ export class Helper {
 
   async getIssueById(
     id: Issue["id"],
-    session?: ClientSession
+    session?: ClientSession,
+    projection: ProjectionType<DbIssue> | null = null
   ): Promise<Issue | null> {
-    const issue = await this.issues.findOne({ id }, null, { session });
+    const issue = await this.issues.findOne({ id }, projection, { session });
     if (!issue) return null;
     return dbIssueToIssue(issue);
   }
 
-  async getIssueByFingerprint({
-    fingerprint,
-  }: {
-    fingerprint: Issue["fingerprint"];
-  }) {
-    const issue = await this.issues.findOne({ fingerprint });
+  async getIssueByFingerprint(
+    fingerprint: Issue["fingerprint"],
+    session?: ClientSession,
+    projection: ProjectionType<DbIssue> | null = null
+  ) {
+    const issue = await this.issues.findOne({ fingerprint }, projection, {
+      session,
+    });
     if (!issue) return null;
     return dbIssueToIssue(issue);
   }
@@ -77,5 +80,25 @@ export class Helper {
     });
     if (!occurrence) return null;
     return dbOccurrenceToOccurrence(occurrence);
+  }
+
+  async getLastOccurrenceUpdatedIssue(
+    issueId: Issue["id"],
+    session?: ClientSession
+  ) {
+    const issue = await this.getIssueById(issueId, session, {
+      totalOccurrences: 1,
+      lastOccurrenceMessage: 1,
+      resolved: 1,
+      lastOccurrenceTimestamp: 1,
+    });
+    if (!issue) return null;
+    return issue as Pick<
+      Issue,
+      | "totalOccurrences"
+      | "lastOccurrenceMessage"
+      | "lastOccurrenceTimestamp"
+      | "resolved"
+    >;
   }
 }

@@ -20,6 +20,7 @@ import {
 } from "./models/Occurrence";
 import { MongoDbTransaction } from "./transaction";
 import { DbIssue, DbOccurrence } from "./types";
+import { dbIssueToIssue } from "./utils";
 
 export class MongoDbStorage implements Storage {
   connectionString: string;
@@ -72,7 +73,7 @@ export class MongoDbStorage implements Storage {
   }
 
   async addOccurrence(data: Occurrence, transaction: Transaction) {
-    const [occurrence] = await this.occurrences.create([data], {
+    await this.occurrences.create([data], {
       session: (transaction as MongoDbTransaction).session,
     });
   }
@@ -94,7 +95,13 @@ export class MongoDbStorage implements Storage {
     fingerprint: Issue["fingerprint"],
     transaction?: T
   ) {
-    return null;
+    const issue = await this.issues.findOne(
+      { fingerprint },
+      { id: 1, archived: 1 },
+      { session: (transaction as MongoDbTransaction)?.session }
+    );
+    if (!issue) return null;
+    return dbIssueToIssue(issue);
   }
 
   async getIssuesTotal(filters: GetIssuesFilters) {
@@ -122,7 +129,20 @@ export class MongoDbStorage implements Storage {
   async updateLastOccurrenceOnIssue(
     data: UpdateLastOccurrenceOnIssueType,
     transaction: Transaction
-  ) {}
+  ) {
+    await this.issues.updateOne(
+      { id: data.issueId },
+      {
+        resolved: data.resolved,
+        lastOccurrenceMessage: data.message,
+        lastOccurrenceTimestamp: data.timestamp,
+        $inc: { totalOccurrences: 1 },
+      },
+      {
+        session: (transaction as MongoDbTransaction).session,
+      }
+    );
+  }
 
   runInTransaction: Storage["runInTransaction"] = async (fn) => {
     const transaction = await this.createTransaction();
