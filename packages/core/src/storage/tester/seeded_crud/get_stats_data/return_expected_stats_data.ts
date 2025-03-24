@@ -182,16 +182,16 @@ export class ReturnExpectedStatsData extends StorageTest {
 
         const dataSet: TestCase[] = [
           this.createTestCase(10000, 0),
-          // this.createTestCase(25000, 5000),
-          // this.createTestCase(35000, 2000),
-          // this.createTestCase(15000, 10000),
-          // this.createTestCase(35000, 20000),
+          this.createTestCase(25000, 5000),
+          this.createTestCase(35000, 2000),
+          this.createTestCase(15000, 10000),
+          this.createTestCase(35000, 20000),
 
-          // this.createTestCase(10000, 0, otherTimezone),
-          // this.createTestCase(25000, 5000, otherTimezone),
-          // this.createTestCase(35000, 2000, otherTimezone),
-          // this.createTestCase(15000, 10000, otherTimezone),
-          // this.createTestCase(35000, 20000, otherTimezone),
+          this.createTestCase(10000, 0, otherTimezone),
+          this.createTestCase(25000, 5000, otherTimezone),
+          this.createTestCase(35000, 2000, otherTimezone),
+          this.createTestCase(15000, 10000, otherTimezone),
+          this.createTestCase(35000, 20000, otherTimezone),
         ];
         const storage = await this.getStorage();
 

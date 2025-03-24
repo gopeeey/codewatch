@@ -1,7 +1,8 @@
 import { StorageScenario } from "src/storage/tester/storage_scenario";
 import {
-  InsertIssueFunc,
-  InsertOccurrenceFunc,
+  CreateOccurrenceData,
+  InsertIssuesFn,
+  InsertOccurrencesFn,
   IsoFromNow,
 } from "src/storage/tester/types";
 import { createCreateIssueData } from "src/storage/tester/utils";
@@ -32,15 +33,15 @@ export class GetPaginatedOccurrences extends StorageScenario {
    */
   apply_supplied_filters: ApplySuppliedFilters;
 
-  private insertOccurrence: InsertOccurrenceFunc;
-  private insertIssue: InsertIssueFunc;
+  private insertOccurrence: InsertOccurrencesFn;
+  private insertIssues: InsertIssuesFn;
   private isoFromNow: IsoFromNow;
   private occurrenceCount = 10;
 
   constructor(
     storage: Storage,
-    insertOccurrence: InsertOccurrenceFunc,
-    insertIssue: InsertIssueFunc,
+    insertOccurrence: InsertOccurrencesFn,
+    insertIssues: InsertIssuesFn,
     isoFromNow: IsoFromNow
   ) {
     super(storage);
@@ -64,18 +65,19 @@ export class GetPaginatedOccurrences extends StorageScenario {
     );
 
     this.insertOccurrence = insertOccurrence;
-    this.insertIssue = insertIssue;
+    this.insertIssues = insertIssues;
     this.isoFromNow = isoFromNow;
   }
 
   private async seedOccurrences() {
     const now = new Date().toISOString();
     const issueData = createCreateIssueData(now);
-    const issueId = await this.insertIssue(issueData);
+    const [issue] = await this.insertIssues([issueData]);
 
+    const occurrencesData: CreateOccurrenceData[] = [];
     for (let i = 1; i <= this.occurrenceCount; i++) {
-      await this.insertOccurrence({
-        issueId,
+      occurrencesData.push({
+        issueId: issue.id,
         message: `Error ${i}`,
         timestamp: this.isoFromNow(i * 1000),
         stdoutLogs: [],
@@ -83,10 +85,11 @@ export class GetPaginatedOccurrences extends StorageScenario {
         stack: i.toString(),
       });
     }
+    await this.insertOccurrence(occurrencesData);
 
-    this.sort_occurrences_by_timestamp.issueId = issueId;
-    this.paginate_occurrences.issueId = issueId;
-    this.apply_supplied_filters.issueId = issueId;
+    this.sort_occurrences_by_timestamp.issueId = issue.id;
+    this.paginate_occurrences.issueId = issue.id;
+    this.apply_supplied_filters.issueId = issue.id;
   }
 
   protected runScenario() {

@@ -1,4 +1,5 @@
 import Levenshtein from "levenshtein";
+import { nanoid } from "nanoid";
 import {
   CreateIssueData,
   IsoFromNow,
@@ -11,7 +12,7 @@ export const createCreateIssueData = (
   overrides?: Partial<Omit<Issue, "id">>
 ) => {
   const issue: CreateIssueData = {
-    fingerprint: "123456789012345678",
+    fingerprint: nanoid(),
     lastOccurrenceTimestamp: timestamp,
     createdAt: timestamp,
     lastOccurrenceMessage: "",

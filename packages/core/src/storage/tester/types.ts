@@ -15,18 +15,14 @@ export type TestIssueData = {
   overrides?: Partial<CreateIssueData>;
 };
 
-export type InsertTestIssueFn = (data: CreateIssueData) => Promise<string>;
-export type InsertTestOccurrenceFn = (
-  data: CreateOccurrenceData
+export type InsertIssuesFn = (data: CreateIssueData[]) => Promise<Issue[]>;
+export type InsertOccurrencesFn = (
+  data: CreateOccurrenceData[]
 ) => Promise<void>;
 
 export type IsoFromNow = (offset: number) => string;
 
 export type GetStorageFunc = GetTestObjectFunc<Storage>;
-export type InsertOccurrenceFunc = (
-  data: CreateOccurrenceData
-) => Promise<void>;
-export type InsertIssueFunc = (data: CreateIssueData) => Promise<Issue["id"]>;
 
 export interface ModdedStatsData
   extends Omit<StatsData, "mostRecurringIssues"> {

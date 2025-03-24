@@ -3,8 +3,8 @@ import { Storage } from "src/types";
 import {
   CreateIssueData,
   CreateOccurrenceData,
-  InsertTestIssueFn,
-  InsertTestOccurrenceFn,
+  InsertIssuesFn,
+  InsertOccurrencesFn,
   TestIssueData,
 } from "../types";
 import { createCreateIssueData } from "../utils";
@@ -21,8 +21,8 @@ import { UnresolveIssues } from "./unresolve_issues";
 
 export class SeededCrud extends StorageScenario {
   crudNow = Date.now();
-  private insertTestIssue?: InsertTestIssueFn;
-  private insertTestOccurrence?: InsertTestOccurrenceFn;
+  private insertTestIssue?: InsertIssuesFn;
+  private insertTestOccurrences?: InsertOccurrencesFn;
 
   get_paginated_issues: GetPaginatedIssues;
   get_issues_total: GetIssuesTotal;
@@ -58,8 +58,8 @@ export class SeededCrud extends StorageScenario {
     this.find_issue_by_id = new FindIssueById(storage);
     this.get_paginated_occurrences = new GetPaginatedOccurrences(
       storage,
-      this.insertOccurrence.bind(this),
-      this.insertIssue.bind(this),
+      this.insertOccurrences.bind(this),
+      this.insertIssues.bind(this),
       this.isoFromNow.bind(this)
     );
     this.get_stats_data = new GetStatsData(
@@ -138,52 +138,67 @@ export class SeededCrud extends StorageScenario {
     },
   ];
 
-  setInsertTestIssueFn(fn: InsertTestIssueFn) {
+  setInsertIssuesFn(fn: InsertIssuesFn) {
     this.insertTestIssue = fn;
   }
 
-  setInsertTestOccurrenceFn(fn: InsertTestOccurrenceFn) {
-    this.insertTestOccurrence = fn;
+  setInsertOccurrencesFn(fn: InsertOccurrencesFn) {
+    this.insertTestOccurrences = fn;
   }
 
-  private async insertIssue(data: CreateIssueData) {
+  private async insertIssues(data: CreateIssueData[]) {
     if (!this.insertTestIssue) {
       throw new Error("No insertTestIssue function set");
     }
     return this.insertTestIssue(data);
   }
 
-  private async insertOccurrence(data: CreateOccurrenceData) {
-    if (!this.insertTestOccurrence) {
-      throw new Error("No insertTestOccurrence function set");
+  private async insertOccurrences(data: CreateOccurrenceData[]) {
+    if (!this.insertTestOccurrences) {
+      throw new Error("No insertTestOccurrences function set");
     }
-    return this.insertTestOccurrence(data);
+    return this.insertTestOccurrences(data);
   }
 
   private async seed() {
     if (!this._storage.ready) await this._storage.init(); // Just to initialize the storage (create tables or whatever if they don't exist)
 
-    await Promise.all(
-      this.issuesData.map(async ({ timestamp, overrides }, index) => {
-        const issueData = createCreateIssueData(timestamp, overrides);
-        const issueId = await this.insertIssue(issueData);
-
-        for (let i = 0; i < issueData.totalOccurrences; i++) {
-          await this.insertOccurrence({
-            issueId,
-            message: `Occurrence for ${issueData.name}`,
-            stderrLogs: [],
-            stdoutLogs: [],
-            timestamp: new Date(
-              i + 1 === issueData.totalOccurrences
-                ? issueData.lastOccurrenceTimestamp
-                : issueData.createdAt
-            ).toISOString(),
-            stack: `Occurrence stack for ${issueData.name}`,
-          });
-        }
-      })
+    const createIssuesData = this.issuesData.map(({ timestamp, overrides }) =>
+      createCreateIssueData(timestamp, overrides)
     );
+    const issues = await this.insertIssues(createIssuesData);
+
+    const createOccurrencesData: CreateOccurrenceData[] = [];
+
+    for (const data of createIssuesData) {
+      const seededIssue = issues.find(
+        (issue) => issue.fingerprint == data.fingerprint
+      );
+      if (!seededIssue) {
+        throw new Error(
+          "Issues not properly seeded. Issue with fingerprint: " +
+            data.fingerprint +
+            " not found"
+        );
+      }
+
+      for (let i = 0; i < seededIssue.totalOccurrences; i++) {
+        createOccurrencesData.push({
+          issueId: seededIssue.id,
+          message: `Occurrence for ${seededIssue.name}`,
+          stderrLogs: [],
+          stdoutLogs: [],
+          timestamp: new Date(
+            i + 1 === seededIssue.totalOccurrences
+              ? seededIssue.lastOccurrenceTimestamp
+              : seededIssue.createdAt
+          ).toISOString(),
+          stack: `Occurrence stack for ${seededIssue.name}`,
+        });
+      }
+    }
+
+    await this.insertOccurrences(createOccurrencesData);
   }
 
   protected runScenario() {
