@@ -11,10 +11,14 @@ export class CallCallbackWithTransaction extends StorageTest {
     this.runJestTest(
       "should call it's callback with a transaction instance",
       async () => {
-        const callback = jest.fn();
+        let obj: any;
+        const callback = async (trx: any) => {
+          obj = trx;
+        };
         const storage = await this.getStorage();
         await storage.runInTransaction(callback);
-        expect(callback).toHaveBeenCalledWith(expect.any(StorageTransaction));
+        expect(obj).toBeDefined();
+        expect(obj instanceof StorageTransaction).toBe(true);
       }
     );
   }
