@@ -18,11 +18,14 @@ export const occurrenceSchema = new mongoose.Schema<DbOccurrence>({
   stack: { type: String, required: true },
   extraData: {},
   systemInfo: {
-    deviceMemory: { type: Number, required: true },
-    freeMemory: { type: Number, required: true },
-    appMemoryUsage: { type: Number, required: true },
-    deviceUptime: { type: Number, required: true },
-    appUptime: { type: Number, required: true },
+    type: {
+      deviceMemory: { type: Number, required: true },
+      freeMemory: { type: Number, required: true },
+      appMemoryUsage: { type: Number, required: true },
+      deviceUptime: { type: Number, required: true },
+      appUptime: { type: Number, required: true },
+    },
+    required: false,
   },
   context: { type: [{ type: [String] }] },
 });

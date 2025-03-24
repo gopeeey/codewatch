@@ -1,4 +1,4 @@
-import { Issue } from "codewatch-core/dist/types";
+import { Issue, Occurrence } from "codewatch-core/dist/types";
 import dotenv from "dotenv";
 import { ClientSession, Connection, Model, ProjectionType } from "mongoose";
 import { issueSchema, issuesCollectionName } from "../models/Issue";
@@ -100,5 +100,14 @@ export class Helper {
       | "lastOccurrenceTimestamp"
       | "resolved"
     >;
+  }
+
+  async insertTestIssue(data: Partial<Issue>) {
+    const issue = await this.issues.create(data);
+    return issue.id;
+  }
+
+  async insertTestOccurrence(data: Partial<Occurrence>) {
+    await this.occurrences.create(data);
   }
 }

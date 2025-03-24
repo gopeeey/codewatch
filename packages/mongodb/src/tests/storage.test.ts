@@ -1,8 +1,13 @@
 import { StorageTester } from "codewatch-core/dist/storage";
+import { MongoMemoryReplSet } from "mongodb-memory-server";
+import { MongoDbStorage } from "../storage";
 import { MongoDbTransaction } from "../transaction";
-import { getStorage, Helper, makeInitSd } from "./helpers";
+import { Helper, makeInitSd } from "./helpers";
 
-const storage = getStorage();
+const mongod = await MongoMemoryReplSet.create();
+
+// const storage = getStorage();
+const storage = new MongoDbStorage(mongod.getUri());
 const tester = new StorageTester(storage);
 const helper = new Helper(storage.connection);
 
@@ -12,7 +17,7 @@ tester.setCleanupTablesFunc(async () => {
 });
 
 tester.init.change_ready_state_to_true.setSeedFunc(makeInitSd());
-tester.init.change_ready_state_to_true.setTimeout(10000);
+tester.init.change_ready_state_to_true.setTimeout(20000);
 
 tester.close.change_ready_state_to_false.setSeedFunc(makeInitSd());
 tester.close.change_ready_state_to_false.setTimeout(10000);
@@ -56,6 +61,12 @@ tester.updateLastOccurrenceOnIssue.update_issue.setPostProcessingFunc(
   }
 );
 
+tester.seededCrud.setInsertTestIssueFn(helper.insertTestIssue.bind(helper));
+
+tester.seededCrud.setInsertTestOccurrenceFn(
+  helper.insertTestOccurrence.bind(helper)
+);
+
 describe("Storage with transactions", () => {
   beforeAll(async () => {
     await new Promise((res, rej) => {
@@ -65,6 +76,10 @@ describe("Storage with transactions", () => {
       storage.connection.on("error", rej);
     });
   }, 20000);
+
+  afterAll(async () => {
+    await mongod.stop();
+  });
 
   tester.run();
 });

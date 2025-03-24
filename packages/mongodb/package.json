@@ -5,13 +5,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest --runInBand --detectOpenHandles"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles"
   },
   "author": "Samuel Gopeh",
   "license": "MIT",
   "dependencies": {
     "codewatch-core": "^1.0.6",
     "mongodb": "^6.14.2",
+    "mongodb-memory-server": "^10.1.4",
     "nanoid": "^3.3.4"
   },
   "devDependencies": {
