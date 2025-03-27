@@ -13,14 +13,14 @@ import {
   UpdateLastOccurrenceOnIssueType,
 } from "codewatch-core/dist/types";
 import mongoose, { Connection, Model } from "mongoose";
-import { issueSchema, issuesCollectionName } from "./models/Issue";
+import { issueSchema, issuesCollectionName } from "./schemas/Issue";
 import {
   occurrenceSchema,
   occurrencesCollectionName,
-} from "./models/Occurrence";
+} from "./schemas/Occurrence";
 import { MongoDbTransaction } from "./transaction";
 import { DbIssue, DbOccurrence } from "./types";
-import { dbIssueToIssue } from "./utils";
+import { dbIssueToIssue, docIssueToIssue } from "./utils";
 
 export class MongoDbStorage implements Storage {
   connectionString: string;
@@ -101,15 +101,93 @@ export class MongoDbStorage implements Storage {
       { session: (transaction as MongoDbTransaction)?.session }
     );
     if (!issue) return null;
-    return dbIssueToIssue(issue);
+    return docIssueToIssue(issue);
+  }
+
+  private _getMatchForIssuesFilter(filters: GetIssuesFilters) {
+    let match: Record<string, any> = {};
+
+    if (filters.searchString) {
+      match = { $text: { $search: filters.searchString } };
+    }
+
+    if (filters.startDate) {
+      match.createdAt = { $gte: new Date(filters.startDate) };
+    }
+
+    if (filters.endDate) {
+      match.createdAt = {
+        ...match.createdAt,
+        $lte: new Date(filters.endDate),
+      };
+    }
+
+    switch (filters.tab) {
+      case "archived":
+        match.archived = true;
+        break;
+      case "resolved":
+        match.resolved = true;
+        match.archived = false;
+        break;
+      case "unresolved":
+        match.resolved = false;
+        match.archived = false;
+        break;
+      default:
+        throw new Error("Unsupported tab");
+    }
+
+    return match;
   }
 
   async getIssuesTotal(filters: GetIssuesFilters) {
-    return 0;
+    const docs = await this.issues.aggregate<{ count: number }>([
+      { $match: this._getMatchForIssuesFilter(filters) },
+      { $group: { _id: null, count: { $sum: 1 } } },
+    ]);
+    return docs[0].count;
   }
 
   async getPaginatedIssues(filters: GetPaginatedIssuesFilters) {
-    return [];
+    const pipeline: mongoose.PipelineStage[] = [
+      { $match: this._getMatchForIssuesFilter(filters) },
+    ];
+
+    let sortStage: mongoose.PipelineStage = { $sort: {} };
+    const order = filters.order === "asc" ? 1 : -1;
+
+    switch (filters.sort) {
+      case "created-at":
+        sortStage = { $sort: { createdAt: order } };
+        break;
+      case "last-seen":
+        sortStage = { $sort: { lastOccurrenceTimestamp: order } };
+        break;
+      case "total-occurrences":
+        sortStage = { $sort: { totalOccurrences: order } };
+        break;
+      case "relevance":
+        pipeline.push({
+          $addFields: {
+            relevance: { $meta: "textScore" },
+            nameLengthDiff: {
+              $subtract: [filters.searchString.length, { $strLenCP: "$name" }],
+            },
+          },
+        });
+        sortStage = { $sort: { relevance: order, nameLengthDiff: order } };
+        break;
+      default:
+        throw new Error("Unsupported sort param");
+    }
+    pipeline.push(sortStage);
+
+    pipeline.push({ $skip: (filters.page - 1) * filters.perPage });
+    pipeline.push({ $limit: filters.perPage });
+
+    const docs = await this.issues.aggregate<DbIssue>(pipeline);
+    return docs.map(dbIssueToIssue);
   }
 
   async getPaginatedOccurrences(filters: GetPaginatedOccurrencesFilters) {

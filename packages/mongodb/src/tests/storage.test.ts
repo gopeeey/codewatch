@@ -2,11 +2,12 @@ import { StorageTester } from "codewatch-core/dist/storage";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { MongoDbStorage } from "../storage";
 import { MongoDbTransaction } from "../transaction";
-import { Helper, makeInitSd } from "./helpers";
+import { Helper } from "./helpers";
 
 const mongod = await MongoMemoryReplSet.create();
 
 // const storage = getStorage();
+const mongoUri = mongod.getUri();
 const storage = new MongoDbStorage(mongod.getUri());
 const tester = new StorageTester(storage);
 const helper = new Helper(storage.connection);
@@ -16,11 +17,13 @@ tester.setCleanupTablesFunc(async () => {
   await storage.occurrences.deleteMany();
 });
 
-tester.init.change_ready_state_to_true.setSeedFunc(makeInitSd());
-tester.init.change_ready_state_to_true.setTimeout(20000);
+tester.init.change_ready_state_to_true.setSeedFunc(
+  helper.makeGetStorageFn(mongoUri)
+);
 
-tester.close.change_ready_state_to_false.setSeedFunc(makeInitSd());
-tester.close.change_ready_state_to_false.setTimeout(10000);
+tester.close.change_ready_state_to_false.setSeedFunc(
+  helper.makeGetStorageFn(mongoUri)
+);
 
 tester.createIssue.persist_issue.setPostProcessingFunc(
   async ({ id, transaction }) => {
@@ -61,10 +64,10 @@ tester.updateLastOccurrenceOnIssue.update_issue.setPostProcessingFunc(
   }
 );
 
-tester.seededCrud.setInsertTestIssueFn(helper.insertTestIssue.bind(helper));
+tester.seededCrud.setInsertIssuesFn(helper.insertTestIssues.bind(helper));
 
-tester.seededCrud.setInsertTestOccurrenceFn(
-  helper.insertTestOccurrence.bind(helper)
+tester.seededCrud.setInsertOccurrencesFn(
+  helper.insertTestOccurrences.bind(helper)
 );
 
 describe("Storage with transactions", () => {

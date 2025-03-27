@@ -22,4 +22,6 @@ export const issueSchema = new mongoose.Schema<DbIssue>(
   { timestamps: true }
 );
 
+issueSchema.index({ name: "text" });
+
 export const issuesCollectionName = "codewatchIssues";

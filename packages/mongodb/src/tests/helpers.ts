@@ -1,14 +1,14 @@
 import { Issue, Occurrence } from "codewatch-core/dist/types";
 import dotenv from "dotenv";
 import { ClientSession, Connection, Model, ProjectionType } from "mongoose";
-import { issueSchema, issuesCollectionName } from "../models/Issue";
+import { issueSchema, issuesCollectionName } from "../schemas/Issue";
 import {
   occurrenceSchema,
   occurrencesCollectionName,
-} from "../models/Occurrence";
+} from "../schemas/Occurrence";
 import { MongoDbStorage } from "../storage";
 import { DbIssue, DbOccurrence } from "../types";
-import { dbIssueToIssue, dbOccurrenceToOccurrence } from "../utils";
+import { dbOccurrenceToOccurrence, docIssueToIssue } from "../utils";
 
 dotenv.config();
 
@@ -49,6 +49,12 @@ export class Helper {
     );
   }
 
+  makeGetStorageFn(uri: string, useTransactions = true) {
+    return async () => {
+      return new MongoDbStorage(uri, useTransactions);
+    };
+  }
+
   async getIssueById(
     id: Issue["id"],
     session?: ClientSession,
@@ -56,7 +62,7 @@ export class Helper {
   ): Promise<Issue | null> {
     const issue = await this.issues.findOne({ id }, projection, { session });
     if (!issue) return null;
-    return dbIssueToIssue(issue);
+    return docIssueToIssue(issue);
   }
 
   async getIssueByFingerprint(
@@ -68,7 +74,7 @@ export class Helper {
       session,
     });
     if (!issue) return null;
-    return dbIssueToIssue(issue);
+    return docIssueToIssue(issue);
   }
 
   async getOccurrenceWithIssueId(
@@ -102,12 +108,12 @@ export class Helper {
     >;
   }
 
-  async insertTestIssue(data: Partial<Issue>) {
-    const issue = await this.issues.create(data);
-    return issue.id;
+  async insertTestIssues(data: Partial<Issue>[]) {
+    const issues = await this.issues.create(data);
+    return issues.map(docIssueToIssue);
   }
 
-  async insertTestOccurrence(data: Partial<Occurrence>) {
+  async insertTestOccurrences(data: Partial<Occurrence>[]) {
     await this.occurrences.create(data);
   }
 }
