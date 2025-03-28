@@ -1,6 +1,12 @@
 import { Issue, Occurrence } from "codewatch-core/dist/types";
 import dotenv from "dotenv";
-import { ClientSession, Connection, Model, ProjectionType } from "mongoose";
+import {
+  ClientSession,
+  Connection,
+  Model,
+  ProjectionType,
+  RootFilterQuery,
+} from "mongoose";
 import { issueSchema, issuesCollectionName } from "../schemas/Issue";
 import {
   occurrenceSchema,
@@ -8,7 +14,7 @@ import {
 } from "../schemas/Occurrence";
 import { MongoDbStorage } from "../storage";
 import { DbIssue, DbOccurrence } from "../types";
-import { dbOccurrenceToOccurrence, docIssueToIssue } from "../utils";
+import { docIssueToIssue, docOccurrenceToOccurrence } from "../utils";
 
 dotenv.config();
 
@@ -65,6 +71,17 @@ export class Helper {
     return docIssueToIssue(issue);
   }
 
+  async getMultipleIssuesById(
+    ids: Issue["id"][],
+    session?: ClientSession,
+    projection: ProjectionType<DbIssue> | null = null
+  ) {
+    const issues = await this.issues.find({ id: { $in: ids } }, projection, {
+      session,
+    });
+    return issues.map(docIssueToIssue);
+  }
+
   async getIssueByFingerprint(
     fingerprint: Issue["fingerprint"],
     session?: ClientSession,
@@ -85,7 +102,7 @@ export class Helper {
       session,
     });
     if (!occurrence) return null;
-    return dbOccurrenceToOccurrence(occurrence);
+    return docOccurrenceToOccurrence(occurrence);
   }
 
   async getLastOccurrenceUpdatedIssue(
@@ -115,5 +132,18 @@ export class Helper {
 
   async insertTestOccurrences(data: Partial<Occurrence>[]) {
     await this.occurrences.create(data);
+  }
+
+  async get2Issues(query?: RootFilterQuery<DbIssue>) {
+    const issues = await this.issues.find(query ?? {}).limit(2);
+    return issues.map(docIssueToIssue);
+  }
+
+  async updateAllIssuesToResolved() {
+    await this.issues.updateMany({}, { resolved: true });
+  }
+
+  async updateAllIssuesToArchived() {
+    await this.issues.updateMany({}, { archived: true });
   }
 }

@@ -20,7 +20,11 @@ import {
 } from "./schemas/Occurrence";
 import { MongoDbTransaction } from "./transaction";
 import { DbIssue, DbOccurrence } from "./types";
-import { dbIssueToIssue, docIssueToIssue } from "./utils";
+import {
+  dbIssueToIssue,
+  dbOccurrenceToOccurrence,
+  docIssueToIssue,
+} from "./utils";
 
 export class MongoDbStorage implements Storage {
   connectionString: string;
@@ -78,17 +82,21 @@ export class MongoDbStorage implements Storage {
     });
   }
 
-  async archiveIssues(ids: Issue["id"][]) {}
-
   async createTransaction() {
     if (this.useTransactions) return MongoDbTransaction.start(this.issues);
     return new StorageTransaction();
   }
 
-  async deleteIssues(ids: Issue["id"][]) {}
+  async deleteIssues(ids: Issue["id"][]) {
+    await this.issues.deleteMany({ id: { $in: ids } });
+  }
 
   async findIssueById(id: Issue["id"], transaction?: Transaction) {
-    return null;
+    const issue = await this.issues.findOne({ id: id }, null, {
+      session: (transaction as MongoDbTransaction)?.session,
+    });
+    if (!issue) return null;
+    return docIssueToIssue(issue);
   }
 
   async findIssueIdxArchiveStatusByFingerprint(
@@ -191,18 +199,48 @@ export class MongoDbStorage implements Storage {
   }
 
   async getPaginatedOccurrences(filters: GetPaginatedOccurrencesFilters) {
-    return [];
+    const docs = await this.occurrences.aggregate<DbOccurrence>([
+      {
+        $match: {
+          issueId: filters.issueId,
+          timestamp: {
+            $gte: new Date(filters.startDate),
+            $lte: new Date(filters.endDate),
+          },
+        },
+      },
+      { $sort: { timestamp: -1 } },
+      { $skip: (filters.page - 1) * filters.perPage },
+      { $limit: filters.perPage },
+    ]);
+    return docs.map(dbOccurrenceToOccurrence);
   }
 
   async getStatsData(filters: GetStats) {
     return {} as StatsData;
   }
 
-  async resolveIssues(issueIds: Issue["id"][]) {}
+  async resolveIssues(issueIds: Issue["id"][]) {
+    await this.issues.updateMany({ id: { $in: issueIds } }, { resolved: true });
+  }
 
-  async unarchiveIssues(issueIds: Issue["id"][]) {}
+  async unresolveIssues(issueIds: Issue["id"][]) {
+    await this.issues.updateMany(
+      { id: { $in: issueIds } },
+      { resolved: false }
+    );
+  }
 
-  async unresolveIssues(issueIds: Issue["id"][]) {}
+  async archiveIssues(issueIds: Issue["id"][]) {
+    await this.issues.updateMany({ id: { $in: issueIds } }, { archived: true });
+  }
+
+  async unarchiveIssues(issueIds: Issue["id"][]) {
+    await this.issues.updateMany(
+      { id: { $in: issueIds } },
+      { archived: false }
+    );
+  }
 
   async updateLastOccurrenceOnIssue(
     data: UpdateLastOccurrenceOnIssueType,

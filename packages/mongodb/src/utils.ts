@@ -18,12 +18,19 @@ export function dbIssueToIssue(dbIssue: DbIssue) {
   };
 }
 
-export function dbOccurrenceToOccurrence(
+export function docOccurrenceToOccurrence(
   dbOccurrence: Document<unknown, {}, DbOccurrence>
 ) {
   const json = dbOccurrence.toJSON();
   return {
     ...json,
     timestamp: json.timestamp.toISOString(),
+  };
+}
+
+export function dbOccurrenceToOccurrence(dbOccurrence: DbOccurrence) {
+  return {
+    ...dbOccurrence,
+    timestamp: dbOccurrence.timestamp.toISOString(),
   };
 }

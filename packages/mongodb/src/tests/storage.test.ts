@@ -70,6 +70,61 @@ tester.seededCrud.setInsertOccurrencesFn(
   helper.insertTestOccurrences.bind(helper)
 );
 
+tester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setSeedFunc(
+  async () => helper.get2Issues()
+);
+
+tester.seededCrud.delete_issues.delete_issues_with_supplied_ids.setPostProcessingFunc(
+  helper.getMultipleIssuesById.bind(helper)
+);
+
+tester.seededCrud.resolve_issues.update_resolved_to_true.setSeedFunc(async () =>
+  helper.get2Issues({ resolved: false })
+);
+
+tester.seededCrud.resolve_issues.update_resolved_to_true.setPostProcessingFunc(
+  helper.getMultipleIssuesById.bind(helper)
+);
+
+tester.seededCrud.unresolve_issues.update_resolved_to_false.setSeedFunc(
+  async () => {
+    await helper.updateAllIssuesToResolved();
+    return helper.get2Issues({ resolved: true });
+  }
+);
+
+tester.seededCrud.unresolve_issues.update_resolved_to_false.setPostProcessingFunc(
+  helper.getMultipleIssuesById.bind(helper)
+);
+
+tester.seededCrud.archive_issues.update_archived_to_true.setSeedFunc(async () =>
+  helper.get2Issues({ archived: false })
+);
+
+tester.seededCrud.archive_issues.update_archived_to_true.setPostProcessingFunc(
+  helper.getMultipleIssuesById.bind(helper)
+);
+
+tester.seededCrud.unarchive_issues.update_archived_to_false.setSeedFunc(
+  async () => {
+    await helper.updateAllIssuesToArchived();
+    return helper.get2Issues({ archived: true });
+  }
+);
+
+tester.seededCrud.unarchive_issues.update_archived_to_false.setPostProcessingFunc(
+  helper.getMultipleIssuesById.bind(helper)
+);
+
+tester.seededCrud.find_issue_by_id.issue_exists.return_issue.setSeedFunc(
+  async ({ issueId, transaction }) => {
+    return helper.getIssueById(
+      issueId,
+      (transaction as MongoDbTransaction)?.session
+    );
+  }
+);
+
 describe("Storage with transactions", () => {
   beforeAll(async () => {
     await new Promise((res, rej) => {
