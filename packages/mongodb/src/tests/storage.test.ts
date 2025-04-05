@@ -6,7 +6,6 @@ import { Helper } from "./helpers";
 
 const mongod = await MongoMemoryReplSet.create();
 
-// const storage = getStorage();
 const mongoUri = mongod.getUri();
 const storage = new MongoDbStorage(mongod.getUri());
 const tester = new StorageTester(storage);

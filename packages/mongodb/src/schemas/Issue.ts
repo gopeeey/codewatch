@@ -24,4 +24,4 @@ export const issueSchema = new mongoose.Schema<DbIssue>(
 
 issueSchema.index({ name: "text" });
 
-export const issuesCollectionName = "codewatchIssues";
+export const issuesCollectionName = "codewatchissues";

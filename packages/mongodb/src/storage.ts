@@ -19,11 +19,16 @@ import {
   occurrencesCollectionName,
 } from "./schemas/Occurrence";
 import { MongoDbTransaction } from "./transaction";
-import { DbIssue, DbOccurrence } from "./types";
+import {
+  DbIssue,
+  DbOccurrence,
+  IssueWithTotalOccurrencesWithinTimestamp,
+} from "./types";
 import {
   dbIssueToIssue,
   dbOccurrenceToOccurrence,
   docIssueToIssue,
+  getTimezoneString,
 } from "./utils";
 
 export class MongoDbStorage implements Storage {
@@ -217,7 +222,136 @@ export class MongoDbStorage implements Storage {
   }
 
   async getStatsData(filters: GetStats) {
-    return {} as StatsData;
+    const timezone = getTimezoneString(filters.timezoneOffset);
+    const [rawData] = await this.occurrences.aggregate([
+      {
+        $match: {
+          timestamp: {
+            $gte: new Date(filters.startDate),
+            $lte: new Date(filters.endDate),
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: issuesCollectionName,
+          localField: "issueId",
+          foreignField: "id",
+          as: "issue",
+          pipeline: [
+            {
+              $project: { unhandled: 1, isLog: 1, lastOccurrenceTimestamp: 1 },
+            },
+          ],
+        },
+      },
+      { $unwind: "$issue" },
+      {
+        $facet: {
+          totalOccurrencesData: [{ $group: { _id: null, count: { $sum: 1 } } }],
+          totalUnhandledOccurrencesData: [
+            { $match: { "issue.unhandled": true } },
+            { $group: { _id: null, count: { $sum: 1 } } },
+          ],
+          totalManuallyCapturedOccurrencesData: [
+            { $match: { "issue.unhandled": false, "issue.isLog": false } },
+            { $group: { _id: null, count: { $sum: 1 } } },
+          ],
+          totalLoggedDataData: [
+            { $match: { "issue.isLog": true } },
+            { $group: { _id: null, count: { $sum: 1 } } },
+          ],
+          dailyOccurrenceCount: [
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: "%Y-%m-%d",
+                    date: "$timestamp",
+                    timezone,
+                  },
+                },
+                count: { $sum: 1 },
+              },
+            },
+            { $project: { date: "$_id", count: 1, _id: 0 } },
+            { $sort: { date: 1 } },
+          ],
+          dailyUnhandledOccurrenceCount: [
+            { $match: { "issue.unhandled": true } },
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: "%Y-%m-%d",
+                    date: "$timestamp",
+                    timezone,
+                  },
+                },
+                count: { $sum: 1 },
+              },
+            },
+            { $project: { date: "$_id", count: 1, _id: 0 } },
+            { $sort: { date: 1 } },
+          ],
+          totalIssuesData: [
+            { $group: { _id: "$issueId", count: { $sum: 1 } } },
+            { $group: { _id: null, count: { $sum: 1 } } },
+          ],
+          mostRecurringIssueIdsData: [
+            {
+              $group: {
+                _id: "$issueId",
+                count: { $sum: 1 },
+                lastOccurrenceTimestamp: {
+                  $addToSet: "$issue.lastOccurrenceTimestamp",
+                },
+              },
+            },
+            { $unwind: "$lastOccurrenceTimestamp" },
+            { $sort: { count: -1, lastOccurrenceTimestamp: -1 } },
+            { $limit: 5 },
+          ],
+        },
+      },
+    ]);
+    const recurringIssues = await this.issues.find({
+      id: {
+        $in: rawData.mostRecurringIssueIdsData.map(
+          (doc: { _id: string }) => doc._id
+        ),
+      },
+    });
+
+    const sortedRecurringIssues: IssueWithTotalOccurrencesWithinTimestamp[] =
+      [];
+    for (const issue of rawData.mostRecurringIssueIdsData) {
+      const foundIssue = recurringIssues.find((i) => i.id === issue._id);
+      if (foundIssue) {
+        sortedRecurringIssues.push({
+          ...docIssueToIssue(foundIssue),
+          totalOccurrencesWithinTimestamp: issue.count,
+        });
+      }
+    }
+
+    const data: StatsData = {
+      totalOccurrences: rawData.totalOccurrencesData[0]?.count || 0,
+      totalUnhandledOccurrences:
+        rawData.totalUnhandledOccurrencesData[0]?.count || 0,
+      totalManuallyCapturedOccurrences:
+        rawData.totalManuallyCapturedOccurrencesData[0]?.count || 0,
+      totalLoggedData: rawData.totalLoggedDataData[0]?.count || 0,
+      dailyOccurrenceCount: rawData.dailyOccurrenceCount,
+      dailyUnhandledOccurrenceCount: rawData.dailyUnhandledOccurrenceCount,
+      totalIssues: rawData.totalIssuesData[0]?.count || 0,
+      mostRecurringIssues: sortedRecurringIssues,
+    };
+    console.log(
+      JSON.stringify(rawData.mostRecurringIssueIdsData),
+      JSON.stringify(recurringIssues)
+    );
+    return data;
   }
 
   async resolveIssues(issueIds: Issue["id"][]) {

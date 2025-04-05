@@ -34,3 +34,13 @@ export function dbOccurrenceToOccurrence(dbOccurrence: DbOccurrence) {
     timestamp: dbOccurrence.timestamp.toISOString(),
   };
 }
+
+export function getTimezoneString(offset: number): string {
+  const sign = offset >= 0 ? "+" : "-";
+  const absOffset = Math.abs(offset);
+  const hours = Math.floor(absOffset / 60);
+  const minutes = absOffset % 60;
+  return `${sign}${hours.toString().padStart(2, "0")}${minutes
+    .toString()
+    .padStart(2, "0")}`;
+}

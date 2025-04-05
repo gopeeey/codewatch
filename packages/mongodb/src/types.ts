@@ -9,3 +9,7 @@ export interface DbIssue
 export interface DbOccurrence extends Omit<Occurrence, "timestamp"> {
   timestamp: Date;
 }
+
+export interface IssueWithTotalOccurrencesWithinTimestamp extends Issue {
+  totalOccurrencesWithinTimestamp: number;
+}

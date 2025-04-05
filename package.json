@@ -9,5 +9,8 @@
   "workspaces": [],
   "author": "Samuel Gopeh",
   "license": "ISC",
-  "dependencies": {}
+  "dependencies": {
+    "mongoose": "^8.12.1",
+    "nanoid": "^5.1.3"
+  }
 }

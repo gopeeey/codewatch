@@ -30,4 +30,4 @@ export const occurrenceSchema = new mongoose.Schema<DbOccurrence>({
   context: { type: [{ type: [String] }] },
 });
 
-export const occurrencesCollectionName = "codewatchOccurrences";
+export const occurrencesCollectionName = "codewatchoccurrences";
