@@ -347,10 +347,6 @@ export class MongoDbStorage implements Storage {
       totalIssues: rawData.totalIssuesData[0]?.count || 0,
       mostRecurringIssues: sortedRecurringIssues,
     };
-    console.log(
-      JSON.stringify(rawData.mostRecurringIssueIdsData),
-      JSON.stringify(recurringIssues)
-    );
     return data;
   }
 
